@@ -1,0 +1,474 @@
+
+<link href="/userLogin.css" rel="stylesheet">
+<div class="page">
+
+  <div class="left-panel" id="left-panel">
+    <div class="brand-top">TYMORA</div>
+
+    <div class="watch-scene" id="watch-scene">
+      <div class="watch-inner" id="watch-inner">
+
+        <!--
+          .watch-wrap is the single clickable parent.
+          .watch-hit-area is a transparent circular overlay covering
+          the entire watch face — guarantees zero dead zones.
+          All SVG children have pointer-events:none via CSS,
+          so every click bubbles straight up to .watch-wrap.
+        -->
+        <div class="watch-wrap" id="watch-wrap">
+
+          <!-- Transparent circular hit overlay — sits above the SVG, covers the full watch diameter -->
+          <div class="watch-hit-area" id="watch-hit-area"></div>
+
+          <svg class="watch-svg" viewBox="0 0 300 300" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f0d060"/>
+                <stop offset="25%" stop-color="#c9a84c"/>
+                <stop offset="50%" stop-color="#f5e070"/>
+                <stop offset="75%" stop-color="#9a7428"/>
+                <stop offset="100%" stop-color="#e8c050"/>
+              </linearGradient>
+              <linearGradient id="goldRingInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#d4b050"/>
+                <stop offset="50%" stop-color="#8a6520"/>
+                <stop offset="100%" stop-color="#c9a030"/>
+              </linearGradient>
+              <radialGradient id="dialGrad" cx="40%" cy="35%" r="70%">
+                <stop offset="0%" stop-color="#1a1608"/>
+                <stop offset="60%" stop-color="#0d0b04"/>
+                <stop offset="100%" stop-color="#050400"/>
+              </radialGradient>
+              <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#8a6520"/>
+                <stop offset="50%" stop-color="#e8c050"/>
+                <stop offset="100%" stop-color="#8a6520"/>
+              </linearGradient>
+              <pattern id="dialPattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+                <circle cx="4" cy="4" r="0.5" fill="#c9a84c" opacity="0.3"/>
+              </pattern>
+              <linearGradient id="hourHandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#c9a030"/>
+                <stop offset="50%" stop-color="#f0d060"/>
+                <stop offset="100%" stop-color="#c9a030"/>
+              </linearGradient>
+              <linearGradient id="minHandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#a07820"/>
+                <stop offset="50%" stop-color="#e0c050"/>
+                <stop offset="100%" stop-color="#a07820"/>
+              </linearGradient>
+              <filter id="handGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="watchGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur"/>
+                <feColorMatrix type="matrix" values="1 0.8 0 0 0  0.8 0.6 0 0 0  0 0 0 0 0  0 0 0 0.5 0" in="blur" result="colored"/>
+                <feMerge><feMergeNode in="colored"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect x="255" y="138" width="18" height="24" rx="4" fill="url(#crownGrad)"/>
+            <circle cx="150" cy="150" r="138" fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="20"/>
+            <circle cx="150" cy="150" r="130" fill="url(#goldRing)" filter="url(#watchGlow)"/>
+            <circle cx="150" cy="150" r="120" fill="#0d0b04" stroke="url(#goldRingInner)" stroke-width="2"/>
+            <circle cx="150" cy="150" r="116" fill="url(#dialGrad)"/>
+            <circle cx="150" cy="150" r="116" fill="url(#dialPattern)" opacity="0.3"/>
+            <circle cx="150" cy="205" r="18" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+            <circle cx="150" cy="205" r="14" fill="rgba(201,168,76,0.04)" stroke="rgba(201,168,76,0.08)" stroke-width="0.5"/>
+            <g id="subdialTicks"></g>
+            <g id="hourMarkers"></g>
+            <text x="150" y="120" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="11" font-weight="400" fill="#c9a84c" letter-spacing="5" opacity="0.85">TYMORA</text>
+            <text x="150" y="135" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="5" font-weight="300" fill="rgba(201,168,76,0.45)" letter-spacing="3">SWISS MADE</text>
+            <rect x="196" y="144" width="20" height="13" rx="1" fill="#0a0800" stroke="rgba(201,168,76,0.3)" stroke-width="0.5"/>
+            <text x="206" y="154.5" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="7" fill="#c9a84c" font-weight="400" id="svg-date">01</text>
+            <g class="hand-hour" id="hand-hour" filter="url(#handGlow)">
+              <polygon points="150,68 154,145 150,155 146,145" fill="url(#hourHandGrad)"/>
+              <polygon points="150,155 152,165 150,168 148,165" fill="#9a7428"/>
+            </g>
+            <g class="hand-minute" id="hand-minute" filter="url(#handGlow)">
+              <polygon points="150,42 152.5,143 150,154 147.5,143" fill="url(#minHandGrad)"/>
+              <polygon points="150,154 152,170 150,174 148,170" fill="#7a5818"/>
+            </g>
+            <g class="hand-second" id="hand-second">
+              <line x1="150" y1="50" x2="150" y2="180" stroke="#e53935" stroke-width="1.2"/>
+              <line x1="150" y1="180" x2="150" y2="200" stroke="#e53935" stroke-width="1.2" opacity="0.5"/>
+              <circle cx="150" cy="180" r="2" fill="#e53935"/>
+            </g>
+            <circle cx="150" cy="150" r="5" fill="url(#goldRing)" stroke="#0d0b04" stroke-width="1"/>
+            <circle cx="150" cy="150" r="2.5" fill="#f0d060"/>
+          </svg>
+        </div>
+
+        <!-- BRANDS OVERLAY -->
+        <div class="brands-overlay" id="brands-overlay">
+          <div class="brands-title">Heritage Maisons</div>
+          <div class="brands-grid" id="brands-grid"></div>
+        </div>
+
+      </div><!-- /watch-inner -->
+
+      <div class="click-hint" id="click-hint">Click to Explore</div>
+    </div><!-- /watch-scene -->
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-content" id="detail-content">
+        <div class="detail-brand-name" id="detail-name"></div>
+        <div class="detail-tagline" id="detail-tag"></div>
+        <div class="detail-divider"></div>
+        <div class="detail-founded-badge" id="detail-founded"></div>
+        <div class="detail-description" id="detail-desc"></div>
+        <div class="detail-facts" id="detail-facts"></div>
+      </div>
+      <div class="detail-bg-hint">Click background to return</div>
+    </div>
+
+    <div class="tagline">TYM Of Refined Aesthetics</div>
+  </div><!-- /left-panel -->
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="right-panel" id="right-panel">
+    <form id="loginForm" class="form-card" action="/user/login" method="POST">
+      <div class="form-brand">TYMORA</div>
+      <div class="form-brand-underline"></div>
+      <h1 class="form-title">Welcome back.</h1>
+      <p class="form-subtitle">Access your private collection</p>
+      <p id="loginMessage" class="form-subtitle" style="color: {{#if success}}#8a6520{{else}}red{{/if}};">
+  {{message}}
+</p>
+      <div>
+        <div class="field-group">
+          <label class="field-label" for="email">Email Address</label>
+          <div class="field-wrap">
+            <span class="field-icon">✉</span>
+            <input  id="email" name="email" placeholder="your@email.com" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="password">Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔒</span>
+            <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+          <a href="#" class="forgot-link">Forgot Password</a>
+        </div>
+        <button class="btn-enter" type="submit" id="enter-btn">
+          Enter <span class="btn-arrow">→</span>
+        </button>
+      </div>
+      <p class="register-line">New to Tymora? <a href="/register">Create an Account</a></p>
+      <div class="or-divider">
+  <span class="or-line"></span>
+  <span class="or-text">or</span>
+  <span class="or-line"></span>
+</div>
+<button class="btn-google" type="button" id="google-btn">
+  <svg class="g-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#c9a84c" opacity="0.9"/>
+    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#c9a84c" opacity="0.65"/>
+    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#c9a84c" opacity="0.45"/>
+    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#c9a84c" opacity="0.75"/>
+  </svg>
+  Continue with Google
+</button>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ── BRANDS DATA ──
+const BRANDS = [
+  {
+    id: 'rolex',
+    logo: 'ROLEX',
+    founded: 'Est. 1905',
+    tag: 'The Crown of Watchmaking',
+    desc: 'Born in London, refined in Geneva — Rolex has defined precision and prestige for over a century. Every crown is a testament to the pursuit of perfection.',
+    facts: [
+      { value: '1905', label: 'Founded' },
+      { value: '800K+', label: 'Yearly Pieces' },
+      { value: 'Geneva', label: 'Manufacture' },
+    ]
+  },
+  {
+    id: 'patek',
+    logo: 'PATEK\nPHILIPPE',
+    founded: 'Est. 1839',
+    tag: 'You never actually own a Patek Philippe',
+    desc: 'The most coveted name in horology. Patek Philippe watches are heirlooms before they are timepieces — crafted in Geneva for generations yet to come.',
+    facts: [
+      { value: '1839', label: 'Founded' },
+      { value: '60K', label: 'Yearly Pieces' },
+      { value: 'Geneva', label: 'Manufacture' },
+    ]
+  },
+  {
+    id: 'ap',
+    logo: 'AUDEMARS\nPIGUET',
+    founded: 'Est. 1875',
+    tag: 'To Break the Rules, You Must First Master Them',
+    desc: 'Founded in the Vallée de Joux by two visionary watchmakers, Audemars Piguet remains one of the few grand manufactures still in family hands.',
+    facts: [
+      { value: '1875', label: 'Founded' },
+      { value: '45K', label: 'Yearly Pieces' },
+      { value: 'Le Brassus', label: 'Manufacture' },
+    ]
+  },
+  {
+    id: 'vacheron',
+    logo: 'VACHERON\nCONSTANTIN',
+    founded: 'Est. 1755',
+    tag: 'Doing Well That Which Is Done',
+    desc: 'The oldest continuously operating watch manufacturer in the world. Vacheron Constantin has never ceased production since 1755 — an unbroken thread through history.',
+    facts: [
+      { value: '1755', label: 'Founded' },
+      { value: '20K', label: 'Yearly Pieces' },
+      { value: 'Geneva', label: 'Manufacture' },
+    ]
+  },
+  {
+    id: 'aw',
+    logo: 'A. LANGE\n& SÖHNE',
+    founded: 'Est. 1845',
+    tag: 'Quintessentially German Watchmaking',
+    desc: 'From the Saxon town of Glashütte, A. Lange & Söhne creates horological masterpieces that blend German engineering rigour with breathtaking artisanal beauty.',
+    facts: [
+      { value: '1845', label: 'Founded' },
+      { value: '5K', label: 'Yearly Pieces' },
+      { value: 'Glashütte', label: 'Manufacture' },
+    ]
+  },
+  {
+    id: 'jaeger',
+    logo: 'JAEGER-\nLECOULTRE',
+    founded: 'Est. 1833',
+    tag: 'The Watchmaker of Watchmakers',
+    desc: "With over 1,400 calibres and 400+ patents, Jaeger-LeCoultre is the inventor's manufacture — a house that has supplied movements to the entire Swiss watchmaking world.",
+    facts: [
+      { value: '1833', label: 'Founded' },
+      { value: '50K', label: 'Yearly Pieces' },
+      { value: 'Le Sentier', label: 'Manufacture' },
+    ]
+  },
+];
+
+// ── STATE ──
+let state = 'watch';
+let activeBrandId = null;
+let transitioning = false;
+
+const leftPanel     = document.getElementById('left-panel');
+const watchScene    = document.getElementById('watch-scene');
+const watchWrap     = document.getElementById('watch-wrap');
+const watchHitArea  = document.getElementById('watch-hit-area');
+const detailPanel   = document.getElementById('detail-panel');
+const detailContent = document.getElementById('detail-content');
+
+// ── BUILD BRANDS GRID ──
+const grid = document.getElementById('brands-grid');
+BRANDS.forEach(b => {
+  const card = document.createElement('div');
+  card.className = 'brand-card';
+  card.dataset.id = b.id;
+  card.innerHTML = `<div class="brand-logo">${b.logo.replace('\n', '<br>')}</div><div class="brand-founded">${b.founded}</div>`;
+  card.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state !== 'brands') return;
+    handleBrandClick(b, card);
+  });
+  grid.appendChild(card);
+});
+
+// ── CLOCK ──
+const hourHand = document.getElementById('hand-hour');
+const minHand  = document.getElementById('hand-minute');
+const secHand  = document.getElementById('hand-second');
+const svgDate  = document.getElementById('svg-date');
+
+function updateClock() {
+  const n  = new Date();
+  const hh = n.getHours() % 12, mm = n.getMinutes(), ss = n.getSeconds(), ms = n.getMilliseconds();
+  const hDeg = (hh/12)*360 + (mm/60)*30 + (ss/3600)*6;
+  const mDeg = (mm/60)*360 + (ss/60)*6 + (ms/60000)*6;
+  const sDeg = (ss/60)*360 + (ms/1000)*6;
+  hourHand.style.transform = `rotate(${hDeg}deg)`;
+  minHand.style.transform  = `rotate(${mDeg}deg)`;
+  secHand.style.transform  = `rotate(${sDeg}deg)`;
+  hourHand.style.transformOrigin = '150px 150px';
+  minHand.style.transformOrigin  = '150px 150px';
+  secHand.style.transformOrigin  = '150px 150px';
+  svgDate.textContent = String(n.getDate()).padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 50);
+
+// ── HOUR MARKERS ──
+const markersG = document.getElementById('hourMarkers');
+const cx = 150, cy = 150, r = 110;
+for (let i = 0; i < 60; i++) {
+  const angle = (i/60)*2*Math.PI - Math.PI/2;
+  const isHour = i%5 === 0;
+  const len = isHour ? 12 : 5;
+  const outerR = r, innerR = r - len;
+  const x1 = cx + outerR*Math.cos(angle), y1 = cy + outerR*Math.sin(angle);
+  const x2 = cx + innerR*Math.cos(angle), y2 = cy + innerR*Math.sin(angle);
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+  line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+  line.setAttribute('stroke', isHour ? '#c9a84c' : '#6a5018');
+  line.setAttribute('stroke-width', isHour ? 2 : 0.8);
+  markersG.appendChild(line);
+}
+
+// Sub-dial ticks
+const subG = document.getElementById('subdialTicks');
+for (let i = 0; i < 12; i++) {
+  const ang = (i/12)*2*Math.PI - Math.PI/2;
+  const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1', 150 + 14*Math.cos(ang)); l.setAttribute('y1', 205 + 14*Math.sin(ang));
+  l.setAttribute('x2', 150 + 11*Math.cos(ang)); l.setAttribute('y2', 205 + 11*Math.sin(ang));
+  l.setAttribute('stroke','#c9a84c'); l.setAttribute('stroke-width','0.8'); l.setAttribute('opacity','0.5');
+  subG.appendChild(l);
+}
+
+// ── STATE MANAGEMENT ──
+function setState(newState) {
+  state = newState;
+  leftPanel.classList.remove('state-brands', 'state-detail');
+  if (newState === 'brands') leftPanel.classList.add('state-brands');
+  if (newState === 'detail') leftPanel.classList.add('state-detail');
+  detailPanel.classList.toggle('active', newState === 'detail');
+}
+
+function clearActiveBrand() {
+  document.querySelectorAll('.brand-card').forEach(c => c.classList.remove('active-brand'));
+  activeBrandId = null;
+}
+
+// ── TRANSITIONS ──
+function doTwistToBrands() {
+  if (transitioning) return;
+  transitioning = true;
+  watchScene.classList.add('twist-anim');
+  setTimeout(() => {
+    watchScene.classList.remove('twist-anim');
+    setState('brands');
+    transitioning = false;
+  }, 380);
+}
+
+function goToWatch() {
+  clearActiveBrand();
+  setState('watch');
+  watchScene.classList.add('twist-anim');
+  setTimeout(() => {
+    watchScene.classList.remove('twist-anim');
+  }, 800);
+}
+
+function goToBrands() {
+  clearActiveBrand();
+  setState('brands');
+}
+
+function populateDetail(brand) {
+  document.getElementById('detail-name').textContent = brand.logo.replace('\n', ' ');
+  document.getElementById('detail-tag').textContent = brand.tag;
+  document.getElementById('detail-founded').textContent = brand.founded;
+  document.getElementById('detail-desc').textContent = brand.desc;
+  document.getElementById('detail-facts').innerHTML = brand.facts.map(f =>
+    `<div class="detail-fact"><div class="fact-value">${f.value}</div><div class="fact-label">${f.label}</div></div>`
+  ).join('');
+}
+
+function handleBrandClick(brand, card) {
+  clearActiveBrand();
+  activeBrandId = brand.id;
+  card.classList.add('active-brand');
+  populateDetail(brand);
+  setState('detail');
+}
+
+// ── UNIFIED WATCH CLICK HANDLER ──
+// Attached to BOTH the hit overlay and the watch-wrap so either path works.
+// The hit overlay sits on top and catches all watch-area clicks first.
+function handleWatchClick(e) {
+  e.stopPropagation();
+  if (transitioning) return;
+  if (state === 'watch') {
+    doTwistToBrands();
+  } else if (state === 'brands') {
+    goToWatch();
+  }
+  // state === 'detail': watch is hidden, this never fires
+}
+
+watchHitArea.addEventListener('click', handleWatchClick);
+watchWrap.addEventListener('click', handleWatchClick);
+
+// ── BACKGROUND CLICK HANDLER (left panel) ──
+leftPanel.addEventListener('click', (e) => {
+  const bg = (
+    e.target === leftPanel ||
+    e.target.classList.contains('brand-top') ||
+    e.target.classList.contains('tagline') ||
+    e.target.classList.contains('brands-title') ||
+    e.target === detailPanel ||
+    e.target.classList.contains('detail-bg-hint')
+  );
+  if (!bg) return;
+
+  if (state === 'detail') {
+    goToBrands();
+  } else if (state === 'brands') {
+    goToWatch();
+  }
+});
+
+// ── FORM FOCUS → return to watch ──
+['email', 'password'].forEach(id => {
+  document.getElementById(id).addEventListener('focus', () => {
+    if (state !== 'watch') goToWatch();
+  });
+});
+
+// ── ENTER BUTTON ──
+document.getElementById('enter-btn').addEventListener('click', () => {
+  if (state !== 'watch') goToWatch();
+});
+
+ //  --- Validation ---  
+
+const loginForm = document.getElementById("loginForm")
+
+loginForm.addEventListener("submit", function(e){
+
+	const email = document.getElementById("email").value.trim()
+	const password = document.getElementById("password").value.trim()
+	const msg = document.getElementById("loginMessage")
+
+	 msg.innerText = ""
+	 
+	if(email === "" || password === ""){
+		msg.innerText = "Please fill all fields"
+		msg.style.color = "red"
+		e.preventDefault()
+		return
+	}
+
+	const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/
+
+	if(!email.match(emailPattern)){
+		msg.innerText = "Enter valid email"
+		e.preventDefault()
+		return
+  }
+	if(password.length < 6){
+		msg.innerText = "Password must be at least 6 characters"
+		e.preventDefault()
+		return
+	}
+})
+
+</script>
