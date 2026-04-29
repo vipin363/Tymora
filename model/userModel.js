@@ -9,12 +9,20 @@ const userSchema = mongoose.Schema({
         required:true,
         unique:true,
     },
-    password:{
-        type: String,
-        required:true,
+   password:{
+        type:String,
+        default:null
+    },
+    googleId:{
+        type:String,
+        default:null
     },
      isBlocked:{
         type:Boolean,
         default:false,
-    }
+    }   
+    
 })
+
+
+export default mongoose.model("user",userSchema)

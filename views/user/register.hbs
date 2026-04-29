@@ -1,5 +1,5 @@
 
-<link href="/userregister.css" rel="stylesheet">
+<link href="/userRegister.css" rel="stylesheet">
 <div class="page">
 
   <!-- LEFT PANEL -->
@@ -118,19 +118,21 @@
   </div>
 
   <!-- RIGHT PANEL -->
+
   <div class="right-panel" id="right-panel">
-    <div class="form-card">
+    <form class="form-card" id="signupForm" action="/user/register" method="post" autocomplete="off">
       <div class="form-brand">TYMORA</div>
       <div class="form-brand-underline"></div>
       <h1 class="form-title">Begin your journey.</h1>
       <p class="form-subtitle">Create your private collection</p>
+      <p class="form-subtitle" id="registerMessage" style="color:red;"></p>
 
       <!-- Full Name -->
       <div class="field-group">
         <label class="field-label" for="fullname">Full Name</label>
         <div class="field-wrap">
           <span class="field-icon">◈</span>
-          <input type="text" id="fullname" name="fullname" placeholder="Your full name" autocomplete="name"/>
+          <input type="text" id="fullname" name="name" placeholder="Your full name" autocomplete="name"/>
         </div>
       </div>
 
@@ -174,11 +176,11 @@
         </div>
       </div>
 
-      <button class="btn-enter" type="button" id="enter-btn">
+      <button class="btn-enter" type="submit" id="enter-btn">
         Create Account <span>→</span>
       </button>
 
-      <p class="login-line">Already a member? <a href="#">Sign In</a></p>
+      <p class="login-line">Already a member? <a href="/user/login">Sign In</a></p>
 
       <div class="or-divider">
         <span class="or-line"></span>
@@ -186,8 +188,8 @@
         <span class="or-line"></span>
       </div> 
 
-       <button class="btn-google" type="button">
-        <svg class="g-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" fill="none">
+       <button class="btn-google" type="button" onclick="window.location.href='/user/auth/google'">
+        <svg class="g-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" fill="none" >
           <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#c9a84c" opacity="0.9"/>
           <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#c9a84c" opacity="0.65"/>
           <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#c9a84c" opacity="0.45"/>
@@ -196,11 +198,9 @@
         Continue with Google
       </button>
 
-      <p class="terms-text">By creating an account you agree to our<br><a href="#">Terms of Service</a> &amp; <a href="#">Privacy Policy</a></p>
-    </div>
+    </form>
   </div>
 
-</div>
 
 <script>
 // ── BRANDS DATA ──
@@ -364,16 +364,6 @@ function makeEyeToggle(btnId, inputId, iconId) {
 makeEyeToggle('eye-pass',    'password',         'eye-pass-icon');
 makeEyeToggle('eye-confirm', 'confirm-password', 'eye-confirm-icon');
 
-// ── CONFIRM MATCH ──
-const matchHint = document.getElementById('match-hint');
-function checkMatch() {
-  const pw  = document.getElementById('password').value;
-  const cpw = document.getElementById('confirm-password').value;
-  if (!cpw) { matchHint.textContent = ''; matchHint.className = 'match-hint'; return; }
-  if (pw === cpw) { matchHint.textContent = '✓ Passwords match'; matchHint.className = 'match-hint match'; }
-  else            { matchHint.textContent = '✗ Passwords do not match'; matchHint.className = 'match-hint no-match'; }
-}
-document.getElementById('confirm-password').addEventListener('input', checkMatch);
 
 // ── FORM FOCUS → return to watch ──
 ['fullname','email','password','confirm-password'].forEach(id => {
@@ -381,4 +371,66 @@ document.getElementById('confirm-password').addEventListener('input', checkMatch
 });
 
 document.getElementById('enter-btn').addEventListener('click', () => { if (state !== 'watch') goToWatch(); });
+
+
+
+const registerForm = document.getElementById("signupForm");
+
+registerForm.addEventListener("submit", function(e){
+console.log("Submit fired");
+	const name = document.getElementById("fullname").value.trim();
+	const email = document.getElementById("email").value.trim();
+	const password = document.getElementById("password").value.trim();
+  console.log("Password:", password);
+	const confirmPassword = document.getElementById("confirm-password").value.trim();
+	const msg = document.getElementById("registerMessage");
+
+	msg.innerText = "";
+
+	if(name === "" || email === "" || password === "" || confirmPassword === ""){
+		msg.innerText = "Please fill all fields";
+		e.preventDefault();
+		return;
+	}
+
+	const namePattern = /^[A-Za-z]+( [A-Za-z]+)*$/;
+
+	if(!name.match(namePattern)){
+		msg.innerText = "Invalid name";
+		e.preventDefault();
+		return;
+	}
+
+	if(name.length < 3){
+		msg.innerText = "Name must be at least 3 characters";
+		e.preventDefault();
+		return;
+	}
+
+	const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+
+	if(!email.match(emailPattern)){
+		msg.innerText = "Invalid email";
+		e.preventDefault();
+		return;
+	}
+
+	const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+	if(!password.match(passwordPattern)){
+		msg.innerText = "Password must be 8+ chars with uppercase, lowercase, number & symbol";
+		e.preventDefault();
+		return;
+	}
+
+	if(password !== confirmPassword){
+		msg.innerText = "Passwords do not match";
+		e.preventDefault();
+		return;
+	}
+  console.log(password);
+console.log(confirmPassword);
+
+});
+
 </script>

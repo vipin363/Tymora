@@ -1,0 +1,292 @@
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #e8c96a;
+      --dark: #0a0a0a;
+      --dark-2: #111111;
+      --dark-3: #1a1a1a;
+      --white: #f5f0e8;
+      --muted: #888;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--dark);
+      color: var(--white);
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 68px;
+      background: rgba(10, 10, 10, 0.95);
+      border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+      position: relative;
+      padding-bottom: 4px;
+      transition: color 0.25s;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 1px;
+      background: var(--gold);
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active { color: var(--gold); }
+    .nav-links a:hover::after,
+    .nav-links a.active::after { width: 100%; }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 6px 14px;
+    }
+
+    .nav-search input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--white);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      width: 130px;
+    }
+
+    .nav-search input::placeholder { color: var(--muted); }
+
+    .nav-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      transition: background 0.2s, color 0.2s;
+      position: relative;
+    }
+
+    .nav-icon-btn:hover { background: rgba(201,168,76,0.12); color: var(--gold); }
+
+    .cart-badge {
+      position: absolute;
+      top: 2px; right: 2px;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.55rem;
+      font-weight: 700;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ─── HERO / HOME ─── */
+    .home-page {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background: dark with radial glow */
+    .home-page::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 70% 50%, rgba(201,168,76,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 60%);
+    }
+
+    /* Decorative gear rings */
+    /* .gear-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.08);
+      animation: spin linear infinite;
+    } */
+
+    /* .gear-ring:nth-child(1) { width: 600px; height: 600px; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-duration: 60s; }
+    .gear-ring:nth-child(2) { width: 400px; height: 400px; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-duration: 40s; animation-direction: reverse; border-color: rgba(201,168,76,0.05); }
+    .gear-ring:nth-child(3) { width: 800px; height: 800px; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-duration: 80s; border-color: rgba(201,168,76,0.04); } */
+
+    /* @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+    /* Tick marks on first ring */
+    .gear-ring:nth-child(1)::before {
+      content: '';
+      position: absolute;
+      top: 10px; left: 50%;
+      width: 1px; height: 16px;
+      background: rgba(201,168,76,0.3);
+      transform: translateX(-50%);
+      box-shadow:
+        0 580px 0 rgba(201,168,76,0.3),
+        290px 0 0 rgba(201,168,76,0.15),
+        -290px 0 0 rgba(201,168,76,0.15);
+    }
+
+    /* Center content */
+    .center-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      text-align: center;
+      animation: fadeUp 1s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    } */
+
+    .center-eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .center-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 6vw, 6rem);
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+    }
+
+    .center-title span { color: var(--gold); }
+
+    .center-sub {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+
+    /* ─── LOGOUT BUTTON ─── */
+    .logout-btn {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 42px;
+      background: transparent;
+      border: 1.5px solid var(--gold);
+      color: var(--gold);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.35s;
+    }
+
+    .logout-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      transform: translateX(-101%);
+      transition: transform 0.35s cubic-bezier(.77,0,.18,1);
+      z-index: 0;
+    }
+
+    .logout-btn:hover::before { transform: translateX(0); }
+    .logout-btn:hover { color: #000; }
+
+    .logout-btn span, .logout-btn svg { position: relative; z-index: 1; }
+
+    /* ─── BOTTOM STRIP ─── */
+    .bottom-strip {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0.4;
+    }
+    .login-btn{
+    text-decoration: none;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #111;
+    background: linear-gradient(135deg, #f5d67b, #d4af37, #8a6520);
+    box-shadow: 0 4px 14px rgba(212,175,55,0.28);
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(212,175,55,0.38);
+    background: linear-gradient(135deg, #ffe7a8, #e0bc55, #a67c2d);
+}
+
+.login-btn:active{
+    transform: scale(0.97);
+}

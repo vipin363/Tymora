@@ -96,12 +96,12 @@
 
   <!-- RIGHT PANEL -->
   <div class="right-panel">
-    <div class="form-card">
+    <form action={{formAction}} method="post" class="form-card">
       <div class="form-brand">TYMORA</div>
       <div class="form-brand-underline"></div>
       <h1 class="form-title">Verify identity.</h1>
       <p class="form-subtitle">Code sent to</p>
-      <p class="email-display" id="email-display">your@email.com</p>
+      <p class="email-display" id="email-display">{{email}}</p>
 
       <label class="otp-label" for="otp-1">Enter verification code</label>
       <div class="otp-row" id="otp-row">
@@ -112,20 +112,25 @@
         <input class="otp-box" id="otp-5" type="text" inputmode="numeric" maxlength="1"/>
         <input class="otp-box" id="otp-6" type="text" inputmode="numeric" maxlength="1"/>
       </div>
-      <div class="otp-error" id="otp-error">Invalid code. Please try again.</div>
+      <input type="hidden" name="otp" id="final-otp">
+      <p style="color:red">{{message}}</p>
+      <p id="otp-error" style="color:red;"></p>
 
       <div class="resend-row">
-        <span class="timer-text">Resend in <span class="timer-count" id="timer-count">01:00</span></span>
-        <button class="resend-btn" id="resend-btn" disabled>Resend Code</button>
+    <span class="timer-text">
+      Resend in <span class="timer-count" id="timer-count">01:00</span>
+  </span>
+
+  <button type="button" class="resend-btn" id="resend-btn" disabled>Resend Code</button>
       </div>
 
-      <button class="btn-verify" id="verify-btn">Verify &nbsp;→</button>
+      <button type="submit" class="btn-verify" id="verify-btn">Verify &nbsp;→</button>
 
-      <p class="change-email-line">Wrong address? <a href="/login" id="change-email-link">Change email</a></p>
-    </div>
+
+      <p class="change-email-line">Wrong address? <a href="/user/forgotPassword" id="change-email-link">Change email</a></p>
+  </form>
   </div>
 
-</div>
 
 <script>
 // ── Clock ──
@@ -178,11 +183,6 @@ for (let i = 0; i < 12; i++) {
   subG.appendChild(l);
 }
 
-// ── Email display from URL param ──
-const params = new URLSearchParams(window.location.search);
-const email = params.get('email') || 'your@email.com';
-document.getElementById('email-display').textContent = email;
-
 // ── OTP Input Logic ──
 const boxes = Array.from(document.querySelectorAll('.otp-box'));
 const errorEl = document.getElementById('otp-error');
@@ -219,7 +219,7 @@ boxes.forEach((box, idx) => {
 });
 
 // ── Countdown Timer ──
-let timeLeft = 60;
+let timeLeft = {{remaining}};
 const timerEl = document.getElementById('timer-count');
 const resendBtn = document.getElementById('resend-btn');
 
@@ -228,56 +228,56 @@ function formatTime(s) {
   return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
 }
 
-let timerInterval = setInterval(() => {
-  timeLeft--;
-  timerEl.textContent = formatTime(timeLeft);
-  if (timeLeft <= 0) {
-    clearInterval(timerInterval);
-    timerEl.textContent = '00:00';
-    resendBtn.disabled = false;
-  }
-}, 1000);
+function enableResend(){
+  resendBtn.disabled = false;
+  resendBtn.classList.add('active');
+  timerEl.textContent = '00:00';
+}
 
-resendBtn.addEventListener('click', () => {
-  if (resendBtn.disabled) return;
-  resendBtn.disabled = true;
-  timeLeft = 60;
+function startTimer(){
+
   timerEl.textContent = formatTime(timeLeft);
-  boxes.forEach(b => { b.value = ''; b.classList.remove('filled','error','success'); });
-  errorEl.classList.remove('visible');
-  boxes[0].focus();
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
+
+  if(timeLeft <= 0){
+    enableResend();
+    return;
+  }
+
+  resendBtn.disabled = true;
+  resendBtn.classList.remove('active');
+
+  const timerInterval = setInterval(()=>{
+
     timeLeft--;
     timerEl.textContent = formatTime(timeLeft);
-    if (timeLeft <= 0) {
+
+    if(timeLeft <= 0){
       clearInterval(timerInterval);
-      timerEl.textContent = '00:00';
-      resendBtn.disabled = false;
+      enableResend();
     }
-  }, 1000);
+
+  },1000);
+}
+
+startTimer();
+
+resendBtn.addEventListener('click', ()=>{
+
+  if(resendBtn.disabled) return;
+
+  window.location.href = "/user/resendOtp";
+
 });
 
 // ── Verify Button ──
-document.getElementById('verify-btn').addEventListener('click', () => {
+document.getElementById('verify-btn').addEventListener('click', function(e){
   const code = boxes.map(b => b.value).join('');
-  if (code.length < 6) {
-    boxes.forEach(b => b.classList.add('error'));
-    errorEl.textContent = 'Please enter all 6 digits.';
-    errorEl.classList.add('visible');
-    boxes.find(b => !b.value)?.focus();
+  if(code.length < 6){
+    e.preventDefault();
+    errorEl.textContent = "Please enter 6 digit OTP";
     return;
   }
-  // Demo: treat "000000" as wrong, anything else succeeds
-  if (code === '000000') {
-    boxes.forEach(b => b.classList.add('error'));
-    errorEl.textContent = 'Invalid code. Please try again.';
-    errorEl.classList.add('visible');
-  } else {
-    boxes.forEach(b => { b.classList.remove('error'); b.classList.add('success'); });
-    errorEl.classList.remove('visible');
-    // Redirect or proceed here
-  }
+  document.getElementById("final-otp").value = code;
 });
 
 // Focus first box on load
