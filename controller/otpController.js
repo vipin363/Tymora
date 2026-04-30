@@ -73,6 +73,23 @@ console.log(typeof otp, typeof req.session.otp);
 export const resendOtp = async (req,res)=>{
  try{
 
+    
+    
+    // FORGOT PASSWORD FLOW
+    if(req.session.resetEmail){
+
+      const email = req.session.resetEmail;
+
+
+      const otp = Math.floor(100000 + Math.random()*900000);
+
+      req.session.resetOtp = otp;
+      req.session.resetOtpExpiry = Date.now() + 60 * 1000;
+
+      await sendOtpMail(email, otp);
+
+      return res.redirect('/user/forgotOtp');
+   }
    // REGISTER FLOW
    if(req.session.userData){
 
@@ -90,25 +107,6 @@ export const resendOtp = async (req,res)=>{
       await sendOtpMail(email, otp);
 
       return res.redirect('/user/otp');
-   }
-
-   // FORGOT PASSWORD FLOW
-   if(req.session.resetEmail){
-
-      const email = req.session.resetEmail;
-
-      if(Date.now() < req.session.resetOtpExpiry){
-         return res.redirect('/user/forgotOtp');
-      }
-
-      const otp = Math.floor(100000 + Math.random()*900000);
-
-      req.session.resetOtp = otp;
-      req.session.resetOtpExpiry = Date.now() + 60 * 1000;
-
-      await sendOtpMail(email, otp);
-
-      return res.redirect('/user/forgotOtp');
    }
 
    return res.redirect('/user/forgotPassword');

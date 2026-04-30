@@ -1,0 +1,280 @@
+   :root {
+      --bg:        #0e0d0b;
+      --surface:   #161410;
+      --card:      #1a1714;
+      --border:    #2e2820;
+      --gold:      #c9a84c;
+      --gold-dim:  #a07c35;
+      --gold-bg:   rgba(201,168,76,.08);
+      --text:      #e8e0d0;
+      --text-muted:#9a8e7e;
+      --text-faint:#5a5045;
+      --red:       #c0392b;
+      --red-bg:    rgba(192,57,43,.12);
+      --radius:    8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.6);
+    }
+    .breadcrumb a {
+  color: #d4af37;
+  text-decoration: none;
+}
+
+/* PAGE HEADER */
+.page-header{
+  padding: 30px 60px;
+}
+
+.page-title{
+  font-size: 32px;
+  color: #fff;
+}
+
+.page-sub{
+  color: #888;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+/* ADDRESS GRID */
+.address-wrap{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+  gap: 20px;
+  padding: 30px 60px;
+  
+}
+
+.breadcrumb {
+      padding: 14px 40px;
+      font-size: 9px;
+      margin-top: 90px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .breadcrumb a { color: var(--text-faint); }
+    .breadcrumb span { color: var(--text-muted); }
+
+
+/* CARD */
+.address-card{
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 20px;
+  background: rgba(255,255,255,0.02);
+  transition: 0.3s;
+  position: relative;
+}
+
+/* ACTIVE */
+.address-card.active{
+  border-color: #c9a646;
+}
+
+/* TOP */
+.address-top{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.address-title{
+  font-weight: 600;
+  color: #fff;
+}
+
+/* DEFAULT BADGE */
+.default-badge{
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid #c9a646;
+  color: #c9a646;
+  border-radius: 6px;
+}
+
+/* BODY */
+.address-body{
+  margin-top: 12px;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+}
+
+/* ACTIONS */
+.address-actions{
+  margin-top: 15px;
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+}
+
+.address-actions a{
+  color: #888;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.address-actions a:hover{
+  color: #c9a646;
+}
+
+.address-actions .danger{
+  color: #c44;
+}
+
+/* ADD NEW */
+.add-new{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-style: dashed;
+}
+
+.add-box{
+  text-align: center;
+  color: #aaa;
+}
+
+.add-box .plus{
+  font-size: 28px;
+  display: block;
+  margin-bottom: 6px;
+}
+.modal-overlay{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  backdrop-filter: blur(8px); 
+  background: rgba(0,0,0,0.6);
+
+  display: none;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+}
+nav{
+  position: fixed;
+  z-index: 1000;
+}
+.modal-box{
+  background: #111;
+  padding: 30px;
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+
+  position: relative;
+}
+.modal-box input,
+.modal-box select{
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #333;
+  background: #000;
+  color: #fff;
+  border-radius: 6px;
+}
+.default-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.default-row input{
+  width: 16px;
+  height: 16px;
+}
+.modal-btn-red{
+  width: 100%;
+  padding: 12px;
+  background: #d4af37;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.modal-btn-cancel{
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #444;
+  color: #fff;
+  margin-top: 10px;
+}
+.modal-box{
+  transform: scale(0.9);
+  transition: 0.3s ease;
+}
+
+.modal-overlay[style*="flex"] .modal-box{
+  transform: scale(1);
+}
+.modal-overlay{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-box{
+  background: #111;
+  padding: 25px;
+  border-radius: 10px;
+  width: 350px;
+  text-align: center;
+}
+
+.modal-icon-wrap{
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.red-bg{
+  color: red;
+}
+
+.modal-title-text{
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.modal-desc-text{
+  font-size: 14px;
+  margin-bottom: 20px;
+  color: #aaa;
+}
+
+.modal-btn-red{
+  width: 100%;
+  padding: 10px;
+  background: red;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.modal-btn-cancel{
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #555;
+  color: white;
+  cursor: pointer;
+}

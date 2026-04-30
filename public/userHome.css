@@ -18,121 +18,7 @@
       overflow-x: hidden;
     }
 
-    /* ─── NAVBAR ─── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 48px;
-      height: 68px;
-      background: rgba(10, 10, 10, 0.95);
-      border-bottom: 1px solid rgba(201, 168, 76, 0.15);
-      backdrop-filter: blur(12px);
-    }
-
-    .nav-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.12em;
-      text-decoration: none;
-      user-select: none;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 36px;
-      list-style: none;
-    }
-
-    .nav-links a {
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--white);
-      text-decoration: none;
-      position: relative;
-      padding-bottom: 4px;
-      transition: color 0.25s;
-    }
-
-    .nav-links a::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0;
-      width: 0; height: 1px;
-      background: var(--gold);
-      transition: width 0.3s ease;
-    }
-
-    .nav-links a:hover,
-    .nav-links a.active { color: var(--gold); }
-    .nav-links a:hover::after,
-    .nav-links a.active::after { width: 100%; }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .nav-search {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 4px;
-      padding: 6px 14px;
-    }
-
-    .nav-search input {
-      background: none;
-      border: none;
-      outline: none;
-      color: var(--white);
-      font-family: 'Montserrat', sans-serif;
-      font-size: 0.75rem;
-      letter-spacing: 0.05em;
-      width: 130px;
-    }
-
-    .nav-search input::placeholder { color: var(--muted); }
-
-    .nav-icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      transition: background 0.2s, color 0.2s;
-      position: relative;
-    }
-
-    .nav-icon-btn:hover { background: rgba(201,168,76,0.12); color: var(--gold); }
-
-    .cart-badge {
-      position: absolute;
-      top: 2px; right: 2px;
-      background: var(--gold);
-      color: #000;
-      font-size: 0.55rem;
-      font-weight: 700;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-    }
-
+    
     /* ─── HERO / HOME ─── */
     .home-page {
       height: 100vh;
@@ -268,18 +154,7 @@
       background: linear-gradient(90deg, transparent, var(--gold), transparent);
       opacity: 0.4;
     }
-    .login-btn{
-    text-decoration: none;
-    padding: 10px 22px;
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #111;
-    background: linear-gradient(135deg, #f5d67b, #d4af37, #8a6520);
-    box-shadow: 0 4px 14px rgba(212,175,55,0.28);
-    transition: all 0.3s ease;
-}
+
 
 .login-btn:hover{
     transform: translateY(-2px);
@@ -290,3 +165,5 @@
 .login-btn:active{
     transform: scale(0.97);
 }
+
+

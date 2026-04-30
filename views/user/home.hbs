@@ -1,4 +1,6 @@
 <link href="/userHome.css" rel="stylesheet">
+<link href="/footer.css" rel="stylesheet">
+<link href="/navBar.css" rel="stylesheet">
 <!-- NAVBAR -->
 <nav>
     <a class="nav-logo" href="#">TYMORA</a>
@@ -43,7 +45,7 @@
             </svg>
         </button> --}}
         {{#if user}}
-        <a href="/user/home" class="nav-icon-btn" title="Account">
+        <a href="/user/profile" class="nav-icon-btn" title="Account">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
@@ -81,12 +83,82 @@
             </svg>
             <span>Logout</span>
         </button> --}}
-        {{#if user}}
-       <button class="logout-btn" onclick="window.location.href='/user/logout'">
-         Logout
-        </button>
-        {{/if}}
     </div>
 </main>
 
 <div class="bottom-strip"></div>
+<!-- FOOTER HTML -->
+
+<footer class="tymora-footer">
+
+  <div class="footer-top">
+
+    <!-- LEFT BRAND -->
+    <div class="footer-brand">
+      <h2>TYMORA</h2>
+
+      <p>
+        Curating the world’s most exceptional<br>
+        timepieces since 1924. Excellence in every<br>
+        second.
+      </p>
+
+      <div class="footer-icons">
+        <span>↔</span>
+        <span>@</span>
+      </div>
+    </div>
+
+    <!-- COLLECTIONS -->
+    <div class="footer-col">
+      <h4>COLLECTIONS</h4>
+      <a href="#">GRAND COMPLICATIONS</a>
+      <a href="#">HERITAGE DRESS</a>
+      <a href="#">SPORT PROFESSIONAL</a>
+      <a href="#">SKELETON ART</a>
+    </div>
+
+    <!-- LEGAL -->
+    <div class="footer-col">
+      <h4>LEGAL</h4>
+      <a href="#">PRIVACY POLICY</a>
+      <a href="#">TERMS OF SERVICE</a>
+      <a href="#">AUTHENTICITY GUARANTEE</a>
+      <a href="#">SHIPPING & RETURNS</a>
+    </div>
+
+    <!-- CUSTOMER CARE -->
+    <div class="footer-col">
+      <h4>CUSTOMER CARE</h4>
+      <a href="#">CONTACT US</a>
+      <a href="#">CARE GUIDE</a>
+      <a href="#">BOOK A CONSULTATION</a>
+      <a href="#">FAQ</a>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="footer-right">
+      <div class="footer-icons-top">
+        <span>▭</span>
+        <span>🏛</span>
+      </div>
+
+      <button class="secure-btn">🔒 SSL SECURED</button>
+    </div>
+
+  </div>
+
+  <div class="footer-line"></div>
+
+  <div class="footer-bottom">
+    <p>© 2026 TYMORA HOROLOGY. ALL RIGHTS RESERVED.</p>
+
+    <div class="footer-cities">
+      <span>INDIA</span>
+      <span>LONDON</span>
+      <span>DUBAI</span>
+      <span>NEW YORK</span>
+    </div>
+  </div>
+
+</footer>

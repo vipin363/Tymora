@@ -17,6 +17,18 @@ const userSchema = mongoose.Schema({
         type:String,
         default:null
     },
+    avatar:{
+        type:String,
+        default:null
+    },
+    phone:{
+        type:String,
+        default:null
+    },
+    dob:{
+        type:Date,
+         default:null
+    },
      isBlocked:{
         type:Boolean,
         default:false,
