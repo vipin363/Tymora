@@ -1,11 +1,19 @@
 
 
+// middleware/adminAuth.js
 
-export const isLogin=(req,res,next)=>{
-    if(req.session.admin){
-        res.redirect('/admin/dashBoard')
-    }else{
-        next()
-    }
-}
+export const isAdminLogin = (req, res, next) => {
+  if (req.session.admin) {
+    return res.redirect('/admin/dashboard');
+  }
+  next();
+};
+
+export const isAdminAuth = (req, res, next) => {
+  if (req.session.admin) {
+    next();
+  } else {
+    res.redirect('/admin/login');
+  }
+};
 

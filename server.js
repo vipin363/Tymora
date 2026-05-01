@@ -1,4 +1,5 @@
 import express from 'express';
+import hbs from 'hbs';
 import dotenv from "dotenv";
 dotenv.config();
 const app = express()
@@ -30,8 +31,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.set('view engine', 'hbs');
-app.use(express.static('public'));
+hbs.registerHelper("add", (a, b) => a + b);
+hbs.registerHelper("subtract", (a, b) => a - b);
+hbs.registerHelper("gt", (a, b) => a > b);
+hbs.registerHelper("lt", (a, b) => a < b);
+hbs.registerHelper("eq", (a, b) => a === b);
 
+hbs.registerHelper("ifEquals", function (a, b, options) {
+  return a === b ? options.fn(this) : options.inverse(this);
+});
+
+app.use(express.static('public'));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

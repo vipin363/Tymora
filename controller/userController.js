@@ -52,6 +52,13 @@ export const loadLogin = async (req,res)=>{
         if(req.query.success){
              success = true
             }
+             if(req.query.msg === "blocked"){
+        message = "Your account has been blocked by admin"
+    }
+
+    if(req.query.msg === "deleted"){
+        message = "Your account has been deleted by admin"
+    }
 
     res.render('user/login',{message,success})
 }
@@ -123,6 +130,8 @@ export const forgotPassword = async(req,res)=>{
       req.session.resetEmail = email;
       req.session.resetOtp = otp;
       req.session.resetOtpExpiry = Date.now() + 60000;
+
+      req.session.save();
 
       await sendOtpMail(email, otp);
 

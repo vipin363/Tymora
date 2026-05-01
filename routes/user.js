@@ -6,7 +6,7 @@ import { loadOtpPage,verifyOtp,resendOtp,loadForgotOtpPage,verifyForgotOtp } fro
 import  passport from 'passport';
 import upload from '../middleware/uploard.js';
 
-router.get('/', homePage);
+router.get('/',homePage);
 router.get('/login',isLogin,loadLogin)
 router.post('/login',login)
 
@@ -16,9 +16,7 @@ router.post('/register',registerUser)
 
 router.get('/otp',hasOtpSession,loadOtpPage)
 router.post('/verifyOtp',hasOtpSession,verifyOtp)
-router.get('/resendOtp',hasOtpSession,resendOtp);
-
-// router.get('/home',isAuth,homePage)
+router.get('/resendOtp',resendOtp);
 
 router.get('/logout',isAuth,logout)
 
@@ -57,9 +55,9 @@ router.post('/changePassword', isAuth, changePassword);
 router.post('/deleteAccount', isAuth, deleteAccount);
 
 router.get('/address', isAuth, loadAddressPage);
-router.post("/addAddress", addAddress);
-router.get("/getAddress/:id", getAddress);
-router.post("/updateAddress/:id", updateAddress);
+router.post("/addAddress", isAuth,addAddress);
+router.get("/getAddress/:id",isAuth, getAddress);
+router.post("/updateAddress/:id",isAuth, updateAddress);
 router.get("/setDefault/:id",isAuth, setDefaultAddress);
 router.post("/deleteAddress/:id", isAuth, deleteAddress);
 

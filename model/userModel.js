@@ -32,9 +32,9 @@ const userSchema = mongoose.Schema({
      isBlocked:{
         type:Boolean,
         default:false,
-    }   
+    }
+ } , { timestamps: true })
     
-})
 
 
 export default mongoose.model("user",userSchema)

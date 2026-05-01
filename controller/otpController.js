@@ -197,3 +197,103 @@ export const verifyForgotOtp = (req,res)=>{
       });
    }
 }
+
+export const loadAdminOtpPage = (req, res) => {
+  if (!req.session.resetEmail) {
+    return res.redirect('/admin/forgotPassword');
+  }
+
+  let remaining = Math.floor(
+    (req.session.resetOtpExpiry - Date.now()) / 1000
+  );
+
+  if (remaining < 0) remaining = 0;
+
+  res.render('admin/otp', {
+    email: req.session.resetEmail,
+    remaining,
+    formAction: '/admin/otp'
+  });
+};
+
+export const verifyAdminForgotOtp = (req, res) => {
+   try {
+      const { otp } = req.body;
+      
+
+    const email = req.session.resetEmail;
+
+    if (!email) {
+      return res.redirect('/admin/forgotPassword');
+    }
+
+    let remaining = Math.floor(
+      (req.session.resetOtpExpiry - Date.now()) / 1000
+    );
+
+    if (remaining < 0) remaining = 0;
+
+    if (!otp || otp.trim() === '') {
+      return res.render('admin/otp', {
+        email,
+        remaining,
+        formAction: '/admin/otp',
+        message: "Please enter OTP"
+      });
+    }
+
+    if (Date.now() > req.session.resetOtpExpiry) {
+      return res.render('admin/otp', {
+        email,
+        remaining: 0,
+        formAction: '/admin/otp',
+        message: "OTP expired"
+      });
+    }
+
+    if (otp.trim() === String(req.session.resetOtp)) {
+      req.session.resetVerified = true;
+      return res.redirect('/admin/resetPassword');
+    }
+
+    return res.render('admin/otp', {
+      email,
+      remaining,
+      formAction: '/admin/otp',
+      error: "Invalid OTP"
+    });
+
+  } catch (err) {
+    console.log(err);
+    return res.render('admin/otp', {
+      email: req.session.resetEmail,
+      remaining: 0,
+      formAction: '/admin/otp',
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const resendAdminOtp = async (req, res) => {
+  try {
+    const email = req.session.resetEmail;
+
+    if (!email) {
+      return res.redirect('/admin/forgotPassword');
+    }
+req.session.resetOtp = null;
+req.session.resetOtpExpiry = null;
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    req.session.resetOtp = otp;
+    req.session.resetOtpExpiry = Date.now() + 60 * 1000;
+
+    await sendOtpMail(email, otp);
+
+    res.redirect('/admin/otp');
+
+  } catch (err) {
+    console.log(err);
+    res.redirect('/admin/forgotPassword');
+  }
+};
