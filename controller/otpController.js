@@ -72,10 +72,6 @@ console.log(typeof otp, typeof req.session.otp);
 
 export const resendOtp = async (req,res)=>{
  try{
-
-    
-    
-    // FORGOT PASSWORD FLOW
     if(req.session.resetEmail){
 
       const email = req.session.resetEmail;
@@ -90,7 +86,7 @@ export const resendOtp = async (req,res)=>{
 
       return res.redirect('/user/forgotOtp');
    }
-   // REGISTER FLOW
+  
    if(req.session.userData){
 
       const email = req.session.userData.email;
@@ -198,7 +194,7 @@ export const verifyForgotOtp = (req,res)=>{
    }
 }
 
-export const loadAdminOtpPage = (req, res) => {
+export const loadAdminOtpPage = (req, res)=>{
   if (!req.session.resetEmail) {
     return res.redirect('/admin/forgotPassword');
   }
@@ -216,7 +212,7 @@ export const loadAdminOtpPage = (req, res) => {
   });
 };
 
-export const verifyAdminForgotOtp = (req, res) => {
+export const verifyAdminForgotOtp = (req, res)=>{
    try {
       const { otp } = req.body;
       
@@ -274,7 +270,7 @@ export const verifyAdminForgotOtp = (req, res) => {
   }
 };
 
-export const resendAdminOtp = async (req, res) => {
+export const resendAdminOtp =async(req, res)=>{
   try {
     const email = req.session.resetEmail;
 

@@ -62,11 +62,17 @@
     value="{{search}}"
   >
 
-  <!-- 🔥 SORT DROPDOWN -->
+  <!-- SORT DROPDOWN -->
   <select name="sort" class="sort-select">
     <option value="latest" {{#if (eq sort "latest")}}selected{{/if}}>Latest</option>
     <option value="oldest" {{#if (eq sort "oldest")}}selected{{/if}}>Oldest</option>
   </select>
+
+  <select name="status" class="sort-select">
+  <option value="all" {{#if (eq status "all")}}selected{{/if}}>All</option>
+  <option value="blocked" {{#if (eq status "blocked")}}selected{{/if}}>Blocked</option>
+  <option value="active" {{#if (eq status "active")}}selected{{/if}}>Active</option>
+</select>
 
   <button type="submit" class="btn-search">Search</button>
 
@@ -201,7 +207,7 @@
   <span>Page {{currentPage}} of {{totalPages}}</span>
 
   {{#if (lt currentPage totalPages)}}
-    <a href="/admin/users?page={{add currentPage 1}}&search={{search}}">Next</a>
+    <a href="/admin/users?page={{add currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Next</a>
   {{/if}}
 
 </div>

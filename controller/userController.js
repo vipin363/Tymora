@@ -244,7 +244,7 @@ export const updateProfile = async (req,res)=>{
       
       const user = await userSchema.findById(req.session.user.id);
       
-      // NAME VALIDATION
+      
       const nameRegex = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
       
       if(!nameRegex.test(name.trim())){
@@ -254,7 +254,7 @@ export const updateProfile = async (req,res)=>{
          });
       }
 
-      // PHONE VALIDATION
+   
    const phoneRegex = /^[0-9]{10}$/;
    
    if(!phoneRegex.test(phone)){
@@ -264,7 +264,6 @@ export const updateProfile = async (req,res)=>{
       });
    }
    
-   // DOB VALIDATION
       if(!dob){
          return res.render('user/editProfile',{
             user,
@@ -296,7 +295,6 @@ export const updateProfile = async (req,res)=>{
       });
    }
    
-   // Optional: age minimum 13
    let age = today.getFullYear() - birthDate.getFullYear();
 
    if(age < 13){
@@ -306,8 +304,6 @@ export const updateProfile = async (req,res)=>{
       });
    }
    
-   
-   // UPDATE DB
    let updateData = {
       name: name.trim(),
       phone: phone.trim(),
@@ -374,10 +370,8 @@ export const verifyChangeEmail = async (req, res) => {
 
       const { otp } = req.body;
 
-      if (
-         req.session.changeOtp == otp &&
-         Date.now() < req.session.changeOtpExpiry
-      ) {
+      if (req.session.changeOtp == otp &&
+         Date.now() < req.session.changeOtpExpiry) {
 
          await userSchema.findByIdAndUpdate(
             req.session.user.id,
@@ -459,24 +453,24 @@ export const changePassword = async (req,res)=>{
 
     const user = await userSchema.findById(req.session.user.id);
 
-    // 1. required
+    
     if(!currentPassword || !newPassword || !confirmPassword){
       return res.json({ success:false, message:"All fields required" });
     }
 
-    // 2. check current password
+   
     const isMatch = await bcrypt.compare(currentPassword, user.password);
 
     if(!isMatch){
       return res.json({ success:false, message:"Current password incorrect" });
     }
 
-    // 3. match new password
+   
     if(newPassword !== confirmPassword){
       return res.json({ success:false, message:"Passwords do not match" });
     }
 
-    // 4. strong password
+    
     const passwordPattern =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
@@ -484,12 +478,12 @@ export const changePassword = async (req,res)=>{
       return res.json({ success:false, message:"Weak password" });
     }
 
-    // 5. same password check
+    
     if(currentPassword === newPassword){
       return res.json({ success:false, message:"New password must be different" });
     }
 
-    // 6. hash
+   
     const hashed = await bcrypt.hash(newPassword,10);
 
     await userSchema.findByIdAndUpdate(user._id,{
@@ -535,7 +529,7 @@ export const addAddress = async (req,res)=>{
       isDefault
     } = req.body;
 
-    // VALIDATION
+   
     if(!type || !fullName || !street || !city || !state || !pincode || !phone){
       return res.json({ success:false, message:"All fields required" });
     }
@@ -548,7 +542,7 @@ export const addAddress = async (req,res)=>{
       return res.json({ success:false, message:"Invalid pincode" });
     }
 
-    // DEFAULT LOGIC
+    
     if(isDefault){
       await addressModel.updateMany({ userId }, { isDefault:false });
     }
@@ -611,13 +605,11 @@ export const setDefaultAddress = async (req,res)=>{
     const userId = req.session.user.id;
     const addressId = req.params.id;
 
-    // ❌ remove all default
     await addressModel.updateMany(
       { userId },
       { isDefault:false }
     );
 
-    // ✅ set selected as default
     await addressModel.findByIdAndUpdate(
       addressId,
       { isDefault:true }

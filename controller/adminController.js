@@ -1,24 +1,22 @@
 import Admin from "../model/adminModel.js";
-import User from "../model/userModel.js"
+import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
-import { sendOtpMail } from '../services/mailService.js';
+import { sendOtpMail } from "../services/mailService.js";
 
-
-export const loadLogin = (req, res)=>{
+export const loadLogin = (req, res) => {
   res.render("admin/login");
 };
 
-export const login = async (req, res)=>{
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-
-    const admin = await Admin.findOne({ email, isAdmin: true  });
+    const admin = await Admin.findOne({ email, isAdmin: true });
 
     if (!admin) {
       return res.render("admin/login", {
         error: "Invalid email or password",
-        email:""
+        email: "",
       });
     }
 
@@ -26,49 +24,50 @@ export const login = async (req, res)=>{
     if (!isMatch) {
       return res.render("admin/login", {
         error: "Invalid email or password",
-        email:""
+        email: "",
       });
     }
     req.session.admin = admin._id;
 
     res.redirect("/admin/dashBoard");
-
   } catch (err) {
     console.log(err);
     res.render("admin/login", { error: "Something went wrong" });
   }
 };
 
-export const loadDashboard = (req, res)=>{
-   res.render("admin/dashBoard", {
-    activePage: "dashboard"
+export const loadDashboard = (req, res) => {
+  res.render("admin/dashBoard", {
+    activePage: "dashboard",
   });
 };
 
-export const logout = (req, res)=>{
+export const logout = (req, res) => {
   req.session.destroy();
   res.redirect("/admin/login");
 };
 
-export const loadForgotPassword = (req,res)=>{
-        res.render("admin/forgotPassword");
-} 
+export const loadForgotPassword = (req, res) => {
+  res.render("admin/forgotPassword");
+};
 
-export const forgotPassword = async(req, res)=>{
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
     if (!email) {
-      return res.render('admin/forgotPassword', { error: "Email required" });
+      return res.render("admin/forgotPassword", { error: "Email required" });
     }
 
     const admin = await Admin.findOne({ email, isAdmin: true });
 
     if (!admin) {
-      return res.render('admin/forgotPassword', { error: "Email not registered" });
+      return res.render("admin/forgotPassword", {
+        error: "Email not registered",
+      });
     }
 
-    const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     req.session.resetEmail = email;
     req.session.resetOtp = otp;
@@ -78,11 +77,10 @@ export const forgotPassword = async(req, res)=>{
 
     await sendOtpMail(email, otp);
 
-    res.redirect('/admin/otp');
-
+    res.redirect("/admin/otp");
   } catch (err) {
     console.log(err);
-    res.render('admin/forgotPassword', { error: "Something went wrong" });
+    res.render("admin/forgotPassword", { error: "Something went wrong" });
   }
 };
 
@@ -93,28 +91,33 @@ export const resetAdminPassword = async (req, res) => {
     const email = req.session.resetEmail;
 
     if (!email || !req.session.resetVerified) {
-      return res.redirect('/admin/forgotPassword');
+      return res.redirect("/admin/forgotPassword");
     }
 
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
-      return res.redirect('/admin/login');
+      return res.redirect("/admin/login");
     }
 
-  
     if (!newPassword || !confirmPassword) {
-      return res.render('admin/resetPassword', { error: "All fields required" });
+      return res.render("admin/resetPassword", {
+        error: "All fields required",
+      });
     }
 
     if (newPassword !== confirmPassword) {
-      return res.render('admin/resetPassword', { error: "Passwords do not match" });
+      return res.render("admin/resetPassword", {
+        error: "Passwords do not match",
+      });
     }
 
     const isSame = await bcrypt.compare(newPassword, admin.password);
 
     if (isSame) {
-      return res.render('admin/resetPassword', { error: "New password must be different from old password" });
+      return res.render("admin/resetPassword", {
+        error: "New password must be different from old password",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -127,11 +130,10 @@ export const resetAdminPassword = async (req, res) => {
     req.session.resetOtpExpiry = null;
     req.session.resetVerified = null;
 
-    res.redirect('/admin/login');
-
+    res.redirect("/admin/login");
   } catch (err) {
     console.log(err);
-    res.render('admin/resetPassword', { error: "Something went wrong" });
+    res.render("admin/resetPassword", { error: "Something went wrong" });
   }
 };
 
@@ -139,6 +141,7 @@ export const loadUsers = async (req, res) => {
   try {
     const search = req.query.search || "";
     const sortOption = req.query.sort || "latest";
+    const statusFilter = req.query.status || "all";
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
     const skip = (page - 1) * limit;
@@ -146,12 +149,26 @@ export const loadUsers = async (req, res) => {
     const query = {
       $or: [
         { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } }
-      ]
+        { email: { $regex: search, $options: "i" } },
+      ],
     };
 
+    if (statusFilter === "blocked") {
+  query.isBlocked = true;
+} else if (statusFilter === "active") {
+  query.isBlocked = false;
+}
+
+    let sortQuery = {};
+
+    if (sortOption === "latest") {
+      sortQuery = { createdAt: -1 };
+    } else if (sortOption === "oldest") {
+      sortQuery = { createdAt: 1 };
+    }
+
     const users = await User.find(query)
-      .sort({ createdAt: -1 })
+      .sort( sortQuery )
       .skip(skip)
       .limit(limit);
 
@@ -162,7 +179,7 @@ export const loadUsers = async (req, res) => {
 
     const totalPages = Math.ceil(totalUsers / limit);
 
-    const formattedUsers = users.map(u => ({
+    const formattedUsers = users.map((u) => ({
       _id: u._id,
       name: u.name,
       email: u.email,
@@ -170,7 +187,7 @@ export const loadUsers = async (req, res) => {
       avatar: u.avatar || null,
       initials: u.name?.charAt(0).toUpperCase() || "U",
       status: u.isBlocked ? "blocked" : "active",
-      joined: u.createdAt?.toDateString()
+      joined: u.createdAt?.toDateString(),
     }));
 
     res.render("admin/userManagement", {
@@ -184,10 +201,9 @@ export const loadUsers = async (req, res) => {
         totalUsers,
         activeUsers,
         blockedUsers,
-        totalRevenue: 0
-      }
+        totalRevenue: 0,
+      },
     });
-
   } catch (err) {
     console.log(err);
     res.redirect("/admin/dashBoard");
@@ -196,20 +212,20 @@ export const loadUsers = async (req, res) => {
 
 export const blockUser = async (req, res) => {
   await User.findByIdAndUpdate(req.params.id, { isBlocked: true });
-  res.redirect('/admin/users');
+  res.redirect("/admin/users");
 };
 
 export const unblockUser = async (req, res) => {
   await User.findByIdAndUpdate(req.params.id, { isBlocked: false });
-  res.redirect('/admin/users');
+  res.redirect("/admin/users");
 };
 
 export const deleteUser = async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
-    res.redirect('/admin/users');
+    res.redirect("/admin/users");
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/users');
+    res.redirect("/admin/users");
   }
 };
