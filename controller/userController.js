@@ -6,7 +6,8 @@ import addressModel from "../model/addressModel.js";
 
 
 export const loadRegister = async (req,res)=>{
-    res.render('user/register',{message:null})
+    let message = req.query.message || "";
+   res.render('user/register', { message });
 }
 
 export const registerUser = async (req,res)=>{
@@ -14,10 +15,11 @@ export const registerUser = async (req,res)=>{
     try{
         const {name,email,password} = req.body
         const user = await userSchema.findOne({email})
-
+       
         if(user){
             return res.render('user/login',{message:"user already exists"})
         }
+      
 
         const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
 
@@ -29,12 +31,14 @@ export const registerUser = async (req,res)=>{
               }
 
         const otp =  Math.floor(100000 + Math.random()*900000);
-        req.session.otpExpiry = Date.now() + 60 * 1000;
+
             req.session.userData = { name,email,password };
             req.session.otp = otp;
+            
+            await sendOtpMail(email, otp);
+
             req.session.otpExpiry = Date.now() + 60 * 1000;
 
-            await sendOtpMail(email, otp);
             res.redirect("/user/otp");
     }catch(err){
         res.render('user/register',{message:'Something went wrong'})
@@ -70,14 +74,23 @@ export const login = async (req,res)=>{
         if(!user){
            return res.render('user/login',{message:"User not exists"})
          }
+
         if(user.isBlocked){
           return  res.render('user/login',{message:"Your account is blocked by the Admin"})
         }
+
+         if(!user.password){
+            return res.render('user/login',{
+            message:"You registered using Google. Please login with Google and set your password in profile or please continue with forgot password."
+            })}
+
+
          const isMatch = await bcrypt.compare(password,user.password)
 
             if(!isMatch){
              return res.render('user/login',{message:"Incorrect password"})
             }
+           
 
             req.session.user = {
                 id:user._id,
@@ -91,18 +104,50 @@ export const login = async (req,res)=>{
     }
 }
 
-export const homePage = async (req,res)=>{
-   res.render('user/home',{
-      user:req.session.user || null,
-      message:req.query.message || null
-   });
-}
+export const homePage = async (req, res) => {
+  try {
 
-export const logout = (req,res)=>{
-  req.session.destroy(()=>{
-    res.redirect('/user/?message=Logged out successfully');
-  });
-}
+    let message = req.query.message || null;
+
+    if (req.session.user) {
+
+      const user = await userSchema.findById(req.session.user.id);
+
+      if (!user) {
+        req.session.user = null;
+        return res.render('user/home', {
+          user: null,
+          message: "Your account has been deleted by admin"
+        });
+      }
+
+      if (user.isBlocked) {
+        req.session.user = null;
+        return res.render('user/home', {
+          user: null,
+          message: "Your account has been blocked by admin"
+        });
+      }
+    }
+
+    res.render('user/home', {
+      user: req.session.user || null,
+      message
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.render('user/home', {
+      user: null,
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const logout = (req, res) => {
+  req.session.user = null;
+  res.redirect('/user/?message=Logged out successfully');
+};
 
 export const loadForgotPassword = (req,res)=>{
     res.render('user/forgotPassword')
@@ -129,11 +174,11 @@ export const forgotPassword = async(req,res)=>{
 
       req.session.resetEmail = email;
       req.session.resetOtp = otp;
-      req.session.resetOtpExpiry = Date.now() + 60000;
-
-      req.session.save();
-
+      
       await sendOtpMail(email, otp);
+
+      req.session.resetOtpExpiry = Date.now() + 60000;
+      req.session.save();
 
       return res.redirect('/user/forgotOtp');
 
@@ -209,7 +254,7 @@ export const loadProfile = async (req,res)=>{
          user.dob = new Date(user.dob).toLocaleDateString('en-GB');
       }
 
-      res.render('user/userProfile',{ user });
+      res.render('user/userProfile',{ user,hasPassword: !!user.password });
 
    }catch(err){
       console.log(err);
@@ -348,14 +393,14 @@ export const changeEmail = async (req, res) => {
       }
 
       const otp = Math.floor(100000 + Math.random()*900000);
-
+      
       req.session.changeEmail = email;
       req.session.changeOtp = otp;
+      
+      
+      await sendOtpMail(email, otp);
       req.session.changeOtpExpiry = Date.now() + 60000;
       req.session.save();
-
-
-      await sendOtpMail(email, otp);
 
       return res.json({ success:true });
 
@@ -404,10 +449,10 @@ export const resendChangeEmailOtp = async (req,res)=>{
       const otp = Math.floor(100000 + Math.random()*900000);
 
       req.session.changeOtp = otp;
-      req.session.changeOtpExpiry = Date.now() + 60000;
-
+      
       await sendOtpMail(req.session.changeEmail, otp);
-
+      req.session.changeOtpExpiry = Date.now() + 60000;
+      
       return res.json({ success:true });
 
    }catch(err){
@@ -436,9 +481,8 @@ export const deleteAccount = async (req, res) => {
     }
     await userSchema.findByIdAndDelete(userId);
 
-    req.session.destroy(() => {
-      res.redirect('/user/home?message=Account deleted successfully');
-    });
+    req.session.user = null;
+res.redirect('/user/home?message=Account deleted successfully');
 
   } catch (err) {
     console.log(err);
@@ -449,49 +493,84 @@ export const deleteAccount = async (req, res) => {
 export const changePassword = async (req,res)=>{
   try{
 
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+   const { currentPassword, newPassword, confirmPassword } = req.body;
+   const user = await userSchema.findById(req.session.user.id);
 
-    const user = await userSchema.findById(req.session.user.id);
+      if(!user.password){
+
+            if(!newPassword || !confirmPassword){
+                  return res.json({ success:false, message:"All fields required" });
+                  }
+
+            const passwordPattern =/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+            if(!passwordPattern.test(newPassword)){
+                 return res.json({ success:false, message:"Weak password" });
+                  }
+
+             if(newPassword !== confirmPassword){
+                return res.json({ success:false, message:"Passwords do not match" });
+                  }
+
+            const hashed = await bcrypt.hash(newPassword,10);
+
+           user.password = hashed;
+await user.save();
+
+req.session.user = {
+  id: user._id,
+  name: user.name
+};
+
+
+                return res.json({ success:true });
+    }
 
     
-    if(!currentPassword || !newPassword || !confirmPassword){
-      return res.json({ success:false, message:"All fields required" });
-    }
+     
+if(!currentPassword || !newPassword || !confirmPassword){
+  return res.json({ success:false, message:"All fields required" });
+}
 
-   
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+// password strength
+const passwordPattern =
+/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
-    if(!isMatch){
-      return res.json({ success:false, message:"Current password incorrect" });
-    }
+if(!passwordPattern.test(newPassword)){
+  return res.json({ success:false, message:"Weak password" });
+}
 
-   
-    if(newPassword !== confirmPassword){
-      return res.json({ success:false, message:"Passwords do not match" });
-    }
+// check same password
+if(currentPassword === newPassword){
+  return res.json({ success:false, message:"New password must be different" });
+}
 
-    
-    const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+//  NOW CHECK CURRENT PASSWORD
+const isMatch = await bcrypt.compare(currentPassword, user.password);
 
-    if(!passwordPattern.test(newPassword)){
-      return res.json({ success:false, message:"Weak password" });
-    }
+if(!isMatch){
+  return res.json({ success:false, message:"Current password incorrect" });
+}
 
-    
-    if(currentPassword === newPassword){
-      return res.json({ success:false, message:"New password must be different" });
-    }
+// confirm password
+if(newPassword !== confirmPassword){
+  return res.json({ success:false, message:"Passwords do not match" });
+}
 
-   
-    const hashed = await bcrypt.hash(newPassword,10);
+// save
+const hashed = await bcrypt.hash(newPassword,10);
 
-    await userSchema.findByIdAndUpdate(user._id,{
-      $set:{ password:hashed }
-    });
+user.password = hashed;
+await user.save();
 
-    return res.json({ success:true });
+req.session.user = {
+  id: user._id,
+  name: user.name
+};
 
+
+
+return res.json({ success:true });
   }catch(err){
     console.log(err);
     return res.json({ success:false, message:"Something went wrong" });

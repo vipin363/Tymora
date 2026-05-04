@@ -1,7 +1,7 @@
 import express from 'express';
 const router=express.Router()
 import {isAdminLogin,isAdminAuth} from '../middleware/adminAuth.js'
-import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,resetAdminPassword,loadUsers,blockUser,unblockUser,deleteUser} from '../controller/adminController.js';
+import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,resetAdminPassword,loadUsers,blockUser,unblockUser,deleteUser,loadUserProfile} from '../controller/adminController.js';
 import { loadAdminOtpPage, verifyAdminForgotOtp,resendAdminOtp } from '../controller/otpController.js';
 
 
@@ -33,6 +33,8 @@ router.get('/users', isAdminAuth, loadUsers);
 router.get('/block-user/:id', isAdminAuth, blockUser);
 router.get('/unblock-user/:id', isAdminAuth, unblockUser);
 router.get('/delete-user/:id', isAdminAuth, deleteUser);
+
+router.get('/users/:id',isAdminAuth, loadUserProfile);
 
 router.get("/logout", logout);
 

@@ -4,6 +4,7 @@
 <link href="/userHome.css" rel="stylesheet">
 <link href="/footer.css" rel="stylesheet">
 <link href="/navBar.css" rel="stylesheet">
+<link rel="stylesheet" href="/theme.css">
 <!-- NAVBAR -->
 <nav>
     <a class="nav-logo" href="#">TYMORA</a>
@@ -41,12 +42,6 @@
             <span class="cart-badge">2</span>
         </button>
 
-        {{!-- <button class="nav-icon-btn" title="Account">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-            </svg>
-        </button> --}}
         {{#if user}}
         <a href="/user/profile" class="nav-icon-btn" title="Account">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -198,7 +193,11 @@
 
         <div class="setting-row">
           <a class="setting-link" onclick="showModal('change-password-modal')">
+            {{#if hasPassword}}
             Change Password <span>›</span>
+            {{else}}
+            Create Password <span>›</span>
+            {{/if}}
           </a>
         </div>
 
@@ -208,12 +207,10 @@
           </a>
         </div>
 
-        <div class="toggle-wrap">
-          <span>Light Mode</span>
-          <div class="toggle" id="theme-toggle"
-            onclick="this.classList.toggle('on')">
-          </div>
-        </div>
+       <div class="toggle-wrap">
+      <span id="themeLabel">Light Mode</span>
+     <div class="toggle" id="theme-toggle"></div>
+     </div>
 
         <button class="btn-delete-acct"
           onclick="showModal('delete-modal')">
@@ -424,6 +421,7 @@
     <div class="modal-title-text">
       Change Email
     </div>
+    <p>{{user.email}}</p>
 
     <p class="modal-desc-text">
       Enter your new email address
@@ -513,11 +511,19 @@
   <div class="modal-box">
 
     <div class="modal-title-text">
+      {{#if hasPassword}}
       Change Password
+      {{else}}
+      Create Password
+      {{/if}}
     </div>
 
     <p class="modal-desc-text">
+      {{#if hasPassword}}
       Enter your current and new password
+      {{else}}
+      Enter your password
+      {{/if}}
     </p>
 
     <!-- ERROR MESSAGE -->
@@ -530,8 +536,10 @@
 
       <!-- CURRENT PASSWORD -->
      <div class="password-wrap">
-  <input type="password" id="currentPassword" placeholder="Current Password">
-</div>
+      {{#if hasPassword}}
+    <input type="password" id="currentPassword" placeholder="Current Password">
+  {{/if}}
+  </div>
 
 <div class="password-wrap">
   <input type="password" id="newPassword" placeholder="New Password">
@@ -728,7 +736,8 @@ if(delInput && delBtn){
 document.getElementById("changePasswordForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  const currentPassword = document.getElementById("currentPassword").value.trim();
+ const currentPasswordInput = document.getElementById("currentPassword");
+const currentPassword = currentPasswordInput ? currentPasswordInput.value.trim() : null;
   const newPassword = document.getElementById("newPassword").value.trim();
   const confirmPassword = document.getElementById("confirmPassword").value.trim();
 
@@ -739,10 +748,16 @@ document.getElementById("changePasswordForm").addEventListener("submit", async f
   successBox.innerText = "";
 
   // 1. Required check
-  if(!currentPassword || !newPassword || !confirmPassword){
-    errorBox.innerText = "All fields are required";
-    return;
-  }
+if(!newPassword || !confirmPassword){
+  errorBox.innerText = "All fields are required";
+  return;
+}
+
+// Only check currentPassword if it exists
+if(currentPasswordInput && !currentPassword){
+  errorBox.innerText = "Current password required";
+  return;
+}
 
   // 2. Match check
   if(newPassword !== confirmPassword){
@@ -751,10 +766,10 @@ document.getElementById("changePasswordForm").addEventListener("submit", async f
   }
 
  // 3. current password and new not match
-  if(currentPassword === newPassword){
+  if(currentPasswordInput && currentPassword === newPassword){
   errorBox.innerText = "New password must be different";
   return;
- }
+}
 
   // 4. Strong password check
   const passwordPattern =
@@ -782,28 +797,27 @@ document.getElementById("changePasswordForm").addEventListener("submit", async f
 
     const data = await res.json();
 
-    if(data.success){
+   if(data.success){
 
-  successBox.innerText = "Password updated successfully ";
+  successBox.innerText = "Password updated successfully";
 
   document.getElementById("changePasswordForm").reset();
 
   setTimeout(()=>{
-    hideModal("change-password-modal");
-  },1500);
+    window.location.reload();
+  },1000);
+
+}else{
+  errorBox.innerText = data.message || "Something went wrong";
 }
-
-    successBox.innerText = "Password updated successfully ";
-
-    setTimeout(()=>{
-      hideModal("change-password-modal");
-    },1500);
 
   }catch(err){
     errorBox.innerText = "Something went wrong";
   }
 
 });
+
+
 
 </script>
 

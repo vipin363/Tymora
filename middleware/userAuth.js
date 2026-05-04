@@ -8,23 +8,23 @@ export const isLogin=(req,res,next)=>{
     }
 }
 
-export const isAuth = async (req,res,next)=>{
-   try{
-   if(!req.session.user){
-      return res.redirect('/user/login');
-   }
-   const user = await User.findById(req.session.user.id);
+export const isAuth = async (req, res, next) => {
+  try {
 
-   
-    if (!user) {
-      req.session.user = null;
-      return res.redirect('/user/login?msg=deleted');
+    if (!req.session.user) {
+      return res.redirect('/user/login');
     }
 
-  
+    const user = await User.findById(req.session.user.id);
+
+    if (!user) {
+      req.session.user = null;
+      return res.redirect('/user/?message=Your account has been deleted by admin');
+    }
+
     if (user.isBlocked) {
       req.session.user = null;
-      return res.redirect('/user/login?msg=blocked');
+      return res.redirect('/user/?message=Your account has been blocked by admin');
     }
 
     next();
@@ -33,7 +33,7 @@ export const isAuth = async (req,res,next)=>{
     console.log(err);
     res.redirect('/user/login');
   }
-}
+};
 
 export const hasOtpSession = (req,res,next)=>{
    if(req.session.userData){

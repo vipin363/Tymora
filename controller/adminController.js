@@ -1,5 +1,6 @@
 import Admin from "../model/adminModel.js";
 import User from "../model/userModel.js";
+import Address from "../model/addressModel.js"
 import bcrypt from "bcryptjs";
 import { sendOtpMail } from "../services/mailService.js";
 
@@ -12,6 +13,8 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     const admin = await Admin.findOne({ email, isAdmin: true });
+
+  
 
     if (!admin) {
       return res.render("admin/login", {
@@ -27,7 +30,7 @@ export const login = async (req, res) => {
         email: "",
       });
     }
-    req.session.admin = admin._id;
+    req.session.admin ={ id:admin._id };
 
     res.redirect("/admin/dashBoard");
   } catch (err) {
@@ -43,7 +46,7 @@ export const loadDashboard = (req, res) => {
 };
 
 export const logout = (req, res) => {
-  req.session.destroy();
+  req.session.admin = null;
   res.redirect("/admin/login");
 };
 
@@ -71,12 +74,14 @@ export const forgotPassword = async (req, res) => {
 
     req.session.resetEmail = email;
     req.session.resetOtp = otp;
+    
+    
+    await sendOtpMail(email, otp);
+
     req.session.resetOtpExpiry = Date.now() + 60 * 1000;
 
     await req.session.save();
-
-    await sendOtpMail(email, otp);
-
+    
     res.redirect("/admin/otp");
   } catch (err) {
     console.log(err);
@@ -172,8 +177,7 @@ export const loadUsers = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    const totalUsers = await User.countDocuments(query);
-
+    const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ isBlocked: false });
     const blockedUsers = await User.countDocuments({ isBlocked: true });
 
@@ -212,12 +216,19 @@ export const loadUsers = async (req, res) => {
 
 export const blockUser = async (req, res) => {
   await User.findByIdAndUpdate(req.params.id, { isBlocked: true });
+  if (req.query.from === "profile") {
+    return res.redirect(`/admin/users/${req.params.id}`);
+  }
+
   res.redirect("/admin/users");
 };
 
 export const unblockUser = async (req, res) => {
   await User.findByIdAndUpdate(req.params.id, { isBlocked: false });
-  res.redirect("/admin/users");
+ if (req.query.from === "profile") {
+  return res.redirect(`/admin/users/${req.params.id}`);
+}  res.redirect("/admin/users");
+
 };
 
 export const deleteUser = async (req, res) => {
@@ -227,5 +238,55 @@ export const deleteUser = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.redirect("/admin/users");
+  }
+};
+
+export const loadUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const users = await User.find();
+
+    const formattedUsers = users.map((u) => ({
+      _id: u._id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone || "-",
+      avatar: u.avatar || null,
+      initials: u.name?.charAt(0).toUpperCase() || "U",
+      status: u.isBlocked ? "blocked" : "active",
+      joined: u.createdAt?.toDateString(),
+    }));
+
+    const user = await User.findById(userId);
+
+    const defaultAddress = await Address.findOne({ 
+  userId, 
+  isDefault: true 
+});
+
+    const selectedUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || "-",
+      address: defaultAddress
+    ? `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state}, ${defaultAddress.pincode}`
+    : "No default address",
+      avatar: user.avatar,
+      initials: user.name?.charAt(0).toUpperCase(),
+      status: user.isBlocked ? "blocked" : "active",
+      joined: user.createdAt?.toDateString(),
+    };
+
+    res.render("admin/userManagement", {
+      users: formattedUsers,
+      selectedUser,
+      activePage: "users"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.redirect('/admin/users');
   }
 };

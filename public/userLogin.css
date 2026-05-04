@@ -68,11 +68,6 @@
     /* Let child handle pointer events */
     pointer-events: none;
   }
-
-  /* ── THE CLICKABLE WATCH WRAPPER ──
-     pointer-events: all on this element only.
-     Everything INSIDE the SVG gets pointer-events: none
-     so clicks bubble up to this wrapper naturally. */
   .watch-wrap {
     pointer-events: all;
     cursor: pointer;

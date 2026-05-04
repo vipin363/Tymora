@@ -183,8 +183,7 @@
 
             <td>
 
-              {{!-- <button class="act-btn" onclick="window.location.href='/admin/users/{{this._id}}'">View</button> --}}
-
+              <button class="act-btn" onclick="window.location.href='/admin/users/{{this._id}}'"> View </button>
               {{#if (eq this.status "active")}}
                 <button class="act-btn" onclick="openModalForUser('{{this._id}}','block')">Block</button>
               {{else}}
@@ -226,7 +225,15 @@
     <div class="profile-header">
 
       <div>
-        <div class="profile-img">{{selectedUser.initials}}</div>
+        <div class="profile-img">
+  {{#if selectedUser.avatar}}
+    <img src="{{selectedUser.avatar}}" alt="user">
+  {{else}}
+    <div class="avatar-fallback">
+      {{selectedUser.initials}}
+    </div>
+  {{/if}}
+</div>
 
         <div class="profile-name">
           {{selectedUser.name}}
@@ -244,11 +251,11 @@
       <div>
 
         {{#if (eq selectedUser.status "active")}}
-          <button class="btn-warning" onclick="openModalForUser('{{selectedUser._id}}','block')">Block</button>
+          <button class="btn-warning" onclick="openModalForUser('{{selectedUser._id}}','block','profile')">Block</button>
         {{else}}
-          <button class="btn-success" onclick="openModalForUser('{{selectedUser._id}}','unblock')">Unblock</button>
+          <button class="btn-success" onclick="openModalForUser('{{selectedUser._id}}','unblock','profile')">Unblock</button>
         {{/if}}
-        <button class="btn-danger" onclick="openModalForUser('{{selectedUser._id}}','delete')">Delete</button>
+        <button class="btn-danger" onclick="openModalForUser('{{selectedUser._id}}','delete','profile')">Delete</button>
 
       </div>
 
@@ -264,7 +271,6 @@
         <p><b>Phone:</b> {{selectedUser.phone}}</p>
         <p><b>Address:</b> {{selectedUser.address}}</p>
         <p><b>Joined:</b> {{selectedUser.joined}}</p>
-        <p><b>Last Login:</b> {{selectedUser.lastLogin}}</p>
 
       </div>
 
@@ -408,13 +414,11 @@ function handleBlockToggle(el) {
 }
 
 // ── MODAL 
-function openModalForUser(id, action) {
-  currentUser = {
-    _id: id,
-    name: "",
-    email: "",
-    avatar: ""
-  };
+let currentContext = "list";
+
+function openModalForUser(id, action, context = "list") {
+  currentUser = { _id: id };
+  currentContext = context;
   openModal(action);
 }
 
@@ -477,31 +481,32 @@ function closeModal() {
 function confirmAction() {
   if (!currentUser || !currentAction) return;
 
+  let base = '/admin';
+
+  let redirectQuery = currentContext === "profile"
+    ? `?from=profile`
+    : '';
+
   let url = '';
 
   if (currentAction === 'delete') {
     const val = document.getElementById('confirmInput').value.trim();
 
-    if (val !== 'DELETE') {
-      document.getElementById('confirmInput').style.borderColor = 'var(--rose)';
-      document.getElementById('confirmInput').placeholder = "Type exactly: DELETE";
-      return;
-    }
+    if (val !== 'DELETE') return;
 
-    url = `/admin/delete-user/${currentUser._id}`;
+    url = `${base}/delete-user/${currentUser._id}${redirectQuery}`;
   }
 
   if (currentAction === 'block') {
-    url = `/admin/block-user/${currentUser._id}`;
+    url = `${base}/block-user/${currentUser._id}${redirectQuery}`;
   }
 
   if (currentAction === 'unblock') {
-    url = `/admin/unblock-user/${currentUser._id}`;
+    url = `${base}/unblock-user/${currentUser._id}${redirectQuery}`;
   }
 
   window.location.href = url;
 }
-
 // close modal on overlay click
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();

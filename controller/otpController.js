@@ -3,8 +3,8 @@ import userSchema from '../model/userModel.js';
 import { sendOtpMail } from '../services/mailService.js';
 
 export const loadOtpPage = (req,res)=>{
-   if(!req.session.userData){
-      return res.redirect('/user/register');
+    if(!req.session.userData || !req.session.otp){
+      return res.redirect('/user/register?message=Session expired. Please try again');
    }
    const email = req.session.userData.email;
 
@@ -24,10 +24,14 @@ export const loadOtpPage = (req,res)=>{
 export const verifyOtp = async (req,res)=>{
      try{
 
+      if(!req.session.userData){
+   return res.redirect('/user/register?message=Session expired. Please register again');
+}
+
    const {otp} = req.body;
 
    if (Date.now() > req.session.otpExpiry) {
-  const email = req.session.userData?.email;
+  const email = req.session.userData ? req.session.userData.email : "";
 
  return res.render("user/otp", { email, remaining: 0, message: "OTP expired. Please resend OTP."});
 }
@@ -38,20 +42,24 @@ console.log(typeof otp, typeof req.session.otp);
      const data = req.session.userData;
      const hashedPassword = await bcrypt.hash(data.password,10);
 
-     await userSchema.create({
-       name:data.name,
-       email:data.email,
-       password:hashedPassword
-    });
+     const newUser = await userSchema.create({
+  name:data.name,
+  email:data.email,
+  password:hashedPassword
+});
 
-     req.session.userData = null;
-     req.session.otp = null;
-     req.session.otpExpiry = null;
+req.session.user = {
+  id: newUser._id,
+  name: newUser.name
+};
 
-    return res.redirect("/user/login?message=Registration completed&success=true");   }
+req.session.userData = null;
+req.session.otp = null;
+req.session.otpExpiry = null;
 
-   const email = req.session.userData?.email;
+return res.redirect("/user/?message=Registration successful");   }
 
+   const email = req.session.userData ? req.session.userData.email : "";
         let remaining = Math.floor((req.session.otpExpiry - Date.now()) / 1000);
 
         if(remaining < 0) remaining = 0;
@@ -60,7 +68,7 @@ console.log(typeof otp, typeof req.session.otp);
 
     }catch(err){
         console.log(err)
-        const email = req.session.userData?.email;
+        const email = req.session.userData ? req.session.userData.email : "";
         let remaining = 0;
         if(req.session.otpExpiry){
         remaining = Math.floor((req.session.otpExpiry - Date.now()) / 1000);
@@ -80,9 +88,10 @@ export const resendOtp = async (req,res)=>{
       const otp = Math.floor(100000 + Math.random()*900000);
 
       req.session.resetOtp = otp;
-      req.session.resetOtpExpiry = Date.now() + 60 * 1000;
-
+      
       await sendOtpMail(email, otp);
+      
+      req.session.resetOtpExpiry = Date.now() + 60 * 1000;
 
       return res.redirect('/user/forgotOtp');
    }
@@ -98,9 +107,10 @@ export const resendOtp = async (req,res)=>{
       const otp = Math.floor(100000 + Math.random()*900000);
 
       req.session.otp = otp;
-      req.session.otpExpiry = Date.now() + 60 * 1000;
-
+      
       await sendOtpMail(email, otp);
+      
+      req.session.otpExpiry = Date.now() + 60 * 1000;
 
       return res.redirect('/user/otp');
    }
@@ -282,9 +292,10 @@ req.session.resetOtpExpiry = null;
     const otp = Math.floor(100000 + Math.random() * 900000);
 
     req.session.resetOtp = otp;
-    req.session.resetOtpExpiry = Date.now() + 60 * 1000;
-
+    
     await sendOtpMail(email, otp);
+    
+    req.session.resetOtpExpiry = Date.now() + 60 * 1000;
 
     res.redirect('/admin/otp');
 

@@ -32,15 +32,35 @@ router.get('/home',(req,res)=>{
    res.redirect('/user/');
 });
 
-router.get('/auth/google',passport.authenticate('google',{ scope:['profile','email'] }));
-router.get('/auth/google/callback',passport.authenticate('google',{failureRedirect:'/user/login'}),
-(req,res)=>{
-   req.session.user = {
-      id:req.user._id,
-      name:req.user.name
-   };
-res.redirect('/user/home');
-});
+router.get('/auth/google/login', (req, res, next) => {
+  req.session.googleAuthType = 'login'; 
+  next();
+}, passport.authenticate('google', { scope: ['profile','email'] }));
+
+router.get('/auth/google/register', (req, res, next) => {
+  req.session.googleAuthType = 'register'; 
+  next();
+}, passport.authenticate('google', { scope: ['profile','email'] }));
+
+router.get('/auth/google/callback', (req, res, next) => {
+  passport.authenticate('google', (err, user, info) => {
+    if (err) return next(err);
+    const isRegister = req.session.googleAuthType === 'register';
+    if (!user) {
+      req.session.googleAuthType = null; 
+      if (isRegister) {
+        return res.redirect(`/user/register?message=${info.message}`);
+      } else {
+        return res.redirect(`/user/login?message=${info.message}`);
+      }}
+    req.session.user = {
+      id: user._id,
+      name: user.name
+    };
+    req.session.googleAuthType = null; 
+    res.redirect('/user/home');
+  })(req, res, next);});
+  
 
 router.get('/profile', isAuth, loadProfile);
 router.get('/editProfile', isAuth, loadEditProfile);
@@ -62,7 +82,7 @@ router.get("/setDefault/:id",isAuth, setDefaultAddress);
 router.post("/deleteAddress/:id", isAuth, deleteAddress);
 
 router.use((req,res)=>{
-   res.redirect('/user/');
+   res.redirect('/user/register');
 });
 
 

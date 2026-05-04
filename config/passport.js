@@ -5,28 +5,45 @@ import userSchema from '../model/userModel.js';
 passport.use(new GoogleStrategy({
    clientID: process.env.GOOGLE_CLIENT_ID,
    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-   callbackURL: "http://localhost:3000/user/auth/google/callback"
+   callbackURL: "http://localhost:3000/user/auth/google/callback",
+   passReqToCallback: true  
 },
-async(accessToken, refreshToken, profile, done)=>{
+async(req, accessToken, refreshToken, profile, done)=>{
 
-   let user = await userSchema.findOne({ email: profile.emails[0].value });
+   try {
+      const email = profile.emails[0].value;
+      let user = await userSchema.findOne({ email });
 
-   if(!user){
-      user = await userSchema.create({
-         name: profile.displayName,
-         email: profile.emails[0].value,
-          googleId: profile.id
-      });
+      const isRegister = req.session.googleAuthType === 'register';
+
+      if (!isRegister) {
+
+         if (!user) {
+            return done(null, false, { message: "User not found" });
+         }
+
+         if (user.isBlocked) {
+            return done(null, false, { message: "Account blocked" });
+         }
+
+         return done(null, user);
+      }
+      else {
+
+         if (user) {
+            return done(null, false, { message: "User already exists" });
+         }
+
+         user = await userSchema.create({
+            name: profile.displayName,
+            email,
+            googleId: profile.id
+         });
+
+         return done(null, user);
+      }
+
+   } catch (err) {
+      return done(err, null);
    }
-
-   return done(null, user);
 }));
-
-passport.serializeUser((user,done)=>{
-   done(null,user.id);
-});
-
-passport.deserializeUser(async(id,done)=>{
-   const user = await userSchema.findById(id);
-   done(null,user);
-});
