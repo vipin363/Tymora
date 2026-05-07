@@ -2,7 +2,7 @@ import Admin from "../model/adminModel.js";
 import User from "../model/userModel.js";
 import Address from "../model/addressModel.js"
 import bcrypt from "bcryptjs";
-import { sendOtpMail } from "../services/mailService.js";
+import { generateAndSaveOtp } from "../services/otpService.js";
 
 export const loadLogin = (req, res) => {
   res.render("admin/login");
@@ -70,15 +70,16 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     req.session.resetEmail = email;
-    req.session.resetOtp = otp;
-    
-    
-    await sendOtpMail(email, otp);
+    // req.session.resetOtp = otp;
+    await generateAndSaveOtp({ email, purpose: "forgot_password" });
 
-    req.session.resetOtpExpiry = Date.now() + 60 * 1000;
+    
+    // await sendOtpMail(email, otp);
+
+    // req.session.resetOtpExpiry = Date.now() + 60 * 1000;
 
     await req.session.save();
     
@@ -131,8 +132,7 @@ export const resetAdminPassword = async (req, res) => {
     await admin.save();
 
     req.session.resetEmail = null;
-    req.session.resetOtp = null;
-    req.session.resetOtpExpiry = null;
+
     req.session.resetVerified = null;
 
     res.redirect("/admin/login");

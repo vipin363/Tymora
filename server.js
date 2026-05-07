@@ -28,6 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.set('view engine', 'hbs');
+hbs.registerPartials(path.join(__dirname, "views/partials"));
 hbs.registerHelper("add", (a, b) => a + b);
 hbs.registerHelper("subtract", (a, b) => a - b);
 hbs.registerHelper("gt", (a, b) => a > b);

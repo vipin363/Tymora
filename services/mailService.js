@@ -14,7 +14,6 @@ const transporter = nodemailer.createTransport({
 export const sendOtpMail = async (email, otp) => {
    
  try{
-
    const info = await transporter.sendMail({
      from: process.env.EMAIL_USER,
      to: email,
@@ -29,3 +28,4 @@ export const sendOtpMail = async (email, otp) => {
    throw err;
  }
 };
+

@@ -523,3 +523,156 @@
   transition: opacity 0.3s;
 }
 .btn-google:hover .g-icon { opacity: 1; }
+/* ── RESPONSIVE ── */
+
+/* Tablet & below (≤900px) */
+@media (max-width: 900px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .page {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Watch panel — full width, comes FIRST */
+  .left-panel {
+    width: 100%;
+    min-height: 420px;
+    border-right: none;
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+  }
+
+  .brand-top {
+    left: 20px;
+    top: 20px;
+  }
+
+  .tagline {
+    bottom: 16px;
+  }
+
+  /* Form panel — full width, comes SECOND */
+  .right-panel {
+    width: 100%;
+    padding: 40px 20px 60px;
+    justify-content: center;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* Detail panel inside left panel */
+  .detail-panel {
+    padding: 40px 24px;
+  }
+
+  .detail-brand-name {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .detail-description {
+    font-size: 14px;
+  }
+
+  /* Brand grid: 2 columns on tablet */
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brand-card {
+    width: 130px;
+    height: 80px;
+  }
+}
+
+/* Phone (≤480px) */
+@media (max-width: 480px) {
+  .left-panel {
+    min-height: 360px;
+  }
+
+  /* Watch SVG slightly smaller on small phones */
+  .watch-wrap svg {
+    width: 240px;
+    height: 240px;
+  }
+
+  .watch-hit-area {
+    width: 240px;
+    height: 240px;
+  }
+
+  /* Hand transform-origin stays at 150/150 regardless of SVG display size */
+
+  .right-panel {
+    padding: 32px 16px 48px;
+  }
+
+  .form-brand {
+    font-size: 22px;
+    letter-spacing: 7px;
+  }
+
+  .form-title {
+    font-size: 22px;
+  }
+
+  /* Brand grid: 2 columns still, tighter cards */
+  .brand-card {
+    width: 100%;
+    height: 72px;
+  }
+
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .detail-facts {
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+/* ── SPACING GAP between watch panel and form panel (mobile/tablet only) ── */
+
+@media (max-width: 900px) {
+  .left-panel {
+    padding-bottom: 32px;
+  }
+
+  .right-panel {
+    padding-top: 48px;
+    padding-bottom: 72px;
+  }
+
+  /* Extra visual separator line with a fade effect */
+  .left-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.25), transparent);
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    padding-bottom: 24px;
+    min-height: 400px;   /* a touch taller so the watch breathes */
+  }
+
+  .right-panel {
+    padding-top: 40px;
+    padding-bottom: 56px;
+  }
+}

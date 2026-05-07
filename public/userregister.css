@@ -551,3 +551,143 @@ html, body {
 }
 .terms-text a { color: rgba(201,168,76,0.45); text-decoration: none; }
 .terms-text a:hover { color: var(--gold); }
+
+/* ── RESPONSIVE ── */
+
+@media (max-width: 900px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .page {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Watch panel — full width, comes FIRST */
+  .left-panel {
+    width: 100%;
+    min-height: 420px;
+    border-right: none;
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    padding-bottom: 40px;
+  }
+
+  /* Subtle gold fade-line at the bottom edge of watch panel */
+  .left-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.25), transparent);
+    pointer-events: none;
+  }
+
+  .brand-top {
+    left: 20px;
+    top: 20px;
+  }
+
+  .tagline {
+    bottom: 16px;
+  }
+
+  /* Form panel — full width, comes SECOND */
+  .right-panel {
+    width: 100%;
+    padding: 52px 20px 72px;
+    justify-content: center;
+    overflow-y: visible;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* Detail panel inside left panel */
+  .detail-panel {
+    padding: 40px 24px;
+  }
+
+  .detail-brand-name {
+    font-size: 26px;
+    letter-spacing: 4px;
+  }
+
+  .detail-description {
+    font-size: 13px;
+  }
+
+  .detail-facts {
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Brand grid: 2 columns on tablet */
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .brand-card {
+    width: 130px;
+    height: 76px;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    min-height: 380px;
+    padding-bottom: 32px;
+  }
+
+  /* Slightly smaller watch on small phones */
+  .watch-wrap svg {
+    width: 240px;
+    height: 240px;
+  }
+
+  .watch-hit-area {
+    width: 240px;
+    height: 240px;
+  }
+
+  .right-panel {
+    padding: 44px 16px 60px;
+  }
+
+  .form-brand {
+    font-size: 18px;
+    letter-spacing: 6px;
+  }
+
+  .form-title {
+    font-size: 19px;
+  }
+
+  /* Brand cards: full-width 2-col grid */
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .brand-card {
+    width: 100%;
+    height: 68px;
+  }
+
+  .brand-logo {
+    font-size: 11px;
+  }
+
+  /* Strength / match hints stay readable */
+  .strength-label,
+  .match-hint {
+    font-size: 9px;
+  }
+}

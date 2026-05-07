@@ -505,6 +505,193 @@ tbody tr:hover td{background:#f8fafd}
   font-size: 28px;
   font-weight: bold;
 }
+/* ── RESPONSIVE ── */
 
+@media (max-width: 780px) {
+
+  /* ── TOPBAR: keep single row, hide search bar, show hamburger ── */
+  .topbar {
+    flex-wrap: nowrap;
+    height: var(--nav-h);
+    padding: 0 16px;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  /* Hide the search bar entirely in topbar on mobile */
+  .topbar .search-bar {
+    display: none;
+  }
+
+  .admin-meta {
+    display: flex;
+  }
+
+  .admin-meta .admin-name {
+    font-size: 12px;
+  }
+
+  .admin-meta .admin-status {
+    display: none;
+  }
+
+  /* ── Move search bar into content area on mobile ── */
+  .content {
+    padding: 16px;
+  }
+
+  /* Show a mobile search block at top of content */
+  .mobile-search-bar {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+
+  .mobile-search-bar input {
+    flex: 1 1 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+    min-width: 0;
+  }
+
+  .mobile-search-bar select {
+    flex: 1 1 calc(50% - 4px);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    min-width: 0;
+  }
+
+  .mobile-search-bar .btn-search {
+    flex: 1 1 calc(50% - 4px);
+    padding: 10px;
+    text-align: center;
+  }
+
+  .mobile-search-bar .btn-clear {
+    flex: 1 1 100%;
+    text-align: center;
+    padding: 10px;
+  }
+
+  /* ── PREVENT page overflow ── */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .shell {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .main {
+    margin-left: 0;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* ── TABLE: horizontal scroll ── */
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 580px;
+  }
+
+  /* ── STATS: 2 columns ── */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .overlay.open {
+    display: block;
+  }
+
+  .hamburger {
+    display: block;
+  }
+
+  /* ── PROFILE ── */
+  .profile-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-warning,
+  .btn-success,
+  .btn-danger {
+    flex: 1 1 calc(50% - 4px);
+    text-align: center;
+  }
+
+  /* ── PAGINATION ── */
+  .pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  /* ── ORDER HISTORY ── */
+  .order-history-card {
+    overflow-x: auto;
+  }
+
+  .order-history-card table {
+    min-width: 420px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-card .svalue {
+    font-size: 20px;
+  }
+}
 
 

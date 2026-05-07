@@ -1,306 +1,222 @@
+// otp controller
 import bcrypt from 'bcrypt';
 import userSchema from '../model/userModel.js';
-import { sendOtpMail } from '../services/mailService.js';
-
-export const loadOtpPage = (req,res)=>{
-    if(!req.session.userData || !req.session.otp){
-      return res.redirect('/user/register?message=Session expired. Please try again');
-   }
-   const email = req.session.userData.email;
-
-   let remaining = Math.floor(
-      (req.session.otpExpiry - Date.now()) / 1000
-   );
-
-   if(remaining < 0) remaining = 0;
-
-   res.render('user/otp',{
-   email,
-   remaining,
-   formAction:'/user/verifyOtp'
-});
-}
-
-export const verifyOtp = async (req,res)=>{
-     try{
-
-      if(!req.session.userData){
-   return res.redirect('/user/register?message=Session expired. Please register again');
-}
-
-   const {otp} = req.body;
-
-   if (Date.now() > req.session.otpExpiry) {
-  const email = req.session.userData ? req.session.userData.email : "";
-
- return res.render("user/otp", { email, remaining: 0, message: "OTP expired. Please resend OTP."});
-}
-console.log("Entered OTP:", otp);
-console.log("Session OTP:", req.session.otp);
-console.log(typeof otp, typeof req.session.otp);
-   if(otp.trim() === String(req.session.otp)){
-     const data = req.session.userData;
-     const hashedPassword = await bcrypt.hash(data.password,10);
-
-     const newUser = await userSchema.create({
-  name:data.name,
-  email:data.email,
-  password:hashedPassword
-});
-
-req.session.user = {
-  id: newUser._id,
-  name: newUser.name
-};
-
-req.session.userData = null;
-req.session.otp = null;
-req.session.otpExpiry = null;
-
-return res.redirect("/user/?message=Registration successful");   }
-
-   const email = req.session.userData ? req.session.userData.email : "";
-        let remaining = Math.floor((req.session.otpExpiry - Date.now()) / 1000);
-
-        if(remaining < 0) remaining = 0;
-    console.log(otp)
-        return res.render("user/otp", {email,remaining,message: "Invalid OTP"});
-
-    }catch(err){
-        console.log(err)
-        const email = req.session.userData ? req.session.userData.email : "";
-        let remaining = 0;
-        if(req.session.otpExpiry){
-        remaining = Math.floor((req.session.otpExpiry - Date.now()) / 1000);
-        if(remaining < 0) remaining = 0; }
-
-     return res.render("user/otp", {email,remaining,message:"Something went wrong"});
-}
-}
-
-export const resendOtp = async (req,res)=>{
- try{
-    if(req.session.resetEmail){
-
-      const email = req.session.resetEmail;
+import { generateAndSaveOtp, verifyOtpFromDb } from "../services/otpService.js";
+import Otp from "../model/otpModel.js";
 
 
-      const otp = Math.floor(100000 + Math.random()*900000);
-
-      req.session.resetOtp = otp;
-      
-      await sendOtpMail(email, otp);
-      
-      req.session.resetOtpExpiry = Date.now() + 60 * 1000;
-
-      return res.redirect('/user/forgotOtp');
-   }
-  
-   if(req.session.userData){
-
-      const email = req.session.userData.email;
-
-      if(Date.now() < req.session.otpExpiry){
-         return res.redirect('/user/otp');
-      }
-
-      const otp = Math.floor(100000 + Math.random()*900000);
-
-      req.session.otp = otp;
-      
-      await sendOtpMail(email, otp);
-      
-      req.session.otpExpiry = Date.now() + 60 * 1000;
-
-      return res.redirect('/user/otp');
-   }
-
-   return res.redirect('/user/forgotPassword');
-
- }catch(err){
-   console.log(err);
-   return res.redirect('/user/forgotPassword');
- }
-}
-
-export const loadForgotOtpPage = (req,res)=>{
-   if(!req.session.resetEmail){
-      return res.redirect('/user/forgotPassword');
-   }
-
-   let remaining = Math.floor(
-      (req.session.resetOtpExpiry - Date.now()) / 1000
-   );
-
-   if(remaining < 0) remaining = 0;
-
-   res.render('user/otp',{
-   email:req.session.resetEmail,
-   remaining,
-   formAction:'/user/verifyForgotOtp'
-});
-}
-
-export const verifyForgotOtp = (req,res)=>{
-   try{
-      const { otp } = req.body;
-
-      const email = req.session.resetEmail;
-
-      if(!email){
-         return res.render('user/otp',{
-            email:req.session.resetEmail,
-            remaining:0,
-            formAction:'/user/verifyForgotOtp',
-            message:'Invalid OTP'
-         });
-      }
-
-      let remaining = Math.floor(
-         (req.session.resetOtpExpiry - Date.now()) / 1000
-      );
-
-      if(remaining < 0) remaining = 0;
-
-      if(!otp || otp.trim() === ''){
-         return res.render('user/otp',{
-            email,
-            remaining,
-            formAction:'/user/verifyForgotOtp',
-            message:"Please enter OTP"
-         });
-      }
-
-      if(Date.now() > req.session.resetOtpExpiry){
-         return res.render('user/otp',{
-            email,
-            remaining:0,
-            formAction:'/user/verifyForgotOtp',
-            message:"OTP expired. Please resend OTP"
-         });
-      }
-
-      if(otp.trim() === String(req.session.resetOtp)){
-         req.session.resetVerified = true;
-         return res.redirect('/user/resetPassword');
-      }
-
-      return res.render('user/otp',{
-         email:req.session.resetEmail,
-         remaining,
-         formAction:'/user/verifyForgotOtp',
-         message:"Invalid OTP"
-      });
-
-   }catch(err){
-      console.log(err);
-
-      return res.render('user/otp',{
-         email:req.session.resetEmail,
-         remaining:0,
-         formAction:'/user/verifyForgotOtp',
-         message:"Something went wrong"
-      });
-   }
-}
-
-export const loadAdminOtpPage = (req, res)=>{
-  if (!req.session.resetEmail) {
-    return res.redirect('/admin/forgotPassword');
+export const loadOtpPage = async (req, res) => {
+  if (!req.session.userData) {
+    return res.redirect("/user/register?message=Session expired. Please try again");
   }
-
-  let remaining = Math.floor(
-    (req.session.resetOtpExpiry - Date.now()) / 1000
-  );
-
-  if (remaining < 0) remaining = 0;
-
-  res.render('admin/otp', {
-    email: req.session.resetEmail,
-    remaining,
-    formAction: '/admin/otp'
-  });
+   const email = req.session.userData.email;
+  const record = await Otp.findOne({ email, purpose: "register", is_used: false }).sort({ created_at: -1 });
+  const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+  res.render("user/otp", { email, remaining, formAction: "/user/verifyOtp",changeEmailLink: req.session.changeEmailLink  });
 };
 
-export const verifyAdminForgotOtp = (req, res)=>{
-   try {
-      const { otp } = req.body;
-      
-
-    const email = req.session.resetEmail;
-
-    if (!email) {
-      return res.redirect('/admin/forgotPassword');
+export const verifyOtp = async (req, res) => {
+  try {
+    if (!req.session.userData) {
+      return res.redirect("/user/register?message=Session expired. Please register again");
     }
 
-    let remaining = Math.floor(
-      (req.session.resetOtpExpiry - Date.now()) / 1000
-    );
+    const { otp } = req.body;
+    const email = req.session.userData.email;
 
-    if (remaining < 0) remaining = 0;
-
-    if (!otp || otp.trim() === '') {
-      return res.render('admin/otp', {
-        email,
-        remaining,
-        formAction: '/admin/otp',
-        message: "Please enter OTP"
-      });
+      if (!otp || otp.trim() === "") {
+      const record = await Otp.findOne({ email, purpose: "register", is_used: false }).sort({ created_at: -1 });
+      const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+      return res.render("user/otp", { email, remaining, formAction: "/user/verifyOtp", message: "Please enter OTP" });
     }
 
-    if (Date.now() > req.session.resetOtpExpiry) {
-      return res.render('admin/otp', {
-        email,
-        remaining: 0,
-        formAction: '/admin/otp',
-        message: "OTP expired"
-      });
-    }
+    const result = await verifyOtpFromDb({ email, otp_code: otp, purpose: "register" });
 
-    if (otp.trim() === String(req.session.resetOtp)) {
-      req.session.resetVerified = true;
-      return res.redirect('/admin/resetPassword');
-    }
+    if (result.reason === "expired") {
+  return res.render("user/otp", {
+    email, remaining: 0,
+    formAction: "/user/verifyOtp",
+    message: "OTP expired. Please resend."
+  });
+}
 
-    return res.render('admin/otp', {
-      email,
-      remaining,
-      formAction: '/admin/otp',
-      error: "Invalid OTP"
+if (!result.success) {
+  return res.render("user/otp", {
+    email, remaining: result.remaining, 
+    formAction: "/user/verifyOtp",
+    message: "Invalid OTP"
+  });
+}
+
+    const data = req.session.userData;
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const newUser = await userSchema.create({
+      name: data.name,
+      email: data.email,
+      password: hashedPassword
     });
+
+    req.session.user = { id: newUser._id, name: newUser.name };
+    req.session.userData = null;
+
+    return res.redirect("/user/?message=Registration successful");
 
   } catch (err) {
     console.log(err);
-    return res.render('admin/otp', {
-      email: req.session.resetEmail,
+    return res.render("user/otp", {
+      email: req.session.userData?.email,
       remaining: 0,
-      formAction: '/admin/otp',
+      formAction: "/user/verifyOtp",
       message: "Something went wrong"
     });
   }
 };
 
-export const resendAdminOtp =async(req, res)=>{
+export const resendOtp = async (req, res) => {
   try {
-    const email = req.session.resetEmail;
-
-    if (!email) {
-      return res.redirect('/admin/forgotPassword');
+    if (req.session.resetEmail) {
+      await generateAndSaveOtp({
+        email: req.session.resetEmail,
+        purpose: "forgot_password"
+      });
+      return res.redirect("/user/forgotOtp");
     }
-req.session.resetOtp = null;
-req.session.resetOtpExpiry = null;
-    const otp = Math.floor(100000 + Math.random() * 900000);
 
-    req.session.resetOtp = otp;
-    
-    await sendOtpMail(email, otp);
-    
-    req.session.resetOtpExpiry = Date.now() + 60 * 1000;
+    if (req.session.userData) {
+      await generateAndSaveOtp({
+        email: req.session.userData.email,
+        purpose: "register"
+      });
+      return res.redirect("/user/otp");
+    }
 
-    res.redirect('/admin/otp');
+    return res.redirect("/user/forgotPassword");
 
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/forgotPassword');
+    return res.redirect("/user/forgotPassword");
+  }
+};
+
+// ─── USER FORGOT PASSWORD ─────────────────────────────────────────────────────
+
+export const loadForgotOtpPage =  async (req, res) => {
+  if (!req.session.resetEmail) {
+    return res.redirect("/user/forgotPassword");
+  }
+   const email = req.session.resetEmail;
+  const record = await Otp.findOne({ email, purpose: "forgot_password", is_used: false }).sort({ created_at: -1 });
+  const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+  res.render("user/otp", { email, remaining, formAction: "/user/verifyForgotOtp",changeEmailLink: req.session.changeEmailLink  });
+};
+
+export const verifyForgotOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = req.session.resetEmail;
+
+    if (!email) return res.redirect("/user/forgotPassword");
+
+    if (!otp || otp.trim() === "") {
+  const record = await Otp.findOne({ email, purpose: "forgot_password", is_used: false }).sort({ created_at: -1 });
+  const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+  return res.render("user/otp", { email, remaining, formAction: "/user/verifyForgotOtp", message: "Please enter OTP" });
+}
+
+    const result = await verifyOtpFromDb({ email, otp_code: otp, purpose: "forgot_password" });
+
+    if (result.reason === "expired") {
+      return res.render("user/otp", {
+        email, remaining: 0,
+        formAction: "/user/verifyForgotOtp",
+        message: "OTP expired. Please resend."
+      });
+    }
+
+   if (!result.success) {
+  return res.render("user/otp", { email, remaining: result.remaining, formAction: "/user/verifyForgotOtp", message: "Invalid OTP" });
+}
+
+    req.session.resetVerified = true;
+    return res.redirect("/user/resetPassword");
+
+  } catch (err) {
+    console.log(err);
+    return res.render("user/otp", {
+      email: req.session.resetEmail, remaining: 0,
+      formAction: "/user/verifyForgotOtp",
+      message: "Something went wrong"
+    });
+  }
+};
+
+// ─── ADMIN OTP ────────────────────────────────────────────────────────────────
+
+export const loadAdminOtpPage = async (req, res) => {
+  if (!req.session.resetEmail) {
+    return res.redirect("/admin/forgotPassword");
+  }
+    const email = req.session.resetEmail;
+  const record = await Otp.findOne({ email, purpose: "forgot_password", is_used: false }).sort({ created_at: -1 });
+  const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+  res.render("admin/otp", { email, remaining, formAction: "/admin/otp" });
+};
+
+export const verifyAdminForgotOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = req.session.resetEmail;
+
+    if (!email) return res.redirect("/admin/forgotPassword");
+
+    if (!otp || otp.trim() === "") {
+  const record = await Otp.findOne({ email, purpose: "forgot_password", is_used: false }).sort({ created_at: -1 });
+  const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+  return res.render("admin/otp", { email, remaining, formAction: "/admin/otp", message: "Please enter OTP" });
+}
+
+    const result = await verifyOtpFromDb({ email, otp_code: otp, purpose: "forgot_password" });
+
+    if (result.reason === "expired") {
+      return res.render("admin/otp", {
+        email, remaining: 0,
+        formAction: "/admin/otp",
+        message: "OTP expired"
+      });
+    }
+
+    if (!result.success) {
+  return res.render("admin/otp", { email, remaining: result.remaining, formAction: "/admin/otp", error: "Invalid OTP" });
+}
+
+    req.session.resetVerified = true;
+    return res.redirect("/admin/resetPassword");
+
+  } catch (err) {
+    console.log(err);
+    return res.render("admin/otp", {
+      email: req.session.resetEmail, remaining: 0,
+      formAction: "/admin/otp",
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const resendAdminOtp = async (req, res) => {
+  try {
+    const email = req.session.resetEmail;
+    if (!email) return res.redirect("/admin/forgotPassword");
+
+    await generateAndSaveOtp({
+      email,
+      purpose: "forgot_password"
+    });
+
+    return res.redirect("/admin/otp");
+
+  } catch (err) {
+    console.log(err);
+    return res.redirect("/admin/forgotPassword");
   }
 };

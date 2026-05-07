@@ -708,3 +708,221 @@
 .toggle-eye:hover{
   color: #c9a646;
 }
+/* ═══════════════════════════════════════
+   RESPONSIVE — userProfile.css
+   ═══════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    padding: 10px 16px !important;
+    margin-top: 60px !important;
+    font-size: 8px !important;
+  }
+
+  /* ── MAIN LAYOUT: stack left + right ── */
+  .account-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    padding: 12px 16px 48px !important;
+    max-width: 100% !important;
+  }
+
+  /* ── LEFT COLUMN ── */
+  .left-col {
+    width: 100% !important;
+  }
+
+  .profile-card {
+    padding: 24px 16px 20px !important;
+  }
+
+  .profile-avatar {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .info-item {
+    padding: 12px 14px !important;
+  }
+
+  .btn-logout {
+    padding: 12px !important;
+    font-size: 9px !important;
+  }
+
+  /* ── RIGHT COLUMN ── */
+  .right-col {
+    width: 100% !important;
+  }
+
+  /* ── STATS: 3 cols → stay 3 but smaller ── */
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .stat-card {
+    padding: 14px 8px !important;
+  }
+
+  .stat-value {
+    font-size: 22px !important;
+  }
+
+  .stat-label {
+    font-size: 7px !important;
+    letter-spacing: 1px !important;
+  }
+
+  /* ── QUICK LINKS: 3 cols → 3 cols (smaller) ── */
+  .quick-links {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .quick-card {
+    padding: 16px 8px !important;
+    gap: 6px !important;
+  }
+
+  .quick-icon {
+    font-size: 16px !important;
+  }
+
+  .quick-label {
+    font-size: 7px !important;
+    letter-spacing: 1px !important;
+    text-align: center !important;
+  }
+
+  /* ── BOTTOM ROW: side by side → stacked ── */
+  .bottom-row {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .panel {
+    padding: 18px 14px !important;
+  }
+
+  .panel-title {
+    font-size: 15px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .setting-link {
+    font-size: 10px !important;
+    padding: 12px 0 !important;
+  }
+
+  .toggle-wrap {
+    font-size: 10px !important;
+    padding: 12px 0 !important;
+  }
+
+  .btn-delete-acct {
+    font-size: 9px !important;
+    margin-top: 14px !important;
+  }
+
+  /* ── ACTIVITY ── */
+  .act-text {
+    font-size: 10px !important;
+  }
+
+  .act-time {
+    font-size: 8px !important;
+  }
+
+  /* ── MODAL ── */
+  .modal-box {
+    width: 90vw !important;
+    max-width: 340px !important;
+    padding: 24px 18px !important;
+  }
+
+  /* ── FOOTER ── */
+  .tymora-footer,
+  footer {
+    padding: 28px 16px 16px !important;
+    margin-top: 10px !important;
+  }
+
+  .footer-top,
+  .footer-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 22px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .footer-brand,
+  .footer-col {
+    width: 100% !important;
+  }
+
+  .footer-brand h2,
+  .footer-brand .nav-logo {
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .footer-brand p,
+  .footer-tagline {
+    font-size: 10px !important;
+    line-height: 1.6 !important;
+  }
+
+  .footer-right,
+  .footer-badges {
+    display: none !important;
+  }
+
+  .footer-bottom {
+    flex-direction: column !important;
+    gap: 10px !important;
+    text-align: center !important;
+    padding-top: 14px !important;
+    font-size: 8px !important;
+  }
+
+  .footer-cities {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    font-size: 8px !important;
+  }
+
+  .footer-line {
+    margin: 0 !important;
+  }
+}
+
+/* ── Extra small (≤400px) ── */
+@media (max-width: 400px) {
+
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .stat-value {
+    font-size: 18px !important;
+  }
+
+  .quick-links {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .account-wrap {
+    padding: 10px 12px 40px !important;
+  }
+
+  .quick-label {
+    font-size: 6px !important;
+    letter-spacing: 0.5px !important;
+  }
+}

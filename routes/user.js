@@ -81,6 +81,8 @@ router.post("/updateAddress/:id",isAuth, updateAddress);
 router.get("/setDefault/:id",isAuth, setDefaultAddress);
 router.post("/deleteAddress/:id", isAuth, deleteAddress);
 
+
+
 router.use((req,res)=>{
    res.redirect('/user/register');
 });

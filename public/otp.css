@@ -213,3 +213,176 @@ html,body{
   border-bottom-color:#4caf50;
   animation:pulse-gold 0.6s ease;
 }
+/* ── RESPONSIVE ── */
+
+@media (max-width: 900px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .page {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Watch panel — full width, comes FIRST */
+  .left-panel {
+    width: 100%;
+    min-height: 360px;
+    border-right: none;
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    padding-bottom: 40px;
+  }
+
+  /* Subtle gold fade-line at the bottom edge */
+  .left-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.25), transparent);
+    pointer-events: none;
+  }
+
+  .brand-top {
+    left: 20px;
+    top: 20px;
+  }
+
+  .tagline {
+    bottom: 16px;
+  }
+
+  /* Form panel — full width, comes SECOND */
+  .right-panel {
+    width: 100%;
+    padding: 52px 20px 72px;
+    justify-content: center;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .form-brand {
+    font-size: 22px;
+    letter-spacing: 7px;
+  }
+
+  .form-title {
+    font-size: 22px;
+  }
+
+  .form-brand-underline {
+    margin-bottom: 22px;
+  }
+
+  .email-display {
+    margin-bottom: 20px;
+  }
+
+  /* OTP boxes — stretch evenly across full card width */
+  .otp-row {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .otp-box {
+    flex: 1;
+    width: auto;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .resend-row {
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    min-height: 310px;
+    padding-bottom: 28px;
+  }
+
+  /* Slightly smaller watch on small phones */
+  .watch-wrap svg {
+    width: 220px;
+    height: 220px;
+  }
+
+  .right-panel {
+    padding: 44px 16px 60px;
+  }
+
+  .form-brand {
+    font-size: 18px;
+    letter-spacing: 6px;
+  }
+
+  .form-title {
+    font-size: 19px;
+  }
+
+  /* OTP boxes — tighter on very small screens */
+  .otp-row {
+    gap: 6px;
+  }
+
+  .otp-box {
+    height: 46px;
+    font-size: 22px;
+  }
+
+  .resend-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .btn-verify {
+    padding: 12px;
+    font-size: 9px;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+  }
+
+  .change-email-line {
+    font-size: 9px;
+  }
+}
+/* ── OTP RESPONSIVE FIX ── */
+
+@media (max-width: 900px) {
+  .otp-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    width: 100%;
+  }
+
+  .otp-box {
+    flex: 1 1 0;
+    min-width: 0;        /* allows flex to shrink below default min-width */
+    width: 0;            /* forces flex to control the width entirely */
+    height: 52px;
+    font-size: 22px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .otp-row {
+    gap: 5px;
+  }
+
+  .otp-box {
+    height: 46px;
+    font-size: 19px;
+  }
+}

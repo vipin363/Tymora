@@ -95,6 +95,23 @@
     <!-- ══ PAGE 1: USER LIST ══ -->
     <main class="content">
 
+       <!-- Mobile-only search bar (hidden on desktop via CSS) -->
+  <form method="GET" action="/admin/users" class="mobile-search-bar" style="display:none">
+    <input type="text" name="search" placeholder="Search users..." value="{{search}}">
+    <select name="sort" class="sort-select">
+      <option value="latest" {{#if (eq sort "latest")}}selected{{/if}}>Latest</option>
+      <option value="oldest" {{#if (eq sort "oldest")}}selected{{/if}}>Oldest</option>
+    </select>
+    <select name="status" class="sort-select">
+      <option value="all" {{#if (eq status "all")}}selected{{/if}}>All</option>
+      <option value="blocked" {{#if (eq status "blocked")}}selected{{/if}}>Blocked</option>
+      <option value="active" {{#if (eq status "active")}}selected{{/if}}>Active</option>
+    </select>
+    <button type="submit" class="btn-search">Search</button>
+    {{#if search}}<a href="/admin/users" class="btn-clear">Clear</a>{{/if}}
+  </form>
+
+
   <!-- PAGE 1: USER LIST -->
   <div class="page {{#unless selectedUser}}active{{/unless}}" id="page-list">
 

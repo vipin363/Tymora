@@ -1,3 +1,5 @@
+{{!-- otp page --}}
+
 <link href="/adminOtp.css" rel="stylesheet">
 <div class="page">
 
@@ -184,22 +186,22 @@ let seconds = {{remaining}};
 
  function startTimer() {
   const interval = setInterval(() => {
-   if (seconds <= 0) {
-    clearInterval(interval);
-     timerText.textContent = "Expired";
-     resendBtn.disabled = false;
-     verifyBtn.disabled = true;
-    return;
-    }
-
-    seconds--;
 
     const m = String(Math.floor(seconds / 60)).padStart(2, '0');
     const s = String(seconds % 60).padStart(2, '0');
+    timerText.textContent = `${m}:${s}`;
 
-   timerText.textContent = `${m}:${s}`;
+    if (seconds <= 0) {
+      clearInterval(interval);
+      timerText.textContent = "Expired";
+      resendBtn.disabled = false;
+      verifyBtn.disabled = true;
+      return;
+    }
+
+    seconds--;
   }, 1000);
-} 
+}
 
 startTimer();
 

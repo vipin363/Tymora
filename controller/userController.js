@@ -1,9 +1,8 @@
 import userSchema from '../model/userModel.js';
 import bcrypt from 'bcrypt';
-import { sendOtpMail } from '../services/mailService.js';
 import cloudinary from "../config/cloudinary.js";
 import addressModel from "../model/addressModel.js";
-
+import { generateAndSaveOtp , verifyOtpFromDb} from "../services/otpService.js";
 
 export const loadRegister = async (req,res)=>{
     let message = req.query.message || "";
@@ -15,6 +14,7 @@ export const registerUser = async (req,res)=>{
     try{
         const {name,email,password} = req.body
         const user = await userSchema.findOne({email})
+
        
         if(user){
             return res.render('user/login',{message:"user already exists"})
@@ -26,19 +26,12 @@ export const registerUser = async (req,res)=>{
         if(!passwordPattern.test(password)){
             return res.render('user/register',{message:"Password must be strong (uppercase, lowercase, number, symbol)"})
         }
-        if(req.session.otp && req.session.otpExpiry && Date.now() < req.session.otpExpiry){
-         return res.redirect('/user/otp');
-              }
 
-        const otp =  Math.floor(100000 + Math.random()*900000);
 
             req.session.userData = { name,email,password };
-            req.session.otp = otp;
-            
-            await sendOtpMail(email, otp);
+            await generateAndSaveOtp({ email, purpose: "register" });
 
-            req.session.otpExpiry = Date.now() + 60 * 1000;
-
+req.session.changeEmailLink = "/user/register";  
             res.redirect("/user/otp");
     }catch(err){
         res.render('user/register',{message:'Something went wrong'})
@@ -167,19 +160,18 @@ export const forgotPassword = async(req,res)=>{
          return res.render('user/forgotPassword',{message:"Email not registered"});
       }
       req.session.userData = null;
-      req.session.otp = null;
-      req.session.otpExpiry = null;
 
-      const otp = Math.floor(100000 + Math.random()*900000);
+      // const otp = Math.floor(100000 + Math.random()*900000);
 
       req.session.resetEmail = email;
-      req.session.resetOtp = otp;
+      // req.session.resetOtp = otp;
       
-      await sendOtpMail(email, otp);
+      // await sendOtpMail(email, otp);
+await generateAndSaveOtp({ email, purpose: "forgot_password" });
 
-      req.session.resetOtpExpiry = Date.now() + 60000;
+      // req.session.resetOtpExpiry = Date.now() + 60000;
       req.session.save();
-
+      req.session.changeEmailLink = "/user/forgotPassword";
       return res.redirect('/user/forgotOtp');
 
    }catch(err){
@@ -229,8 +221,6 @@ export const resetPassword = async(req,res)=>{
       );
 
       req.session.resetEmail = null;
-      req.session.resetOtp = null;
-      req.session.resetOtpExpiry = null;
       req.session.resetVerified = null;
       return res.redirect(
         '/user/login?message=Password changed successfully&success=true'
@@ -392,14 +382,16 @@ export const changeEmail = async (req, res) => {
          return res.json({ success:false, message:"Email already exists" });
       }
 
-      const otp = Math.floor(100000 + Math.random()*900000);
+      // const otp = Math.floor(100000 + Math.random()*900000);
       
       req.session.changeEmail = email;
-      req.session.changeOtp = otp;
+      // req.session.changeOtp = otp;
       
       
-      await sendOtpMail(email, otp);
-      req.session.changeOtpExpiry = Date.now() + 60000;
+      // await sendOtpMail(email, otp);
+      // req.session.changeOtpExpiry = Date.now() + 60000;
+      await generateAndSaveOtp({ email, purpose: "change_email" });
+
       req.session.save();
 
       return res.json({ success:true });
@@ -415,23 +407,38 @@ export const verifyChangeEmail = async (req, res) => {
 
       const { otp } = req.body;
 
-      if (req.session.changeOtp == otp &&
-         Date.now() < req.session.changeOtpExpiry) {
+      // if (req.session.changeOtp == otp &&
+      //    Date.now() < req.session.changeOtpExpiry) {
 
-         await userSchema.findByIdAndUpdate(
-            req.session.user.id,
-            { email: req.session.changeEmail }
-         );
+      //    await userSchema.findByIdAndUpdate(
+      //       req.session.user.id,
+      //       { email: req.session.changeEmail }
+      //    );
 
-         // clear session
-         req.session.changeEmail = null;
-         req.session.changeOtp = null;
-         req.session.changeOtpExpiry = null;
+      //    req.session.changeEmail = null;
+      //    req.session.changeOtp = null;
+      //    req.session.changeOtpExpiry = null;
 
-         return res.json({ success:true });
-      }
+      //    return res.json({ success:true });
+      // }
+      const result = await verifyOtpFromDb({
+  email: req.session.changeEmail,
+  otp_code: otp,
+  purpose: "change_email"
+});
 
-      return res.json({ success:false, message:"Invalid OTP" });
+if (!result.success) {
+  return res.json({ success: false, message: "Invalid or expired OTP" });
+}
+
+// then continue with the email update logic...
+await userSchema.findByIdAndUpdate(
+  req.session.user.id,
+  { email: req.session.changeEmail }
+);
+req.session.changeEmail = null;
+return res.json({ success: true });
+
 
    } catch (err) {
        console.log(err);
@@ -446,12 +453,14 @@ export const resendChangeEmailOtp = async (req,res)=>{
          return res.json({ success:false, message:"Session expired" });
       }
 
-      const otp = Math.floor(100000 + Math.random()*900000);
+      // const otp = Math.floor(100000 + Math.random()*900000);
 
-      req.session.changeOtp = otp;
+      // req.session.changeOtp = otp;
       
-      await sendOtpMail(req.session.changeEmail, otp);
-      req.session.changeOtpExpiry = Date.now() + 60000;
+      // await sendOtpMail(req.session.changeEmail, otp);
+      // req.session.changeOtpExpiry = Date.now() + 60000;
+      await generateAndSaveOtp({ email: req.session.changeEmail, purpose: "change_email" });
+
       
       return res.json({ success:true });
 
@@ -532,7 +541,6 @@ if(!currentPassword || !newPassword || !confirmPassword){
   return res.json({ success:false, message:"All fields required" });
 }
 
-// password strength
 const passwordPattern =
 /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
@@ -540,19 +548,17 @@ if(!passwordPattern.test(newPassword)){
   return res.json({ success:false, message:"Weak password" });
 }
 
-// check same password
+
 if(currentPassword === newPassword){
   return res.json({ success:false, message:"New password must be different" });
 }
 
-//  NOW CHECK CURRENT PASSWORD
+
 const isMatch = await bcrypt.compare(currentPassword, user.password);
 
 if(!isMatch){
   return res.json({ success:false, message:"Current password incorrect" });
 }
-
-// confirm password
 if(newPassword !== confirmPassword){
   return res.json({ success:false, message:"Passwords do not match" });
 }
@@ -714,3 +720,6 @@ export const deleteAddress = async (req,res)=>{
     res.redirect("/user/address");
   }
 };
+
+
+

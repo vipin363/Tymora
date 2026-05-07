@@ -12,4 +12,51 @@
 {{{body}}}
 
 </body>
+
+<script>
+  const hamburger = document.getElementById('hamburgerBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const menuOverlay = document.getElementById('menuOverlay');
+  const menuClose = document.getElementById('menuClose');
+
+  function openMenu() {
+    hamburger.classList.add('open');
+    mobileMenu.classList.add('open');
+    menuOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    hamburger.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    menuOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', openMenu);
+  menuClose.addEventListener('click', closeMenu);
+  menuOverlay.addEventListener('click', closeMenu);
+
+  // close on link click
+  mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+   /* ── MOBILE SEARCH ── */
+    const searchToggle      = document.getElementById('searchToggle');
+    const mobileSearchBar   = document.getElementById('mobileSearchBar');
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
+
+    searchToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const isOpen = mobileSearchBar.classList.toggle('open');
+        if (isOpen) mobileSearchInput.focus();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!searchToggle.contains(e.target) && !mobileSearchBar.contains(e.target)) {
+            mobileSearchBar.classList.remove('open');
+        }
+    });
+</script>
 </html>

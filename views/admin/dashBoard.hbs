@@ -70,4 +70,27 @@
 function closeLogoutModal() {
   document.getElementById("logoutModal").style.display = "none";
 }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+  }
+
+  function openLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'flex';
+  }
+
+  function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+  }
+
+  // Close sidebar when a nav link is clicked (mobile UX)
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 780) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('open');
+      }
+    });
+  });
 </script>

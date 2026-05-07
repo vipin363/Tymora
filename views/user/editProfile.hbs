@@ -2,8 +2,14 @@
 <link href="/footer.css" rel="stylesheet">
 <link href="/navBar.css" rel="stylesheet">
 <link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/userHome.css">
 
 <nav>
+   <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
     <a class="nav-logo" href="#">TYMORA</a>
 
     <ul class="nav-links">
@@ -22,6 +28,14 @@
             </svg>
             <input type="text" placeholder="Search watches…" />
         </div>
+          <!-- MOBILE search icon (hidden on desktop) -->
+        <button class="nav-search-toggle" id="searchToggle" title="Search" aria-label="Search">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
+        </button>
+
 
         <button class="nav-icon-btn" title="Wishlist">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -57,6 +71,23 @@
     {{/if}}
     </div>
 </nav>
+
+<!-- MOBILE SEARCH DROPDOWN -->
+<div class="mobile-search-bar" id="mobileSearchBar">
+    <input type="text" id="mobileSearchInput" placeholder="Search watches…" />
+</div>
+
+<div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-menu-close" id="menuClose">✕</button>
+    <ul>
+        <li><a href="#" class="active">Home</a></li>
+        <li><a href="#">Collections</a></li>
+        <li><a href="#">Shop</a></li>
+        <li><a href="#">Deals</a></li>
+        <li><a href="#">About Us</a></li>
+    </ul>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div> 
 <!-- BREADCRUMB -->
 <div class="breadcrumb">
   <a href="/user/home">Home</a>
@@ -289,4 +320,6 @@ function removeDpConfirmed() {
   closeRemoveDpModal();
 }
 
+
 </script>
+

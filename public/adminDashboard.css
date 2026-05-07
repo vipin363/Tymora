@@ -218,3 +218,17 @@
 .admin-info {
   margin-left: auto;
 }
+@media (max-width: 780px) {
+  .admin-meta {
+    display: flex;  /* override the display:none */
+  }
+
+  .admin-meta .admin-name {
+    font-size: 12px;
+  }
+
+  /* Hide the status dot on mobile to save space */
+  .admin-meta .admin-status {
+    display: none;
+  }
+}
