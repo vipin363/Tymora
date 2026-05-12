@@ -1,0 +1,1300 @@
+<link href="/adminUserManagement.css" rel="stylesheet">
+<link href="/adminProductManagement.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">
+        <div class="logo-icon">T</div>
+        <div class="logo-text">
+          <div class="name">Tymora</div>
+          <div class="tagline">Tym of Refined Aesthetics</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+     <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}" href="/admin/dashboard">Dashboard</a>
+      <a class="nav-item" href="/admin/categoryManagement">Category management</a>
+      <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}" href="/admin/products">Products</a>
+     <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
+      <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
+      <div class="nav-label" style="margin-top:12px">Store</div>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Returns</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
+    </div>
+    <div class="nav-footer">
+      <a class="nav-item logout" href="#" onclick="openLogoutModal()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      
+    
+
+      <form method="GET" action="/admin/products" class="search-bar" id="filterForm">
+        <input type="text" name="search" placeholder="Search products..." value="{{search}}">
+        <select name="sort" class="sort-select">
+          <option value="latest" {{#if (eq sort "latest")}}selected{{/if}}>Latest</option>
+          <option value="oldest" {{#if (eq sort "oldest")}}selected{{/if}}>Oldest</option>
+          <option value="price_asc" {{#if (eq sort "price_asc")}}selected{{/if}}>Price ↑</option>
+          <option value="price_desc" {{#if (eq sort "price_desc")}}selected{{/if}}>Price ↓</option>
+        </select>
+        <select name="status" class="sort-select">
+          <option value="all" {{#if (eq status "all")}}selected{{/if}}>All Status</option>
+          <option value="active" {{#if (eq status "active")}}selected{{/if}}>Active</option>
+          <option value="inactive" {{#if (eq status "inactive")}}selected{{/if}}>Inactive</option>
+        </select>
+        <select name="category" class="sort-select">
+          <option value="all" {{#if (eq category "all")}}selected{{/if}}>All Categories</option>
+          {{#each categories}}
+          <option value="{{this._id}}" {{#if (eq ../category (toString this._id))}}selected{{/if}}>{{this.name}}</option>
+          {{/each}}
+        </select>
+        <select name="brand" class="sort-select">
+  <option value="all" {{#if (eq brand "all")}}selected{{/if}}>All Brands</option>
+  {{#each brands}}
+  <option value="{{this._id}}" {{#if (eq ../brand (toString this._id))}}selected{{/if}}>{{this.name}}</option>
+  {{/each}}
+</select>
+        <button type="submit" class="btn-search">Search</button>
+        {{#if search}}
+        <a href="/admin/products" class="btn-clear">Clear</a>
+        {{/if}}
+      </form>
+
+      <div class="admin-info">
+        <div class="admin-avatar">A</div>
+        <div class="admin-meta">
+          <div class="admin-name">Admin</div>
+        </div>
+      </div>
+    </header>
+
+     <main class="content">
+
+      <!-- PRODUCT LIST PAGE -->
+      {{#unless selectedProduct}}
+      <div class="page active" id="page-list">
+
+        <div class="page-header">
+          <div>
+            <h2>Product Management</h2>
+            <p>Manage your store products.</p>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-trash" onclick="openTrashModal()">🗑 Trash <span class="trash-badge">{{stats.trashCount}}</span></button>
+            <button class="btn-primary" onclick="openAddModal()">+ Add Product</button>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="slabel">Total Products</div>
+            <div class="svalue">{{stats.totalProducts}}</div>
+          </div>
+          <div class="stat-card">
+            <div class="slabel">Active Products</div>
+            <div class="svalue">{{stats.activeProducts}}</div>
+          </div>
+          <div class="stat-card">
+            <div class="slabel">Inactive Products</div>
+            <div class="svalue">{{stats.inactiveProducts}}</div>
+          </div>
+          <div class="stat-card">
+            <div class="slabel">Out of Stock</div>
+            <div class="svalue">{{stats.outOfStock}}</div>
+          </div>
+          <div class="stat-card">
+            <div class="slabel">Trash</div>
+            <div class="svalue">{{stats.trashCount}}</div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each products}}
+              <tr id="product-row-{{this._id}}">
+                <td>
+                  <div class="product-cell">
+                    <div class="product-thumb">
+                      {{#if this.images.[0]}}
+                        <img src="{{this.images.[0]}}" alt="{{this.name}}">
+                      {{else}}
+                        <span>{{this.initials}}</span>
+                      {{/if}}
+                    </div>
+                    <div>
+                      <div class="pname">{{this.name}}</div>
+                      <div class="psku">SKU: {{this.sku}}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{this.category}}</td>
+                <td>{{this.brand}}</td>
+                <td>₹{{this.price}}</td>
+                <td>
+                  {{#if (eq this.stockStatus "IN_STOCK")}}
+                    <span class="stock-badge in-stock">{{this.stock}} In Stock</span>
+                  {{else if (eq this.stockStatus "LOW_STOCK")}}
+                    <span class="stock-badge low-stock">{{this.stock}} Low</span>
+                  {{else}}
+                    <span class="stock-badge out-stock">Out of Stock</span>
+                  {{/if}}
+                </td>
+                <td>
+                  {{#if (eq this.status "active")}}
+                    <span class="badge s-active">ACTIVE</span>
+                  {{else}}
+                    <span class="badge s-inactive">INACTIVE</span>
+                  {{/if}}
+                </td>
+                <td>
+                  <button class="act-btn" title="View" onclick="window.location.href='/admin/products/{{this._id}}'">👁</button>
+                  <button class="act-btn" title="Edit" onclick="openEditModal('{{this._id}}')">✏️</button>
+                  <button class="act-btn danger" title="Delete" onclick="openDeleteModal('{{this._id}}','{{this.name}}')">🗑</button>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+
+          {{#unless products.length}}
+          <div style="text-align:center;padding:40px;color:#aaa">No products found.</div>
+          {{/unless}}
+
+          <div class="pagination">
+            {{#if (gt currentPage 1)}}
+              <a href="/admin/products?page={{subtract currentPage 1}}&search={{search}}&status={{status}}&category={{category}}&sort={{sort}}">Prev</a>
+            {{/if}}
+            <span>Page {{currentPage}} of {{totalPages}}</span>
+            {{#if (lt currentPage totalPages)}}
+              <a href="/admin/products?page={{add currentPage 1}}&search={{search}}&status={{status}}&category={{category}}&sort={{sort}}">Next</a>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+      {{/unless}}
+
+      <!-- PRODUCT DETAIL PAGE -->
+     {{#if selectedProduct}}
+<div class="page active" id="page-detail" data-product-id="{{selectedProduct._id}}">
+
+  <!-- BREADCRUMB -->
+  <div class="pd-breadcrumb">
+    <a href="/admin/products" class="pd-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Products
+    </a>
+    <span class="pd-bc-sep">/</span>
+    <span class="pd-bc-cur">{{selectedProduct.name}}</span>
+  </div>
+
+  <!-- TOP ACTION BAR -->
+  <div class="pd-topbar">
+    <div class="pd-topbar-left">
+      <h2 class="pd-title">{{selectedProduct.name}}</h2>
+      <div class="pd-badges">
+        {{#if (eq selectedProduct.status "active")}}
+          <span class="badge s-active">● Active</span>
+        {{else}}
+          <span class="badge s-inactive">● Inactive</span>
+        {{/if}}
+        <span class="pd-price-tag">BASE PRICE ₹{{selectedProduct.price}}</span>
+        {{#if selectedProduct.discount}}
+          <span class="badge s-active">{{selectedProduct.discount}}% OFF</span>
+        {{/if}}
+      </div>
+    </div>
+    <div class="pd-topbar-actions">
+      <button class="btn-primary" onclick="openAddVariantModal('{{selectedProduct._id}}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Variant
+      </button>
+      <button class="btn-warning" onclick="openEditModal('{{selectedProduct._id}}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Product
+      </button>
+      <button class="btn-danger" onclick="openDeleteModal('{{selectedProduct._id}}','{{selectedProduct.name}}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="pd-stats-row">
+    <div class="pd-stat-card">
+      <div class="pd-stat-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      </div>
+      <div>
+        <div class="pd-stat-label">Total Stock</div>
+        <div class="pd-stat-value">{{selectedProduct.stock}} <span class="pd-stat-unit">units</span></div>
+      </div>
+    </div>
+    <div class="pd-stat-card">
+      <div class="pd-stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      </div>
+      <div>
+        <div class="pd-stat-label">Total Sales</div>
+        <div class="pd-stat-value">0 <span class="pd-stat-unit">orders</span></div>
+      </div>
+    </div>
+    <div class="pd-stat-card">
+      <div class="pd-stat-icon orange">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+      </div>
+      <div>
+        <div class="pd-stat-label">Total Returns</div>
+        <div class="pd-stat-value">0 <span class="pd-stat-unit">returned</span></div>
+      </div>
+    </div>
+    <div class="pd-stat-card">
+      <div class="pd-stat-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <div>
+        <div class="pd-stat-label">Revenue</div>
+        <div class="pd-stat-value">₹0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN BODY: GALLERY + DETAILS SIDE BY SIDE -->
+  <div class="pd-body-grid">
+
+    <!-- GALLERY COLUMN -->
+    <div class="pd-gallery-col">
+      <div class="pd-gallery-main">
+        {{#if selectedProduct.images.[0]}}
+          <img src="{{selectedProduct.images.[0]}}" alt="{{selectedProduct.name}}" id="galleryMain">
+        {{else}}
+          <div class="pd-gallery-placeholder">No Image</div>
+        {{/if}}
+      </div>
+      <div class="pd-gallery-thumbs">
+        {{#each selectedProduct.images}}
+          <div class="pd-thumb {{#if @first}}active{{/if}}" onclick="switchImage('{{this}}', this)">
+            <img src="{{this}}" alt="thumb {{@index}}">
+          </div>
+        {{/each}}
+      </div>
+    </div>
+
+    <!-- DETAILS COLUMN -->
+    <div class="pd-details-col">
+
+      <!-- Product Info Card -->
+      <div class="pd-info-card">
+        <div class="pd-card-title">Product Details</div>
+        <div class="pd-info-grid">
+          <div class="pd-info-row">
+            <span class="pd-info-label">Category</span>
+            <span class="pd-info-value">{{selectedProduct.category}}</span>
+          </div>
+          <div class="pd-info-row">
+            <span class="pd-info-label">Brand</span>
+            <span class="pd-info-value">{{selectedProduct.brand}}</span>
+          </div>
+          <div class="pd-info-row">
+            <span class="pd-info-label">Gender</span>
+            <span class="pd-info-value">{{selectedProduct.gender}}</span>
+          </div>
+          <div class="pd-info-row">
+            <span class="pd-info-label">SKU</span>
+            <span class="pd-info-value mono">{{selectedProduct.sku}}</span>
+          </div>
+          <div class="pd-info-row">
+            <span class="pd-info-label">Stock</span>
+            <span class="pd-info-value">{{selectedProduct.stock}} units</span>
+          </div>
+          <div class="pd-info-row">
+            <span class="pd-info-label">Discount</span>
+            <span class="pd-info-value">{{selectedProduct.discount}}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visibility Card -->
+      <div class="pd-info-card">
+        <div class="pd-card-title">Visibility & Offers</div>
+        <div class="pd-toggle-info">
+          <span>Featured Product</span>
+          <span class="badge {{#if selectedProduct.featured}}s-active{{else}}s-inactive{{/if}}">
+            {{#if selectedProduct.featured}}Yes{{else}}No{{/if}}
+          </span>
+        </div>
+        <div class="pd-toggle-info">
+          <span>Deal of the Day</span>
+          <span class="badge {{#if selectedProduct.dealOfTheDay}}s-active{{else}}s-inactive{{/if}}">
+            {{#if selectedProduct.dealOfTheDay}}Yes{{else}}No{{/if}}
+          </span>
+        </div>
+        <div class="pd-toggle-info">
+          <span>Offer Product</span>
+          <span class="badge {{#if selectedProduct.offerProduct}}s-active{{else}}s-inactive{{/if}}">
+            {{#if selectedProduct.offerProduct}}Yes{{else}}No{{/if}}
+          </span>
+        </div>
+      </div>
+
+      <!-- Description Card -->
+      <div class="pd-info-card">
+        <div class="pd-card-title">Description</div>
+        <p class="pd-description">{{selectedProduct.description}}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- VARIANT MANAGEMENT SECTION -->
+  <div class="pd-variant-section">
+    <div class="pd-variant-header">
+      <div class="pd-variant-header-left">
+        <h3 class="pd-variant-title">Variant Management</h3>
+        <span class="pd-variant-count" id="variantCountBadge">— Variants</span>
+      </div>
+      <div class="pd-variant-header-right">
+        <div class="pd-variant-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="variantSearchInput" placeholder="Search variants..." oninput="filterVariants(this.value)">
+        </div>
+        <select id="variantStockSort" class="sort-select" onchange="sortVariants(this.value)">
+          <option value="">All Stock</option>
+          <option value="in_stock">In Stock</option>
+          <option value="low_stock">Low Stock</option>
+          <option value="out_stock">Out of Stock</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Variant Table -->
+    <div class="table-card" style="margin-top:0">
+      <table id="variantTable">
+        <thead>
+          <tr>
+            <th>Preview</th>
+            <th>Variant Name</th>
+            <th>Color</th>
+            <th>Size / Storage</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="variantTableBody">
+          <!-- Variants will be loaded here via JS -->
+          <tr>
+            <td colspan="7" style="text-align:center;padding:40px;color:#aaa">
+              Loading variants...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{{/if}}
+
+    </main>
+  </div>
+</div>
+
+
+<!-- ══ ADD/EDIT DRAWER ══ -->
+<div class="drawer-overlay" id="productDrawer">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h3 id="drawerTitle">Add Product</h3>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <form id="productForm">
+        <input type="hidden" id="productId">
+
+        <!-- Basic Info -->
+        <div class="drawer-section-label">Basic Information</div>
+
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input type="text" id="fName" placeholder="e.g. Heritage Automatic 42mm" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="fCategory" required>
+              <option value="">Select category</option>
+              {{#each categories}}
+              <option value="{{this._id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="fGender">
+              <option value="unisex">Unisex</option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Brand *</label>
+          <select id="fBrand" required onchange="handleBrandChange(this.value)">
+            <option value="">Select brand</option>
+            {{#each brands}}
+            <option value="{{this._id}}">{{this.name}}</option>
+            {{/each}}
+            <option value="other">+ Other Brand</option>
+          </select>
+        </div>
+        <div class="form-group" id="newBrandWrap" style="display:none">
+          <label>New Brand Name *</label>
+          <input type="text" id="fNewBrand" placeholder="Enter new brand name">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="fDesc" rows="3" placeholder="Product description..."></textarea>
+        </div>
+
+        <!-- Pricing & Stock -->
+        <div class="drawer-section-label">Pricing & Stock</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price (₹) *</label>
+            <input type="number" id="fPrice" placeholder="0" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Stock *</label>
+            <input type="number" id="fStock" placeholder="0" min="0" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>SKU</label>
+            <input type="text" id="fSku" placeholder="TYM-W-001">
+          </div>
+          <div class="form-group">
+            <label>Discount %</label>
+            <input type="number" id="fDiscount" placeholder="0" min="0" max="100">
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Visibility Toggles -->
+        <div class="drawer-section-label">Visibility</div>
+        <div class="toggle-row">
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-label">Featured Product</div>
+              <div class="toggle-sub">Show in featured section</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="fFeatured">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-label">Deal of the Day</div>
+              <div class="toggle-sub">Highlight as daily deal</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="fDealOfDay">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-label">Offer Product</div>
+              <div class="toggle-sub">Mark as special offer</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="fOfferProduct">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Images -->
+        <div class="drawer-section-label">Product Images</div>
+        <div class="form-group">
+          <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('rawImageInput').click()">
+            <div class="upload-icon">📁</div>
+            <p>Click to select images</p>
+            <small>JPG, PNG, WEBP — select multiple</small>
+          </div>
+          <input type="file" id="rawImageInput" accept="image/*" multiple style="display:none" onchange="handleRawImages(event)">
+          <div class="image-preview-grid" id="imagePreviewGrid"></div>
+          <div class="image-count-note" id="imageCountNote"></div>
+        </div>
+
+      </form>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-cancel-outline" onclick="closeDrawer()">Cancel</button>
+      <button class="btn-primary" id="drawerSubmitBtn" onclick="submitProductForm()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ══ CROPPER MODAL ══ -->
+<div class="cropper-overlay" id="cropperModal">
+  <div class="cropper-box">
+    <h3>Crop Image</h3>
+    <p>Move & zoom the image to frame your shot, then click "Crop & Add"</p>
+    <div class="crop-img-wrap">
+      <img id="cropperImg" alt="crop">
+    </div>
+    <div class="cropper-hint">🔍 Scroll to zoom · Drag to reposition</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="skipCrop()">Skip (use original)</button>
+      <button class="btn-confirm green" onclick="applyCrop()">Crop & Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-icon danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18"/><path d="M8 6v14h8V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 6l1-3h12l1 3"/>
+      </svg>
+    </div>
+    <h3>Delete Product</h3>
+    <p>This is a soft delete — the product moves to trash and can be restored later.</p>
+    <div class="confirm-label">Type DELETE to confirm</div>
+    <input class="confirm-input" id="delConfirmInput" placeholder="DELETE">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmDelete()">Move to Trash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRASH MODAL ══ -->
+<div class="modal-overlay" id="trashModal">
+  <div class="modal trash-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="margin:0">🗑 Trash</h3>
+      <button class="drawer-close" onclick="closeTrashModal()">✕</button>
+    </div>
+    <div id="trashList" class="trash-list">
+      <div style="text-align:center;color:#aaa;padding:30px">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PERMANENT DELETE CONFIRM ══ -->
+<div class="modal-overlay" id="permDeleteModal">
+  <div class="modal">
+    <div class="modal-icon danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18"/><path d="M8 6v14h8V6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+      </svg>
+    </div>
+    <h3>Permanently Delete</h3>
+    <p>This action <b>cannot be undone</b>. The product will be permanently removed from the database.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closePermDeleteModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmPermDelete()">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOGOUT MODAL ══ -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <h3>Confirm Logout</h3>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+
+<script>
+// ── SIDEBAR ──────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+// ── LOGOUT ───────────────────────────────────────────
+function openLogoutModal()  { document.getElementById('logoutModal').classList.add('open'); }
+function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
+function confirmLogout()    { window.location.href = '/admin/logout'; }
+
+// ── GALLERY (detail page) ────────────────────────────
+function switchImage(src, el) {
+  const main = document.getElementById('galleryMain');
+  if (main) main.src = src;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ── BRAND CHANGE ─────────────────────────────────────
+function handleBrandChange(val) {
+  document.getElementById('newBrandWrap').style.display = val === 'other' ? 'block' : 'none';
+  if (val !== 'other') document.getElementById('fNewBrand').value = '';
+}
+
+// ── DRAWER ────────────────────────────────────────────
+let drawerMode = 'add';
+
+function openAddModal() {
+  drawerMode = 'add';
+  document.getElementById('drawerTitle').textContent = 'Add Product';
+  document.getElementById('drawerSubmitBtn').textContent = 'Add Product';
+  document.getElementById('productForm').reset();
+  document.getElementById('productId').value = '';
+  document.getElementById('newBrandWrap').style.display = 'none';
+  clearImagePreviews();
+  document.getElementById('productDrawer').classList.add('open');
+}
+
+function openEditModal(id) {
+  drawerMode = 'edit';
+  document.getElementById('drawerTitle').textContent = 'Edit Product';
+  document.getElementById('drawerSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('productId').value = id;
+  clearImagePreviews();
+
+  fetch(`/admin/products/${id}/json`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('fName').value     = data.name        || '';
+      document.getElementById('fDesc').value     = data.description || '';
+      document.getElementById('fPrice').value    = data.price       || '';
+      document.getElementById('fStock').value    = data.stock       || '';
+      document.getElementById('fSku').value      = data.sku         || '';
+      document.getElementById('fDiscount').value = data.discount    || '';
+      document.getElementById('fStatus').value   = data.status      || 'active';
+      document.getElementById('fGender').value   = data.gender      || 'unisex';
+      document.getElementById('fCategory').value = data.categoryId  || '';
+      document.getElementById('fFeatured').checked    = !!data.featured;
+      document.getElementById('fDealOfDay').checked   = !!data.dealOfTheDay;
+      document.getElementById('fOfferProduct').checked = !!data.offerProduct;
+
+      const brandSelect = document.getElementById('fBrand');
+      if (data.brandId) {
+        const opt = brandSelect.querySelector(`option[value="${data.brandId}"]`);
+        if (opt) brandSelect.value = data.brandId;
+      }
+      document.getElementById('newBrandWrap').style.display = 'none';
+
+      if (data.images && data.images.length) {
+        data.images.forEach(url => addExistingImagePreview(url));
+      }
+    })
+    .catch(() => showToast('Failed to load product data', 'red'));
+
+  document.getElementById('productDrawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('productDrawer').classList.remove('open');
+  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+}
+
+async function submitProductForm() {
+  const id = document.getElementById('productId').value;
+  const name = document.getElementById('fName').value.trim();
+  const category = document.getElementById('fCategory').value;
+  const brand = document.getElementById('fBrand').value;
+  const newBrand = document.getElementById('fNewBrand').value.trim();
+  const price = document.getElementById('fPrice').value;
+  const stock = document.getElementById('fStock').value;
+
+  if (!name) { showToast('Product name is required', 'blue'); return; }
+  if (!category) { showToast('Please select a category', 'blue'); return; }
+  if (!brand) { showToast('Please select a brand', 'blue'); return; }
+  if (brand === 'other' && !newBrand) { showToast('Please enter new brand name', 'blue'); return; }
+  if (!price) { showToast('Price is required', 'blue'); return; }
+  if (!stock && stock !== '0') { showToast('Stock is required', 'blue'); return; }
+
+  const totalImages = croppedBlobs.length + existingImageUrls.length;
+  if (totalImages < 1) { showToast('Please add at least 1 image', 'blue'); return; }
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('category', category);
+  fd.append('brand', brand);
+  if (brand === 'other') fd.append('newBrand', newBrand);
+  fd.append('description', document.getElementById('fDesc').value);
+  fd.append('gender', document.getElementById('fGender').value);
+  fd.append('price', price);
+  fd.append('stock', stock);
+  fd.append('sku', document.getElementById('fSku').value);
+  fd.append('discount', document.getElementById('fDiscount').value || '0');
+  fd.append('status', document.getElementById('fStatus').value);
+  fd.append('featured', document.getElementById('fFeatured').checked);
+  fd.append('dealOfTheDay', document.getElementById('fDealOfDay').checked);
+  fd.append('offerProduct', document.getElementById('fOfferProduct').checked);
+  existingImageUrls.forEach(url => fd.append('existingImages', url));
+  croppedBlobs.forEach((blob, i) => fd.append('images', blob, `image_${i}.jpg`));
+
+  const url = drawerMode === 'add' ? '/admin/products/add' : `/admin/products/edit/${id}`;
+  const btn = document.getElementById('drawerSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: fd
+    });
+    const data = await r.json();
+    if (!data.success) { showToast(data.message || 'Error', 'red'); return; }
+    closeDrawer();
+    showToast(drawerMode === 'add' ? 'Product added!' : 'Product updated!', 'green');
+    await refreshProductTable(); // ← AJAX refresh instead of reload
+    await refreshBrandDropdown();
+  } catch (e) {
+    showToast('Network error', 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = drawerMode === 'add' ? 'Add Product' : 'Save Changes';
+  }
+}
+
+// ── IMAGE + CROPPER ───────────────────────────────────
+let cropperInstance   = null;
+let rawFilesQueue     = [];
+let croppedBlobs      = [];
+let existingImageUrls = [];
+
+function clearImagePreviews() {
+  croppedBlobs = []; existingImageUrls = []; rawFilesQueue = [];
+  document.getElementById('imagePreviewGrid').innerHTML = '';
+  updateImageCount();
+}
+
+function handleRawImages(event) {
+  rawFilesQueue = Array.from(event.target.files);
+  event.target.value = '';
+  processNextInQueue();
+}
+
+function processNextInQueue() {
+  if (!rawFilesQueue.length) return;
+  const file = rawFilesQueue.shift();
+  const reader = new FileReader();
+  reader.onload = e => openCropperModal(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+function openCropperModal(src) {
+  if (cropperInstance) {
+    try { cropperInstance.destroy(); } catch(e) {}
+    cropperInstance = null;
+  }
+
+  const modal = document.getElementById('cropperModal');
+  modal.classList.remove('open');
+
+  const wrap = document.querySelector('.crop-img-wrap');
+  wrap.innerHTML = '<img id="cropperImg" alt="crop">';
+  const img = document.getElementById('cropperImg');
+
+  modal.classList.add('open');
+
+  img.onload = () => {
+    try {
+      cropperInstance = new Cropper(img, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 0.9,
+        dragMode: 'move',
+        movable: true,
+        zoomable: true,
+        scalable: false,
+        rotatable: false,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        guides: true,
+        center: true,
+        highlight: true,
+        background: false
+      });
+    } catch(e) {
+      console.error('Cropper init failed:', e);
+    }
+  };
+
+  img.src = src;
+}
+
+function applyCrop() {
+  if (!cropperInstance) return;
+  cropperInstance.getCroppedCanvas({ width: 800, height: 800 }).toBlob(blob => {
+    const idx = croppedBlobs.length;
+    croppedBlobs.push(blob);
+    addCroppedPreview(blob, idx);
+    closeCropperModal();
+    processNextInQueue();
+    updateImageCount();
+  }, 'image/jpeg', 0.9);
+}
+
+function skipCrop() {
+  const img = document.getElementById('cropperImg');
+  fetch(img.src)
+    .then(r => r.blob())
+    .then(blob => {
+      const idx = croppedBlobs.length;
+      croppedBlobs.push(blob);
+      addCroppedPreview(blob, idx);
+      closeCropperModal();
+      processNextInQueue();
+      updateImageCount();
+    });
+}
+
+function closeCropperModal() {
+  document.getElementById('cropperModal').classList.remove('open');
+  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+}
+
+function addCroppedPreview(blob, index) {
+  const url = URL.createObjectURL(blob);
+  const grid = document.getElementById('imagePreviewGrid');
+  const div = document.createElement('div');
+  div.className = 'preview-item';
+  div.id = `cropped-preview-${index}`;
+  div.innerHTML = `
+    <img src="${url}" alt="preview">
+    <button type="button" class="remove-img" onclick="removeCroppedImage(${index}, this.parentElement)">✕</button>
+    <span class="preview-label">New</span>`;
+  grid.appendChild(div);
+}
+
+function addExistingImagePreview(url) {
+  existingImageUrls.push(url);
+  const grid = document.getElementById('imagePreviewGrid');
+  const div = document.createElement('div');
+  div.className = 'preview-item existing';
+  div.innerHTML = `
+    <img src="${url}" alt="existing">
+    <button type="button" class="remove-img" onclick="removeExistingImage('${url}', this.parentElement)">✕</button>
+    <span class="preview-label">Saved</span>`;
+  grid.appendChild(div);
+  updateImageCount();
+}
+
+function removeCroppedImage(index, el) {
+  croppedBlobs.splice(index, 1);
+  el.remove();
+  document.querySelectorAll('#imagePreviewGrid .preview-item:not(.existing)').forEach((item, i) => {
+    item.id = `cropped-preview-${i}`;
+    const btn = item.querySelector('.remove-img');
+    if (btn) btn.setAttribute('onclick', `removeCroppedImage(${i}, this.parentElement)`);
+  });
+  updateImageCount();
+}
+
+function removeExistingImage(url, el) {
+  existingImageUrls = existingImageUrls.filter(u => u !== url);
+  el.remove();
+  updateImageCount();
+}
+
+function updateImageCount() {
+  const total = croppedBlobs.length + existingImageUrls.length;
+  const note = document.getElementById('imageCountNote');
+  if (!note) return;
+  note.textContent = `${total} image${total !== 1 ? 's' : ''} selected${total < 1 ? ' — at least 1 required' : ' ✓'}`;
+  note.style.color = total < 1 ? '#dc2626' : '#16a34a';
+}
+
+// ── DELETE (SOFT) ─────────────────────────────────────
+let deleteProductId = null;
+
+function openDeleteModal(id, name) {
+  deleteProductId = id;
+  document.getElementById('delConfirmInput').value = '';
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteProductId = null;
+}
+
+async function confirmDelete() {
+  if (!deleteProductId) return;
+  if (document.getElementById('delConfirmInput').value.trim() !== 'DELETE') {
+    showToast('Type DELETE to confirm', 'blue'); return;
+  }
+  try {
+    const r = await fetch(`/admin/products/delete/${deleteProductId}`, {
+      method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await r.json();
+    if (!data.success) { showToast(data.message || 'Error', 'red'); return; }
+    closeDeleteModal();
+    showToast('Product moved to trash', 'red');
+    await refreshProductTable(); // ← AJAX refresh
+  } catch (e) {
+    showToast('Network error', 'red');
+  }
+}
+
+// ── TRASH ─────────────────────────────────────────────
+async function openTrashModal() {
+  document.getElementById('trashModal').classList.add('open');
+  const list = document.getElementById('trashList');
+  list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">Loading...</div>';
+  try {
+    const r = await fetch('/admin/products/trash');
+    const data = await r.json();
+    if (!data.success || !data.products.length) {
+      list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">Trash is empty.</div>';
+      return;
+    }
+    list.innerHTML = data.products.map(p => `
+      <div class="trash-item" id="trash-item-${p._id}">
+        <div class="trash-thumb">
+          ${p.image ? `<img src="${p.image}" alt="">` : `<span>${p.initials}</span>`}
+        </div>
+        <div class="trash-info">
+          <div class="trash-name">${p.name}</div>
+          <div class="trash-meta">${p.category} · ${p.brand}</div>
+          <div class="trash-date">Deleted: ${p.deletedAt}</div>
+        </div>
+        <div class="trash-actions">
+          <button class="act-btn" onclick="restoreProduct('${p._id}')">↩ Restore</button>
+          <button class="act-btn danger" onclick="openPermDeleteModal('${p._id}', '${p.name}')">🗑 Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;color:#e53;padding:30px">Failed to load trash.</div>';
+  }
+}
+
+function closeTrashModal() {
+  document.getElementById('trashModal').classList.remove('open');
+}
+
+async function restoreProduct(id) {
+  try {
+    const r = await fetch(`/admin/products/restore/${id}`, {
+      method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await r.json();
+    if (!data.success) { showToast('Failed to restore', 'red'); return; }
+    document.getElementById(`trash-item-${id}`)?.remove();
+    showToast('Product restored!', 'green');
+    await refreshProductTable(); // ← AJAX refresh
+  } catch (e) {
+    showToast('Network error', 'red');
+  }
+}
+
+let permDeleteId = null;
+function openPermDeleteModal(id, name) {
+  permDeleteId = id;
+  document.getElementById('permDeleteModal').classList.add('open');
+}
+function closePermDeleteModal() {
+  document.getElementById('permDeleteModal').classList.remove('open');
+  permDeleteId = null;
+}
+async function confirmPermDelete() {
+
+  if (!permDeleteId) return;
+  try {
+    const r = await fetch(`/admin/products/permanent-delete/${permDeleteId}`, {
+      method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await r.json();
+    if (!data.success) { showToast('Failed to delete', 'red'); return; }
+    document.getElementById(`trash-item-${permDeleteId}`)?.remove();
+    closePermDeleteModal();
+    showToast('Product permanently deleted', 'red');
+    await refreshProductTable(); // ← add this
+  } catch (e) {
+    showToast('Network error', 'red');
+  }
+}
+
+// ── MODAL OVERLAY CLOSE ───────────────────────────────
+['deleteModal','trashModal','permDeleteModal','cropperModal','logoutModal'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+document.getElementById('productDrawer')?.addEventListener('click', function(e) {
+  if (e.target === this) closeDrawer();
+});
+
+// ── TOAST ─────────────────────────────────────────────
+function showToast(msg, type = 'green') {
+  const icons = {
+    green: '<polyline points="20 6 9 17 4 12"/>',
+    red:   '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    blue:  '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+  };
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `
+    <div class="toast-icon ${type}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        ${icons[type] || icons.green}
+      </svg>
+    </div>
+    <span>${msg}</span>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ── INIT ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  ['deleteModal','trashModal','permDeleteModal','cropperModal','logoutModal','productDrawer']
+    .forEach(id => document.getElementById(id)?.classList.remove('open'));
+});
+
+
+async function refreshProductTable() {
+  try {
+    // Fetch current page with existing search/filter params
+    const params = new URLSearchParams(window.location.search);
+    const r = await fetch(`/admin/products?${params.toString()}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest-table' }
+    });
+    const html = await r.text();
+
+    // Parse the returned HTML and extract just the tbody and stats
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Update table body
+   const newTbody = doc.querySelector('table tbody');
+const curTbody = document.querySelector('table tbody');
+if (newTbody && curTbody) curTbody.innerHTML = newTbody.innerHTML;
+
+// Also update the empty state message
+const tableCard = document.querySelector('.table-card');
+const newTableCard = doc.querySelector('.table-card');
+if (tableCard && newTableCard) {
+  // Update empty state div if it exists
+  const curEmpty = tableCard.querySelector('[style*="text-align:center"][style*="padding:40px"]');
+  const newEmpty = newTableCard.querySelector('[style*="text-align:center"][style*="padding:40px"]');
+  if (newEmpty && !curEmpty) {
+    curTbody.insertAdjacentHTML('afterend', newEmpty.outerHTML);
+  } else if (!newEmpty && curEmpty) {
+    curEmpty.remove();
+  }
+}
+    // Update stat cards
+    doc.querySelectorAll('.stat-card').forEach((card, i) => {
+      const cards = document.querySelectorAll('.stat-card');
+      if (cards[i]) cards[i].innerHTML = card.innerHTML;
+    });
+
+    // Update pagination
+    const newPag = doc.querySelector('.pagination');
+    const curPag = document.querySelector('.pagination');
+    if (newPag && curPag) curPag.innerHTML = newPag.innerHTML;
+
+    // Update trash badge count
+    const newBadge = doc.querySelector('.trash-badge');
+    const curBadge = document.querySelector('.trash-badge');
+    if (newBadge && curBadge) curBadge.textContent = newBadge.textContent;
+
+  } catch (e) {
+    console.error('Table refresh failed:', e);
+  }
+}
+
+
+async function refreshBrandDropdown() {
+  try {
+    const r = await fetch('/admin/products?_=' + Date.now());
+    const html = await r.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Get fresh brand options from the filter dropdown in the fetched page
+    const newBrandSelect = doc.querySelector('select[name="brand"]');
+    const curBrandSelect = document.getElementById('fBrand');
+
+    if (!newBrandSelect || !curBrandSelect) return;
+
+    // Preserve the "other" option and rebuild the rest
+    const otherOption = curBrandSelect.querySelector('option[value="other"]');
+    curBrandSelect.innerHTML = '<option value="">Select brand</option>';
+
+    newBrandSelect.querySelectorAll('option').forEach(opt => {
+      if (opt.value === 'all') return; // skip "All Brands" option
+      const newOpt = document.createElement('option');
+      newOpt.value = opt.value;
+      newOpt.textContent = opt.textContent;
+      curBrandSelect.appendChild(newOpt);
+    });
+
+    if (otherOption) curBrandSelect.appendChild(otherOption);
+
+    // Also refresh the filter bar brand select
+    const filterBrand = document.querySelector('select[name="brand"]');
+    if (filterBrand && newBrandSelect) {
+      filterBrand.innerHTML = newBrandSelect.innerHTML;
+    }
+
+  } catch (e) {
+    console.error('Brand dropdown refresh failed:', e);
+  }
+}
+
+// ── VARIANT MANAGEMENT ────────────────────────────────
+let allVariants = [];
+
+async function loadVariants(productId) {
+  try {
+    const r = await fetch(`/admin/products/${productId}/variants`);
+    const data = await r.json();
+    allVariants = data.variants || [];
+    updateVariantCount(allVariants.length);
+    renderVariantTable(allVariants);
+  } catch (e) {
+    document.getElementById('variantTableBody').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa">No variants found.</td></tr>';
+  }
+}
+
+function renderVariantTable(variants) {
+  const tbody = document.getElementById('variantTableBody');
+  if (!tbody) return;
+
+  if (!variants.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">No variants found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = variants.map(v => {
+    let stockBadge = '';
+    if (v.stock === 0) {
+      stockBadge = `<span class="stock-badge out-stock">Out of Stock</span>`;
+    } else if (v.stock <= 10) {
+      stockBadge = `<span class="stock-badge low-stock">${v.stock} Low</span>`;
+    } else {
+      stockBadge = `<span class="stock-badge in-stock">${v.stock} In Stock</span>`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div class="product-thumb">
+            ${v.image
+              ? `<img src="${v.image}" alt="${v.name}">`
+              : `<span>${(v.name || 'V').charAt(0).toUpperCase()}</span>`}
+          </div>
+        </td>
+        <td><div class="pname">${v.name || '-'}</div><div class="psku">${v.sku || ''}</div></td>
+        <td>${v.color || '-'}</td>
+        <td>${v.storage || v.size || '-'}</td>
+        <td>₹${v.price || '-'}</td>
+        <td>${stockBadge}</td>
+        <td>
+          <button class="act-btn" title="Edit" onclick="openEditVariantModal('${v._id}')">✏️</button>
+          <button class="act-btn danger" title="Delete" onclick="openDeleteVariantModal('${v._id}','${v.name}')">🗑</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function updateVariantCount(count) {
+  const badge = document.getElementById('variantCountBadge');
+  if (badge) badge.textContent = `${count} Variant${count !== 1 ? 's' : ''}`;
+}
+
+function filterVariants(search) {
+  const s = search.toLowerCase();
+  const filtered = allVariants.filter(v =>
+    (v.name || '').toLowerCase().includes(s) ||
+    (v.sku || '').toLowerCase().includes(s) ||
+    (v.color || '').toLowerCase().includes(s)
+  );
+  renderVariantTable(filtered);
+  updateVariantCount(filtered.length);
+}
+
+function sortVariants(val) {
+  let filtered = [...allVariants];
+  if (val === 'in_stock')  filtered = filtered.filter(v => v.stock > 10);
+  if (val === 'low_stock') filtered = filtered.filter(v => v.stock > 0 && v.stock <= 10);
+  if (val === 'out_stock') filtered = filtered.filter(v => v.stock === 0);
+  renderVariantTable(filtered);
+  updateVariantCount(filtered.length);
+}
+
+// Placeholder stubs — wire these to your actual modals/routes
+function openAddVariantModal(productId) {
+  showToast('Add Variant — connect to your variant drawer', 'blue');
+}
+function openEditVariantModal(variantId) {
+  showToast('Edit Variant ' + variantId, 'blue');
+}
+function openDeleteVariantModal(variantId, name) {
+  showToast('Delete Variant: ' + name, 'red');
+}
+
+// Auto-load variants when detail page is shown
+document.addEventListener('DOMContentLoaded', () => {
+  const detailPage = document.getElementById('page-detail');
+  if (detailPage) {
+    // Read product id from the edit button's onclick or embed it as data attribute
+    // Simplest: add data-product-id to page-detail div and read it here
+    const pid = detailPage.dataset.productId;
+    if (pid) loadVariants(pid);
+  }
+});
+</script>

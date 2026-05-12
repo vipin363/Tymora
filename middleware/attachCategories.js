@@ -1,0 +1,19 @@
+import Category from "../model/categoryModel.js";
+
+export const attachCategories = async (req, res, next) => {
+  try {
+    const categories = await Category.find({
+      is_visible: true,
+      deleted_at: null,
+    }).sort({ createdAt: -1 }).lean();
+
+    res.locals.navCategories = categories.map(c => ({
+      _id:  c._id,
+      name: c.name,
+      image: c.image_url || "",
+    }));
+  } catch (err) {
+    res.locals.navCategories = [];
+  }
+  next();
+};

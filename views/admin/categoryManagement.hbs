@@ -1,0 +1,1098 @@
+<link href="/adminUserManagement.css" rel="stylesheet">
+<link href="/categoryManagement.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+<div class="shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="brand">
+                <div class="logo-icon">T</div>
+                <div class="logo-text">
+                    <div class="name">Tymora</div>
+                    <div class="tagline">Tym of Refined Aesthetics</div>
+                </div>
+            </div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Main</div>
+            <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}"
+                href="/admin/dashboard">Dashboard</a>
+            <a class="nav-item {{#ifEquals activePage 'categoryManagement'}}active{{/ifEquals}}"
+                href="/admin/categoryManagement">Category management</a>
+            <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}"
+                href="/admin/products">Products</a>
+            <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
+            <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
+            <div class="nav-label" style="margin-top:12px">Store</div>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>Returns</a>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>Reviews</a>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24">
+                    <path
+                        d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+                </svg>Offers</a>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24">
+                    <path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z" />
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                </svg>Coupons</a>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>Reports</a>
+        </div>
+        <div class="nav-footer">
+            <a class="nav-item logout" href="#" onclick="openLogoutModal()"><svg viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>Logout</a>
+        </div>
+    </aside>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="main">
+        <header class="topbar">
+            <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg></button>
+            <span class="topbar-title">Dashboard</span>
+
+            <form method="GET" action="/admin/categoryManagement" class="search-bar">
+
+                <input class="searchbar" type="text" name="search" placeholder="Search category..." value="{{search}}">
+
+
+                <select name="status" class="sort-select">
+                    <option value="" {{#unless status}}selected{{/unless}}>All</option>
+                    <option value="visible" {{#if (eq status "visible" )}}selected{{/if}}>Visible</option>
+                    <option value="hidden" {{#if (eq status "hidden" )}}selected{{/if}}>Hidden</option>
+                     <option value="trash" {{#if (eq status "trash")}}selected{{/if}}>Trash</option>
+                </select>
+
+                <button type="submit" class="btn-search">Search</button>
+
+                {{#if search}}
+                <a href="/admin/categoryManagement" class="btn-clear">Clear</a>
+                {{/if}}
+
+            </form>
+            <div class="admin-info">
+                <div class="admin-avatar">A</div>
+                <div class="admin-meta">
+                    <div class="admin-name">Admin</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="page-content">
+
+
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1>Category Management</h1>
+                    <p>Manage storefront categories and their visibility from a centralized hub.</p>
+                </div>
+
+            </div>
+
+            <!-- Mobile search bar -->
+            <form method="GET" action="/admin/categoryManagement" class="mobile-search-bar">
+                <input class="searchbar" type="text" name="search" placeholder="Search category..." value="{{search}}">
+                <select name="status" class="sort-select">
+                    <option value="" {{#unless status}}selected{{/unless}}>All</option>
+                    <option value="visible" {{#if (eq status "visible" )}}selected{{/if}}>Visible</option>
+                    <option value="hidden" {{#if (eq status "hidden" )}}selected{{/if}}>Hidden</option>
+                    <option value="trash" {{#if (eq status "trash")}}selected{{/if}}>Trash</option>
+
+                </select>
+                <button type="submit" class="btn-search">Search</button>
+                {{#if search}}
+                <a href="/admin/categoryManagement" class="btn-clear">Clear</a>
+                {{/if}}
+            </form>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">Total Categories</div>
+                    <div class="stat-value" id="statTotal">{{stats.totalCategories}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Visible</div>
+                    <div class="stat-value" id="statVisible">{{stats.visibleCount}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Hidden</div>
+                    <div class="stat-value" id="statHidden">{{stats.hiddenCount}}</div>
+                </div>
+
+                <div class="stat-card" id="statTrashCard">
+    <div class="stat-label">Trash</div>
+    <div class="stat-value" id="statTrashed">{{stats.trashedCount}}</div>
+</div>
+
+            </div>
+
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-title">
+                        <i class="fas fa-layer-group" style="color:var(--accent);margin-right:8px;"></i>Categories
+                    </div>
+                    <div style="display:flex;gap:8px;">
+        <button class="btn-add" style="background:#6b7280;" onclick="openTrashModal()">
+            <i class="fas fa-trash"></i> Trash
+        </button>
+                    <button class="btn-add" onclick="openAddCategoryModal()"><i class="fas fa-plus"></i> Add
+                        Category</button>
+                    </div>
+                </div>
+
+                <div class="tbl-wrap">
+                    <table id="categoryTable">
+                        <thead>
+                            <tr>
+                                <th>CATEGORY</th>
+                                <th>STATUS</th>
+                                <th>VISIBILITY</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryBody">
+                            {{#if categories.length}}
+                            {{#each categories}}
+                            <tr id="cat-row-{{this._id}}">
+                                <td>
+                                    <div class="cat-cell">
+                                        {{#if this.image}}
+                                        <div class="cat-icon-box"
+                                            style="background:none;padding:0;overflow:hidden;width:36px;height:36px;border-radius:8px;">
+                                            <img src="{{this.image}}" alt="{{this.name}}"
+                                                style="width:100%;height:100%;object-fit:cover;">
+                                        </div>
+                                        {{else}}
+                                        <div class="cat-icon-box"><i class="fas fa-tag"></i></div>
+                                        {{/if}}
+                                        <div>
+    <div class="cat-cell-name">{{this.name}}</div>
+    {{#if this.isTrashed}}
+    <div class="cat-cell-sub" style="color:#ef4444;">Deleted: {{this.deletedAt}}</div>
+    {{else}}
+    <div class="cat-cell-sub">ID: {{this._id}}</div>
+    {{/if}}
+</div>
+                                    </div>
+                                </td>
+                              
+                                <td>
+                                    {{#if this.isVisible}}
+                                    <span class="badge badge-visible">VISIBLE</span>
+                                    {{else}}
+                                    <span class="badge badge-hidden">HIDDEN</span>
+                                    {{/if}}
+                                </td>
+                                <td>
+                                    <div class="toggle-cell">
+                                        <label class="toggle">
+                                            <input type="checkbox" {{#if this.isVisible}}checked{{/if}}
+                                                onchange="toggleVisibility('{{this._id}}', this)">
+                                            <span class="toggle-track"></span>
+                                        </label>
+                                        <span class="toggle-label">{{#if
+                                            this.isVisible}}Visible{{else}}Hidden{{/if}}</span>
+                                    </div>
+                                </td>
+                               <td>
+    <div class="action-btns">
+        {{#if this.isTrashed}}
+        <button class="btn-action" style="color:#16a34a;border-color:#bbf7d0;"
+            onclick="restoreCategory('{{this._id}}','{{this.name}}')">
+            Restore
+        </button>
+        <button class="btn-action delete"
+            onclick="confirmPermDelete('{{this._id}}','{{this.name}}')">
+            Delete
+        </button>
+        {{else}}
+        <button class="btn-action"
+            onclick="openEditModal('{{this._id}}','{{this.name}}','{{this.productCount}}','{{this.image}}','{{this.description}}')">
+            Edit
+        </button>
+        <button class="btn-action delete"
+            onclick="confirmDelete('{{this._id}}','{{this.name}}')">
+            Delete
+        </button>
+        {{/if}}
+    </div>
+</td>
+                            </tr>
+                            {{/each}}
+                            {{else}}
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">No categories found. Add one to get started.</div>
+                                </td>
+                            </tr>
+                            {{/if}}
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <div class="pagination">
+
+                    {{#if (gt currentPage 1)}}
+                    <a
+                        href="/admin/categoryManagement?page={{subtract currentPage 1}}&search={{search}}&status={{status}}">Prev</a>
+                    {{/if}}
+
+                    <span>Page {{currentPage}} of {{totalPages}}</span>
+
+                    {{#if (lt currentPage totalPages)}}
+                    <a
+                        href="/admin/categoryManagement?page={{add currentPage 1}}&search={{search}}&status={{status}}">Next</a>
+                    {{/if}}
+
+                </div>
+
+        </main>
+    </div>
+</div>
+
+<div class="modal-overlay" id="logoutModal">
+    <div class="modal">
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to logout?</p>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+            <button class="btn-confirm" onclick="confirmLogout()">Logout</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteCatModal">
+    <div class="modal">
+        <h3>Move to Trash</h3>
+        <p>Move <strong id="deleteModalName"></strong> to trash? You can restore it later.</p>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-confirm" style="background:#dc2626;" onclick="executeDelete()">Move to Trash</button>
+        </div>
+    </div>
+</div>
+{{!-- trash model --}}
+<div class="modal-overlay" id="trashModal">
+    <div class="modal">
+        <h3><i class="fas fa-trash" style="color:#dc2626;margin-right:6px;"></i> Trash</h3>
+        <div id="trashList" style="max-height:340px;overflow-y:auto;margin:12px 0;"></div>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeTrashModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="permDeleteModal">
+    <div class="modal">
+        <h3>Permanently Delete</h3>
+        <p>This cannot be undone. <strong id="permDeleteName"></strong> will be gone forever.</p>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closePermDeleteModal()">Cancel</button>
+            <button class="btn-confirm" style="background:#7f1d1d;" onclick="executePermDelete()">Delete Forever</button>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal-overlay" id="editCatOverlay">
+    <div class="modal add-cat-modal">
+        <div class="add-cat-header">
+            <div>
+                <div class="add-cat-breadcrumb">Category Management &rsaquo; Edit Category</div>
+                <div class="add-cat-title">Edit Category</div>
+                <div class="add-cat-sub">Update the details for this category.</div>
+            </div>
+            <button class="add-cat-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <div class="add-cat-body">
+            <div class="add-cat-left">
+                <div class="field-group">
+                    <label>Category Name <span class="req">*</span></label>
+                    <input id="editCatName" type="text" maxlength="15"
+                        oninput="document.getElementById('editNameCount').textContent=this.value.length+'/15'"
+                        class="cat-input">
+                    <div class="field-meta">
+                        <span id="editNameErr" class="field-err" style="display:none;"></span>
+                        <span id="editNameCount" class="field-count">0/15</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Short Description</label>
+                    <textarea id="editCatDesc" maxlength="40" rows="3"
+                        oninput="document.getElementById('editDescCount').textContent=this.value.length+'/40'"
+                        class="cat-input"></textarea>
+                    <div class="field-meta">
+                        <span id="editDescErr" class="field-err" style="display:none;">Max 40 characters</span>
+                        <span id="editDescCount" class="field-count">0/40</span>
+                    </div>
+                </div>
+            </div>
+            <div class="add-cat-right">
+                <label class="img-label">Category Image</label>
+                <div id="editImgZone" class="img-drop-zone" onclick="document.getElementById('editImgFile').click()"
+                    ondragover="event.preventDefault();this.classList.add('drag-over')"
+                    ondragleave="this.classList.remove('drag-over')" ondrop="handleEditImgDrop(event)">
+                    <img id="editImgPreview"
+                        style="display:none;width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #93c5fd;margin-bottom:8px;">
+                    <div id="editImgPlaceholder">
+                        <div class="img-upload-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a"
+                                stroke-width="2">
+                                <polyline points="16 16 12 12 8 16" />
+                                <line x1="12" y1="12" x2="12" y2="21" />
+                                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+                            </svg>
+                        </div>
+                        <div class="img-upload-text">Upload Image</div>
+                        <div class="img-upload-hint">PNG or JPG, max 2MB.</div>
+                    </div>
+                    <div id="editImgName"
+                        style="display:none;font-size:11px;color:#1e3a8a;word-break:break-all;margin-top:4px;"></div>
+                </div>
+                <input type="file" id="editImgFile" accept="image/png,image/jpeg" style="display:none"
+                    onchange="handleEditImgSelect(event)">
+                <span id="editImgErr" class="field-err" style="display:none;">Max 2MB, PNG or JPG only</span>
+                <button id="editRemoveImg" onclick="removeEditImg()" style="display:none;" class="btn-remove-img">✕
+                    Remove image</button>
+            </div>
+        </div>
+        <div class="add-cat-footer">
+            <button class="btn-add-cat-submit btn-edit-cat-submit" onclick="submitEditCategory()">Save Changes</button>
+            <button class="btn-add-cat-cancel" onclick="closeEditModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addCatOverlay">
+    <div class="modal add-cat-modal">
+
+        <div class="add-cat-header">
+            <div>
+                <div class="add-cat-breadcrumb">Homepage UI &rsaquo; Add New Category</div>
+                <div class="add-cat-title">Create New Category</div>
+                <div class="add-cat-sub">Organize your products by creating a clear hierarchy.</div>
+            </div>
+            <button class="add-cat-close" onclick="closeAddCategoryModal()">&times;</button>
+        </div>
+
+        <div class="add-cat-body">
+            <div class="add-cat-left">
+
+                <div class="field-group">
+                    <label>Category Name <span class="req">*</span></label>
+                    <input id="catName" type="text" maxlength="15" placeholder="e.g. Minimalist Home Decor"
+                        oninput="updateCatNameCount()" class="cat-input">
+                    <div class="field-meta">
+                        <span id="catNameErr" class="field-err" style="display:none;">Only letters &amp; spaces (max
+                            15)</span>
+                        <span id="catNameCount" class="field-count">0/15</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Short Description</label>
+                    <textarea id="catDesc" maxlength="40" rows="3"
+                        placeholder="Briefly describe the purpose of this category..." oninput="updateCatDescCount()"
+                        class="cat-input"></textarea>
+                    <div class="field-meta">
+                        <span id="catDescErr" class="field-err" style="display:none;">Max 40 characters</span>
+                        <span id="catDescCount" class="field-count">0/40</span>
+                    </div>
+                </div>
+
+            </div>
+
+
+                
+
+            <div class="add-cat-right">
+                <label class="img-label">Category Image</label>
+                <div id="catImgZone" class="img-drop-zone" onclick="document.getElementById('catImgFile').click()"
+                    ondragover="event.preventDefault(); this.classList.add('drag-over')"
+                    ondragleave="this.classList.remove('drag-over')" ondrop="handleCatImgDrop(event)">
+                    <img id="catImgPreview"
+                        style="display:none; width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #93c5fd; margin-bottom:8px;">
+                    <div id="catImgPlaceholder">
+                        <div class="img-upload-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a"
+                                stroke-width="2">
+                                <polyline points="16 16 12 12 8 16" />
+                                <line x1="12" y1="12" x2="12" y2="21" />
+                                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+                            </svg>
+                        </div>
+                        <div class="img-upload-text">Upload Image</div>
+                        <div class="img-upload-hint">Drag and drop your file here, or click to browse. Max size 2MB
+                            (PNG, JPG).</div>
+                    </div>
+                    <div id="catImgName"
+                        style="display:none; font-size:11px; color:#1e3a8a; word-break:break-all; margin-top:4px;">
+                    </div>
+                </div>
+                <input type="file" id="catImgFile" accept="image/png,image/jpeg" style="display:none"
+                    onchange="handleCatImgSelect(event)">
+                <span id="catImgErr" class="field-err" style="display:none;">Max 2MB, PNG or JPG only</span>
+                <button id="catRemoveImg" onclick="removeCatImg()" style="display:none;" class="btn-remove-img">✕ Remove
+                    image</button>
+            </div>
+        </div>
+
+        <div class="add-cat-footer">
+            <button class="btn-add-cat-submit" onclick="submitAddCategory()">Add Category</button>
+            <button class="btn-add-cat-cancel" onclick="closeAddCategoryModal()">Cancel</button>
+        </div>
+
+    </div>
+</div>
+
+
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+
+ 
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+  }
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('open');
+      }
+    });
+  });
+ 
+});
+
+  function openLogoutModal() { document.getElementById('logoutModal').classList.add('open'); }
+  function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
+  function confirmLogout() { window.location.href = '/admin/logout'; }
+
+  function toggleVisibility(id, checkbox) {
+    fetch(`/admin/categoryManagement/toggle/${id}`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const row = document.getElementById(`cat-row-${id}`);
+          const badge = row.querySelector('.badge');
+          const label = row.querySelector('.toggle-label');
+          const isVisible = checkbox.checked;
+          badge.textContent = isVisible ? 'VISIBLE' : 'HIDDEN';
+          badge.className = isVisible ? 'badge badge-visible' : 'badge badge-hidden';
+          label.textContent = isVisible ? 'Visible' : 'Hidden';
+          showToast(isVisible ? 'Category is now visible' : 'Category is now hidden', 'green');
+          refreshStats();
+        } else {
+          checkbox.checked = !checkbox.checked;
+          showToast('Failed to update visibility', 'red');
+        }
+      })
+      .catch(() => { checkbox.checked = !checkbox.checked; showToast('Network error', 'red'); });
+  }
+
+  let deletingId = null;
+  let deletingName = '';
+
+  function confirmDelete(id, name) {
+    deletingId = id;
+    deletingName = name;
+    document.getElementById('deleteModalName').textContent = `"${name}"`;
+    document.getElementById('deleteCatModal').classList.add('open');
+  }
+  function closeDeleteModal() {
+    document.getElementById('deleteCatModal').classList.remove('open');
+    deletingId = null;
+  }
+ function executeDelete() {
+  if (!deletingId) return;
+
+  const idToDelete = deletingId;
+  const nameToDelete = deletingName;
+
+  const deleteBtn = document.querySelector('#deleteCatModal .btn-confirm');
+  deleteBtn.textContent = 'Deleting...';
+  deleteBtn.disabled = true;
+
+  fetch(`/admin/categoryManagement/delete/${idToDelete}`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(r => r.json())
+    .then(data => {
+      deleteBtn.textContent = 'Move to Trash';
+      deleteBtn.disabled = false;
+      if (data.success) {
+       
+        const row = document.getElementById(`cat-row-${idToDelete}`);
+        if (row) row.remove();
+
+        closeDeleteModal();
+        showToast(`"${nameToDelete}" moved to trash`, 'red');
+        refreshStats();
+      } else {
+        showToast('Failed to delete', 'red');
+      }
+    })
+    .catch(() => {
+      deleteBtn.textContent = 'Move to Trash';
+      deleteBtn.disabled = false;
+      showToast('Network error', 'red');
+    });
+}
+ 
+  let catImgFile = null;
+
+  function openAddCategoryModal() {
+    document.getElementById('addCatOverlay').classList.add('open');
+    resetCatForm();
+  }
+  function closeAddCategoryModal() {
+    document.getElementById('addCatOverlay').classList.remove('open');
+  }
+ function resetCatForm() {
+  document.getElementById('catName').value = '';
+  document.getElementById('catDesc').value = '';
+  document.getElementById('catNameCount').textContent = '0/15';
+  document.getElementById('catDescCount').textContent = '0/40';
+  ['catNameErr', 'catDescErr', 'catImgErr'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('catName').style.borderColor = '';
+  document.getElementById('catDesc').style.borderColor = '';
+  removeCatImg();
+  const btn = document.querySelector('.btn-add-cat-submit');
+  if (btn) { btn.textContent = 'Add Category'; btn.disabled = false; btn.style.opacity = '1'; }
+}
+  function updateCatNameCount() {
+    const inp = document.getElementById('catName');
+    const val = inp.value;
+    document.getElementById('catNameCount').textContent = val.length + '/15';
+    const err = document.getElementById('catNameErr');
+    if (/[^a-zA-Z\s]/.test(val)) {
+      err.textContent = 'Only letters & spaces allowed.';
+      err.style.display = 'inline'; inp.style.borderColor = '#e53e3e';
+    } else {
+      err.style.display = 'none'; inp.style.borderColor = '';
+    }
+  }
+  function updateCatDescCount() {
+    const val = document.getElementById('catDesc').value;
+    document.getElementById('catDescCount').textContent = val.length + '/40';
+  }
+
+  function handleCatImgSelect(e) { if (e.target.files[0]) processCatImg(e.target.files[0]); }
+  function handleCatImgDrop(e) {
+    e.preventDefault();
+    document.getElementById('catImgZone').classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) processCatImg(e.dataTransfer.files[0]);
+  }
+  function processCatImg(file) {
+    const err = document.getElementById('catImgErr');
+    if (!['image/png', 'image/jpeg'].includes(file.type)) { err.textContent = 'Only PNG or JPG allowed.'; err.style.display = 'block'; return; }
+    if (file.size > 2 * 1024 * 1024) { err.textContent = 'File too large. Max 2MB.'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    catImgFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const preview = document.getElementById('catImgPreview');
+      preview.src = ev.target.result; preview.style.display = 'block';
+      document.getElementById('catImgPlaceholder').style.display = 'none';
+      document.getElementById('catImgName').textContent = file.name;
+      document.getElementById('catImgName').style.display = 'block';
+      document.getElementById('catRemoveImg').style.display = 'inline';
+    };
+    reader.readAsDataURL(file);
+  }
+  function removeCatImg() {
+    catImgFile = null;
+    const fi = document.getElementById('catImgFile');
+    if (fi) fi.value = '';
+    const preview = document.getElementById('catImgPreview');
+    if (preview) preview.style.display = 'none';
+    const ph = document.getElementById('catImgPlaceholder');
+    if (ph) ph.style.display = 'block';
+    const nm = document.getElementById('catImgName');
+    if (nm) nm.style.display = 'none';
+    const rb = document.getElementById('catRemoveImg');
+    if (rb) rb.style.display = 'none';
+  }
+
+ function validateCatForm() {
+  let valid = true;
+  const name = document.getElementById('catName').value.trim();
+  const nameErr = document.getElementById('catNameErr');
+  if (!name) {
+    nameErr.textContent = 'Category name is required.'; nameErr.style.display = 'inline';
+    document.getElementById('catName').style.borderColor = '#e53e3e'; valid = false;
+  } else if (/[^a-zA-Z\s]/.test(name)) {
+    nameErr.textContent = 'Only letters and spaces allowed.'; nameErr.style.display = 'inline';
+    document.getElementById('catName').style.borderColor = '#e53e3e'; valid = false;
+  } else if (name.length > 15) {
+    nameErr.textContent = 'Max 15 characters.'; nameErr.style.display = 'inline';
+    document.getElementById('catName').style.borderColor = '#e53e3e'; valid = false;
+  } else { nameErr.style.display = 'none'; document.getElementById('catName').style.borderColor = ''; }
+
+  const desc = document.getElementById('catDesc').value;
+  if (desc.length > 40) {
+    document.getElementById('catDescErr').style.display = 'inline';
+    document.getElementById('catDesc').style.borderColor = '#e53e3e'; valid = false;
+  } else { document.getElementById('catDescErr').style.display = 'none'; document.getElementById('catDesc').style.borderColor = ''; }
+
+  return valid;
+}
+
+  function submitAddCategory() {
+    if (!validateCatForm()) { showToast('Please fix the errors above.', 'blue'); return; }
+
+    const name = document.getElementById('catName').value.trim();
+    const desc = document.getElementById('catDesc').value;
+   
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', desc);
+    if (catImgFile) formData.append('image', catImgFile);
+
+    const btn = document.querySelector('.btn-add-cat-submit');
+    btn.textContent = 'Saving...'; btn.disabled = true; btn.style.opacity = '0.7';
+
+    fetch('/admin/categoryManagement/add', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    })
+      .then(r => r.json())
+      .then(data => {
+        btn.textContent = 'Add Category'; btn.disabled = false; btn.style.opacity = '1';
+        if (data.success) {
+          closeAddCategoryModal();
+          showToast('Category added successfully!', 'green');
+          const cat = data.category;
+          const tbody = document.getElementById('categoryBody');
+          const emptyRow = tbody.querySelector('.empty-state');
+          if (emptyRow) emptyRow.closest('tr').remove();
+
+          const imgHtml = cat.image_url
+            ? `<div class="cat-icon-box" style="background:none;padding:0;overflow:hidden;width:36px;height:36px;border-radius:8px;">
+                 <img src="${cat.image_url}" alt="${cat.name}" style="width:100%;height:100%;object-fit:cover;">
+               </div>`
+            : `<div class="cat-icon-box"><i class="fas fa-tag"></i></div>`;
+
+          const tr = document.createElement('tr');
+          tr.id = `cat-row-${cat._id}`;
+          tr.dataset.name = cat.name;
+          tr.dataset.desc = cat.short_description || '';
+          tr.dataset.qty  = cat.quantity || 0;
+          tr.dataset.img  = cat.image_url || '';
+
+          tr.innerHTML = `
+            <td>
+              <div class="cat-cell">
+                ${imgHtml}
+                <div>
+                  <div class="cat-cell-name">${cat.name}</div>
+                  <div class="cat-cell-sub">ID: ${cat._id}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge badge-visible">VISIBLE</span></td>
+            <td>
+              <div class="toggle-cell">
+                <label class="toggle">
+                  <input type="checkbox" checked onchange="toggleVisibility('${cat._id}', this)">
+                  <span class="toggle-track"></span>
+                </label>
+                <span class="toggle-label">Visible</span>
+              </div>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-action" onclick="openEditModalFromRow('${cat._id}')">Edit</button>
+                <button class="btn-action delete" onclick="confirmDelete('${cat._id}','${cat.name}')">Delete</button>
+              </div>
+            </td>`;
+          tbody.appendChild(tr);
+
+          refreshStats();
+        } else {
+          showToast(data.message || 'Failed to add category.', 'red');
+        }
+      })
+      .catch(() => {
+        btn.textContent = 'Add Category'; btn.disabled = false; btn.style.opacity = '1';
+        showToast('Network error. Please try again.', 'red');
+      });
+  }
+
+ 
+  let editingCatId  = null;
+  let editImgFile   = null;
+  let editImgRemoved = false;  
+
+ 
+  function openEditModal(id, name, qty, imgUrl, desc) {
+    _populateEditModal(id, name, desc || '', qty, imgUrl || '');
+  }
+
+ 
+  function openEditModalFromRow(id) {
+    const row = document.getElementById(`cat-row-${id}`);
+    _populateEditModal(
+      id,
+      row.dataset.name || '',
+      row.dataset.desc || '',
+      row.dataset.qty  || 0,
+      row.dataset.img  || ''
+    );
+  }
+
+  function _populateEditModal(id, name, desc, qty, imgUrl) {
+    editingCatId   = id;
+    editImgFile    = null;
+    editImgRemoved = false;
+
+    document.getElementById('editCatName').value = name;
+    document.getElementById('editCatDesc').value = desc;
+    document.getElementById('editNameCount').textContent = name.length + '/15';
+    document.getElementById('editDescCount').textContent = desc.length + '/40';
+
+    ['editNameErr','editDescErr','editQtyErr','editImgErr'].forEach(eid => {
+      const el = document.getElementById(eid); if (el) el.style.display = 'none';
+    });
+    document.getElementById('editImgFile').value = '';
+
+    const prev = document.getElementById('editImgPreview');
+    const ph   = document.getElementById('editImgPlaceholder');
+    const rmBtn = document.getElementById('editRemoveImg');
+    if (imgUrl && imgUrl !== 'undefined' && imgUrl !== '') {
+      prev.src = imgUrl; prev.style.display = 'block';
+      ph.style.display = 'none';
+      rmBtn.style.display = 'inline';
+    } else {
+      prev.style.display = 'none';
+      ph.style.display   = 'block';
+      rmBtn.style.display = 'none';
+    }
+    document.getElementById('editImgName').style.display = 'none';
+    document.getElementById('editCatOverlay').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editCatOverlay').classList.remove('open');
+    editingCatId = null; editImgFile = null; editImgRemoved = false;
+  }
+
+  function handleEditImgSelect(e) { if (e.target.files[0]) processEditImg(e.target.files[0]); }
+  function handleEditImgDrop(e) {
+    e.preventDefault();
+    document.getElementById('editImgZone').classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) processEditImg(e.dataTransfer.files[0]);
+  }
+  function processEditImg(file) {
+    const err = document.getElementById('editImgErr');
+    if (!['image/png', 'image/jpeg'].includes(file.type)) { err.textContent = 'Only PNG or JPG allowed.'; err.style.display = 'block'; return; }
+    if (file.size > 2 * 1024 * 1024) { err.textContent = 'File too large. Max 2MB.'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    editImgFile    = file;
+    editImgRemoved = false; 
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const prev = document.getElementById('editImgPreview');
+      prev.src = ev.target.result; prev.style.display = 'block';
+      document.getElementById('editImgPlaceholder').style.display = 'none';
+      document.getElementById('editImgName').textContent = file.name;
+      document.getElementById('editImgName').style.display = 'block';
+      document.getElementById('editRemoveImg').style.display = 'inline';
+    };
+    reader.readAsDataURL(file);
+  }
+  function removeEditImg() {
+    editImgFile    = null;
+    editImgRemoved = true;  
+    document.getElementById('editImgFile').value = '';
+    document.getElementById('editImgPreview').style.display  = 'none';
+    document.getElementById('editImgPlaceholder').style.display = 'block';
+    document.getElementById('editImgName').style.display    = 'none';
+    document.getElementById('editRemoveImg').style.display   = 'none';
+  }
+
+  function submitEditCategory() {
+    const name = document.getElementById('editCatName').value.trim();
+    const nameErr = document.getElementById('editNameErr');
+    let valid = true;
+
+    if (!name) {
+      nameErr.textContent = 'Name required.'; nameErr.style.display = 'inline';
+      document.getElementById('editCatName').style.borderColor = '#e53e3e'; valid = false;
+    } else if (/[^a-zA-Z\s]/.test(name)) {
+      nameErr.textContent = 'Letters & spaces only.'; nameErr.style.display = 'inline';
+      document.getElementById('editCatName').style.borderColor = '#e53e3e'; valid = false;
+    } else if (name.length > 15) {
+      nameErr.textContent = 'Max 15 characters.'; nameErr.style.display = 'inline';
+      document.getElementById('editCatName').style.borderColor = '#e53e3e'; valid = false;
+    } else { nameErr.style.display = 'none'; document.getElementById('editCatName').style.borderColor = ''; }
+
+    const desc = document.getElementById('editCatDesc').value;
+    if (desc.length > 40) {
+      document.getElementById('editDescErr').style.display = 'inline'; valid = false;
+    } else { document.getElementById('editDescErr').style.display = 'none'; }
+
+
+    if (!valid) { showToast('Please fix the errors above.', 'blue'); return; }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', desc);
+    formData.append('removeImage', editImgRemoved ? 'true' : 'false');
+    if (editImgFile) formData.append('image', editImgFile);
+
+    const btn = document.querySelector('.btn-edit-cat-submit');
+    btn.textContent = 'Saving...'; btn.disabled = true; btn.style.opacity = '0.7';
+
+    fetch(`/admin/categoryManagement/edit/${editingCatId}`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    })
+      .then(r => r.json())
+      .then(data => {
+        btn.textContent = 'Save Changes'; btn.disabled = false; btn.style.opacity = '1';
+        if (data.success) {
+          const row = document.getElementById(`cat-row-${editingCatId}`);
+          if (row) {
+            row.dataset.name = data.name;
+            row.dataset.desc = data.short_description || '';
+            row.dataset.qty  = data.quantity;
+            row.dataset.img  = data.image_url || '';
+
+            row.querySelector('.cat-cell-name').textContent = data.name;
+
+            const iconBox = row.querySelector('.cat-icon-box');
+            if (iconBox) {
+              if (data.image_url) {
+                iconBox.style.cssText = 'background:none;padding:0;overflow:hidden;width:36px;height:36px;border-radius:8px;';
+                iconBox.innerHTML = `<img src="${data.image_url}" alt="${data.name}" style="width:100%;height:100%;object-fit:cover;">`;
+              } else {
+                iconBox.style.cssText = '';
+                iconBox.innerHTML = `<i class="fas fa-tag"></i>`;
+              }
+            }
+
+            const editBtn = row.querySelector('.btn-action:not(.delete)');
+            if (editBtn) editBtn.setAttribute('onclick', `openEditModalFromRow('${editingCatId}')`);
+
+            
+          }
+          closeEditModal();
+          showToast('Category updated successfully!', 'green');
+        } else {
+          showToast(data.message || 'Failed to update.', 'red');
+        }
+      })
+      .catch(() => {
+        btn.textContent = 'Save Changes'; btn.disabled = false; btn.style.opacity = '1';
+        showToast('Network error.', 'red');
+      });
+  }
+
+  function showToast(msg, type) {
+    type = type || 'green';
+    const icons = {
+      green: '<polyline points="20 6 9 17 4 12"/>',
+      red:   '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+      blue:  '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+    };
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type] || icons.green}</svg></div><span>${msg}</span>`;
+    wrap.appendChild(t);
+    requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+  }
+
+let permDeletingId = null;
+let permDeletingName = '';
+
+function openTrashModal() {
+  document.getElementById('trashModal').classList.add('open');
+  loadTrashItems();
+}
+function closeTrashModal() {
+  document.getElementById('trashModal').classList.remove('open');
+}
+
+function loadTrashItems() {
+  const list = document.getElementById('trashList');
+  list.innerHTML = '<p style="color:var(--color-text-secondary);text-align:center;padding:16px;">Loading...</p>';
+
+  fetch('/admin/categoryManagement/trash', {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success || !data.categories.length) {
+        list.innerHTML = '<p style="color:var(--color-text-secondary);text-align:center;padding:16px;">Trash is empty.</p>';
+        document.getElementById('statTrashed').textContent = '0';
+        return;
+      }
+      document.getElementById('statTrashed').textContent = data.categories.length;
+      list.innerHTML = data.categories.map(cat => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-border-tertiary);">
+          ${cat.image
+            ? `<img src="${cat.image}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">`
+            : `<div style="width:36px;height:36px;background:var(--color-background-secondary);border-radius:6px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-tag" style="color:#888;font-size:14px;"></i></div>`
+          }
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:500;font-size:14px;">${cat.name}</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);">Deleted: ${cat.deletedAt}</div>
+          </div>
+          <button onclick="restoreCategory('${cat._id}','${cat.name}')"
+            style="padding:5px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+            <i class="fas fa-undo"></i> Restore
+          </button>
+          <button onclick="confirmPermDelete('${cat._id}','${cat.name}')"
+            style="padding:5px 10px;background:#dc2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+            <i class="fas fa-times"></i> Delete
+          </button>
+        </div>
+      `).join('');
+    })
+    .catch(() => {
+      list.innerHTML = '<p style="color:#dc2626;text-align:center;padding:16px;">Failed to load trash.</p>';
+    });
+}
+
+function restoreCategory(id, name) {
+  fetch(`/admin/categoryManagement/restore/${id}`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast(`"${name}" restored successfully!`, 'green');
+
+        const row = document.getElementById(`cat-row-${id}`);
+        if (row) row.remove();
+
+        refreshStats();
+
+        const trashModal = document.getElementById('trashModal');
+        if (trashModal.classList.contains('open')) {
+          loadTrashItems();
+        }
+
+        const remainingRows = document.querySelectorAll('#categoryBody tr[id^="cat-row-"]');
+        if (remainingRows.length === 0) {
+          setTimeout(() => {
+            window.location.href = '/admin/categoryManagement';
+          }, 900);
+        }
+
+      } else {
+        showToast('Failed to restore.', 'red');
+      }
+    })
+    .catch(() => showToast('Network error.', 'red'));
+}
+
+function confirmPermDelete(id, name) {
+  permDeletingId   = id;
+  permDeletingName = name;
+  document.getElementById('permDeleteName').textContent = `"${name}"`;
+  document.getElementById('permDeleteModal').classList.add('open');
+}
+function closePermDeleteModal() {
+  document.getElementById('permDeleteModal').classList.remove('open');
+  permDeletingId = null;
+}
+
+function executePermDelete() {
+  if (!permDeletingId) return;
+  const idToDelete   = permDeletingId;
+  const nameToDelete = permDeletingName;
+
+  const btn = document.querySelector('#permDeleteModal .btn-confirm');
+  btn.textContent = 'Deleting...'; btn.disabled = true;
+
+  fetch(`/admin/categoryManagement/permanent-delete/${idToDelete}`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(r => r.json())
+    .then(data => {
+      btn.textContent = 'Delete Forever'; btn.disabled = false;
+      if (data.success) {
+        document.getElementById(`cat-row-${idToDelete}`)?.remove();
+        closePermDeleteModal();
+        showToast(`"${nameToDelete}" permanently deleted.`, 'red');
+
+        refreshStats();
+
+        const trashModal = document.getElementById('trashModal');
+        if (trashModal.classList.contains('open')) {
+          loadTrashItems();
+        }
+
+        const remainingRows = document.querySelectorAll('#categoryBody tr[id^="cat-row-"]');
+        if (remainingRows.length === 0) {
+          setTimeout(() => {
+            window.location.href = '/admin/categoryManagement';
+          }, 900);
+        }
+
+      } else {
+        showToast('Failed to delete.', 'red');
+      }
+    })
+    .catch(() => {
+      btn.textContent = 'Delete Forever'; btn.disabled = false;
+      showToast('Network error.', 'red');
+    });
+}
+
+function refreshStats() {
+  fetch('/admin/categoryManagement/stats', {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const t  = document.getElementById('statTotal');
+        const v  = document.getElementById('statVisible');
+        const h  = document.getElementById('statHidden');
+        const tr = document.getElementById('statTrashed');
+      
+        if (t)  t.textContent  = data.total;
+        if (v)  v.textContent  = data.visible;
+        if (h)  h.textContent  = data.hidden;
+        if (tr) tr.textContent = data.trashed;
+        
+      }
+    })
+    .catch(() => {});
+}
+
+</script>

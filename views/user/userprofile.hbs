@@ -1,0 +1,888 @@
+{{!-- Save as views/user/profile.hbs --}}
+
+<link rel="stylesheet" href="/userProfile.css">
+<link href="/userHome.css" rel="stylesheet">
+<link rel="stylesheet" href="/theme.css">
+<link href="/navBar.css" rel="stylesheet">
+<link href="/footer.css" rel="stylesheet">
+<!-- NAVBAR -->
+
+<nav>
+   <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <a class="nav-logo" href="/user/home">TYMORA</a>
+
+    <ul class="nav-links">
+        <li><a href="/user/home" class="active">Home</a></li>
+         <li class="nav-dropdown-li"><button class="nav-dropdown-toggle">Collections <svg width="10" height="10" viewBox="0 0 24 24" fill="none" 
+         stroke="currentColor" stroke-width="2.5">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+ <div class="nav-dropdown">
+    {{#each navCategories}}
+      <a href="/user/shop?category={{this._id}}" class="dd-item">
+        {{#if this.image}}
+          <img src="{{this.image}}" alt="{{this.name}}"/>
+        {{/if}}
+        <span>{{this.name}}</span>
+      </a>
+    {{else}}
+      <p class="dd-empty">No collections yet</p>
+    {{/each}}
+  </div>
+</li>
+        <li><a href="#">Shop</a></li>
+        <li><a href="#">Deals</a></li>
+        <li><a href="#">About Us</a></li>
+    </ul>
+
+    <div class="nav-right">
+        <div class="nav-search">
+            <svg width="13" height="13" fill="none" stroke="#888" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input type="text" placeholder="Search watches…" />
+        </div>
+
+         <!-- MOBILE search icon (hidden on desktop) -->
+        <button class="nav-search-toggle" id="searchToggle" title="Search" aria-label="Search">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
+        </button>
+
+        <button class="nav-icon-btn" title="Wishlist">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+        </button>
+
+        <button class="nav-icon-btn" title="Cart">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            <span class="cart-badge">2</span>
+        </button>
+
+        {{!-- <button class="nav-icon-btn" title="Account">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+        </button> --}}
+        {{#if user}}
+        <a href="/user/profile" class="nav-icon-btn" title="Account">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+        </svg>
+        </a>
+    {{else}}
+    <a href="/user/login" class="login-btn">Login</a>
+    {{/if}}
+    </div>
+</nav>
+<!-- MOBILE SEARCH DROPDOWN -->
+<div class="mobile-search-bar" id="mobileSearchBar">
+    <input type="text" id="mobileSearchInput" placeholder="Search watches…" />
+</div>
+
+<div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-menu-close" id="menuClose">✕</button>
+    <ul>
+        <li><a href="#" class="active">Home</a></li>
+        <li><a href="#">Collections</a></li>
+        <li><a href="#">Shop</a></li>
+        <li><a href="#">Deals</a></li>
+        <li><a href="#">About Us</a></li>
+    </ul>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp; <span>My Account</span>
+</div>
+
+<div class="account-wrap">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+
+    <div class="profile-card">
+     <img class="profile-avatar"
+      src="{{#if user.avatar}}{{user.avatar}}?v={{user._id}}{{else}}/image/useravathar.png{{/if}}"
+      alt="Profile">
+
+      <div class="profile-name">{{user.name}}</div>
+
+      <a class="btn-edit-profile" href="/user/editProfile">
+        Edit Profile
+      </a>
+    </div>
+
+    <div class="info-card">
+
+      <div class="info-item">
+        <div class="info-label">Email Address</div>
+        <div class="info-value">{{user.email}}</div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-label">Phone Number</div>
+        <div class="info-value">
+          {{#if user.phone}}
+            {{user.phone}}
+          {{else}}
+            Not Added
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-label">Date of Birth</div>
+        <div class="info-value">
+          {{#if user.dob}}
+            {{user.dob}}
+          {{else}}
+            Not Added
+          {{/if}}
+        </div>
+      </div>
+
+    </div>
+
+    <button class="btn-logout" onclick="showModal('logout-modal')" >
+      Logout Account
+    </button>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- STATS -->
+    <div class="stats-row">
+
+      <div class="stat-card">
+        <div class="stat-value">
+          {{stats.watchesOwned}}
+        </div>
+        <div class="stat-label">Watches Owned</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value gold">
+          {{stats.totalSpent}}
+        </div>
+        <div class="stat-label">Total Spent</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value">
+          {{stats.activeReturns}}
+        </div>
+        <div class="stat-label">Active Returns</div>
+      </div>
+
+    </div>
+
+    <!-- QUICK LINKS -->
+    <div class="quick-links">
+
+      <a class="quick-card" href="/user/orders">
+        <span class="quick-icon">🛒</span>
+        <span class="quick-label">My Orders</span>
+      </a>
+
+      <a class="quick-card" href="/user/address">
+        <span class="quick-icon">📍</span>
+        <span class="quick-label">My Addresses</span>
+      </a>
+
+      <a class="quick-card" href="/user/wishlist">
+        <span class="quick-icon">♡</span>
+        <span class="quick-label">My Wishlist</span>
+      </a>
+
+    </div>
+
+    <div class="quick-links">
+
+      <a class="quick-card" href="/user/wallet">
+        <span class="quick-icon">💳</span>
+        <span class="quick-label">My Wallet</span>
+      </a>
+
+      <a class="quick-card" href="/user/reviews">
+        <span class="quick-icon">🖼</span>
+        <span class="quick-label">My Reviews</span>
+      </a>
+
+      <a class="quick-card" href="/user/coupons">
+        <span class="quick-icon">🏷</span>
+        <span class="quick-label">My Coupons</span>
+      </a>
+
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-row">
+
+      <!-- SETTINGS -->
+      <div class="panel">
+
+        <div class="panel-title">Account Settings</div>
+
+        <div class="setting-row">
+          <a class="setting-link" onclick="showModal('change-password-modal')">
+            {{#if hasPassword}}
+            Change Password <span>›</span>
+            {{else}}
+            Create Password <span>›</span>
+            {{/if}}
+          </a>
+        </div>
+
+        <div class="setting-row">
+          <a class="setting-link"  onclick="showModal('change-email-modal')">
+            Update Email Address <span>›</span>
+          </a>
+        </div>
+
+       <div class="toggle-wrap">
+      <span id="themeLabel">Light Mode</span>
+     <div class="toggle" id="theme-toggle"></div>
+     </div>
+
+        <button class="btn-delete-acct"
+          onclick="showModal('delete-modal')">
+          <span>🗑</span> Delete Account
+        </button>
+
+      </div>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="panel">
+
+        <div class="panel-title">Recent Activity</div>
+
+        {{#if recentActivity.length}}
+
+          {{#each recentActivity}}
+            <div class="activity-item">
+
+              <div class="act-dot"></div>
+
+              <div>
+                <div class="act-text">{{this.text}}</div>
+                <div class="act-time">{{this.time}}</div>
+              </div>
+
+            </div>
+          {{/each}}
+
+        {{else}}
+
+          <div class="activity-item">
+            <div>
+              <div class="act-text">No recent activity</div>
+            </div>
+          </div>
+
+        {{/if}}
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+<!-- FOOTER HTML -->
+
+<footer class="tymora-footer">
+
+  <div class="footer-top">
+
+    <!-- LEFT BRAND -->
+    <div class="footer-brand">
+      <h2>TYMORA</h2>
+
+      <p>
+        Curating the world’s most exceptional<br>
+        timepieces since 1924. Excellence in every<br>
+        second.
+      </p>
+
+      <div class="footer-icons">
+        <span>↔</span>
+        <span>@</span>
+      </div>
+    </div>
+
+    <!-- COLLECTIONS -->
+    <div class="footer-col">
+      <h4>COLLECTIONS</h4>
+      <a href="#">GRAND COMPLICATIONS</a>
+      <a href="#">HERITAGE DRESS</a>
+      <a href="#">SPORT PROFESSIONAL</a>
+      <a href="#">SKELETON ART</a>
+    </div>
+
+    <!-- LEGAL -->
+    <div class="footer-col">
+      <h4>LEGAL</h4>
+      <a href="#">PRIVACY POLICY</a>
+      <a href="#">TERMS OF SERVICE</a>
+      <a href="#">AUTHENTICITY GUARANTEE</a>
+      <a href="#">SHIPPING & RETURNS</a>
+    </div>
+
+    <!-- CUSTOMER CARE -->
+    <div class="footer-col">
+      <h4>CUSTOMER CARE</h4>
+      <a href="#">CONTACT US</a>
+      <a href="#">CARE GUIDE</a>
+      <a href="#">BOOK A CONSULTATION</a>
+      <a href="#">FAQ</a>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="footer-right">
+      <div class="footer-icons-top">
+        <span>▭</span>
+        <span>🏛</span>
+      </div>
+
+      <button class="secure-btn">🔒 SSL SECURED</button>
+    </div>
+
+  </div>
+
+  <div class="footer-line"></div>
+
+  <div class="footer-bottom">
+    <p>© 2026 TYMORA HOROLOGY. ALL RIGHTS RESERVED.</p>
+
+    <div class="footer-cities">
+      <span>INDIA</span>
+      <span>LONDON</span>
+      <span>DUBAI</span>
+      <span>NEW YORK</span>
+    </div>
+  </div>
+
+</footer>
+
+<!-- LOGOUT MODAL -->
+<div class="modal-overlay"
+     id="logout-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('logout-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-icon-wrap gold-bg">→</div>
+
+    <div class="modal-title-text">
+      Logout from TYMORA?
+    </div>
+
+    <p class="modal-desc-text">
+      Are you sure you want to logout?
+    </p>
+
+    <button class="modal-btn-cancel"
+      style="margin-bottom:10px"
+      onclick="hideModal('logout-modal')">
+      Cancel
+    </button>
+
+    <form action="/user/logout" method="GET">
+  <button type="submit" class="modal-btn-red">
+    Logout
+  </button>
+</form>
+
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay"
+     id="delete-modal"
+     style="display:none">
+
+  <div class="modal-box">
+
+    <div class="modal-icon-wrap red-bg">🗑</div>
+
+    <div class="modal-title-text">
+      Delete Account?
+    </div>
+
+    <p class="modal-desc-text">
+      This action cannot be undone.
+    </p>
+
+   
+
+   <form action="/user/deleteAccount" method="POST" onsubmit="console.log('FORM SUBMITTED')">
+
+   <input 
+    class="modal-confirm-input"
+    type="text"
+    id="del-input"
+    name="confirmText"  
+    placeholder="DELETE">
+
+      <button class="modal-btn-red"
+        id="del-btn"
+        type="submit"
+        disabled>
+        Delete Account
+      </button>
+    </form>
+    <button class="modal-btn-cancel"
+  onclick="hideModal('delete-modal')">
+  Cancel
+</button>
+
+  </div>
+
+</div>
+
+<!-- CHANGE EMAIL MODAL -->
+<div class="modal-overlay"
+     id="change-email-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('change-email-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-title-text">
+      Change Email
+    </div>
+    <p>{{user.email}}</p>
+
+    <p class="modal-desc-text">
+      Enter your new email address
+    </p>
+
+    <!-- ERROR MESSAGE -->
+    <div id="email-error" class="error-msg"></div>
+
+    <form id="changeEmailForm">
+
+      <input class="modal-confirm-input"
+        type="email"
+        id="email"
+        name="email"
+        placeholder="example@email.com">
+
+      <button type="submit" class="modal-btn-red">
+        Verify with Code
+      </button>
+
+    </form>
+
+    <button class="modal-btn-cancel"
+      onclick="hideModal('change-email-modal')">
+      Cancel
+    </button>
+
+  </div>
+</div>
+<!-- OTP MODAL -->
+<div class="modal-overlay"
+     id="otp-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('otp-modal')">
+
+
+  <div class="modal-box">
+
+    <div class="modal-title-text">
+      Verify OTP
+    </div>
+    <div id="otp-success" class="success-msg"></div>
+
+    <p class="modal-desc-text">
+      Enter the 6-digit code sent to your email
+    </p>
+
+    <!-- ERROR MESSAGE -->
+    <div id="otp-error" class="error-msg"></div>
+
+    <form id="otpForm">
+
+      <input class="modal-confirm-input"
+        type="text"
+        id="otp"
+        maxlength="6"
+        placeholder="Enter OTP">
+
+        <p id="otp-timer" style="margin-top:10px;color:#aaa;font-size:13px;"></p>
+
+      <button type="submit" class="modal-btn-red">
+        Verify OTP
+      </button>
+
+    </form>
+
+    <!-- RESEND -->
+    <button class="modal-btn-cancel" id="resendOtpBtn">
+      Resend OTP
+    </button>
+    
+
+    <button class="modal-btn-cancel"
+      onclick="hideModal('otp-modal')">
+      Cancel
+    </button>
+
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay"
+     id="change-password-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('change-password-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-title-text">
+      {{#if hasPassword}}
+      Change Password
+      {{else}}
+      Create Password
+      {{/if}}
+    </div>
+
+    <p class="modal-desc-text">
+      {{#if hasPassword}}
+      Enter your current and new password
+      {{else}}
+      Enter your password
+      {{/if}}
+    </p>
+
+    <!-- ERROR MESSAGE -->
+    <div id="password-error" class="error-msg"></div>
+
+    <!-- SUCCESS MESSAGE -->
+    <div id="password-success" class="success-msg"></div>
+
+    <form id="changePasswordForm">
+
+      <!-- CURRENT PASSWORD -->
+     <div class="password-wrap">
+      {{#if hasPassword}}
+    <input type="password" id="currentPassword" placeholder="Current Password">
+  {{/if}}
+  </div>
+
+<div class="password-wrap">
+  <input type="password" id="newPassword" placeholder="New Password">
+  </div>
+
+<div class="password-wrap">
+  <input type="password" id="confirmPassword" placeholder="Confirm Password">
+</div>
+
+      <button type="submit" class="modal-btn-red">
+        Update Password
+      </button>
+
+    </form>
+
+    <button class="modal-btn-cancel"
+      onclick="hideModal('change-password-modal')">
+      Cancel
+    </button>
+
+  </div>
+</div>
+
+<script>
+function showModal(id){
+  document.getElementById(id).style.display = 'flex';
+   const errorBox = document.getElementById("password-error");
+  const successBox = document.getElementById("password-success");
+
+  if(errorBox) errorBox.innerText = "";
+  if(successBox) successBox.innerText = "";
+
+  const form = document.getElementById("changePasswordForm");
+  if(form) form.reset();
+}
+
+function hideModal(id){
+  document.getElementById(id).style.display = 'none';
+}
+
+document.getElementById("changeEmailForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
+  const errorBox = document.getElementById("email-error");
+
+  errorBox.innerText = "";
+
+  //Required check
+  if (!email) {
+    errorBox.innerText = "Email is required";
+    return;
+  }
+
+  //  Format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    errorBox.innerText = "Enter a valid email address";
+    return;
+  }
+
+  try {
+    const res = await fetch("/user/changeEmail", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",   
+  body: JSON.stringify({ email })
+});
+
+    const data = await res.json();
+
+    if (!data.success) {
+      errorBox.innerText = data.message;
+      return;
+    }
+
+    // SUCCESS → redirect to OTP page (or modal later)
+    hideModal("change-email-modal");
+    showModal("otp-modal");
+    clearInterval(interval);
+    timer = 60;
+    startOtpTimer();
+  } catch (err) {
+    errorBox.innerText = "Something went wrong";
+  }
+});
+  document.getElementById("otpForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const otp = Number(document.getElementById("otp").value.trim());
+  const errorBox = document.getElementById("otp-error");
+
+  errorBox.innerText = "";
+
+  if(!otp){
+    errorBox.innerText = "OTP required";
+    return;
+  }
+
+  try{
+
+    const res = await fetch("/user/verifyEmailOtp", {
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  credentials:"include",  
+  body: JSON.stringify({ otp })
+});
+
+    const data = await res.json();
+
+    if(!data.success){
+      errorBox.innerText = data.message;
+      return;
+    }
+
+    // SUCCESS
+    document.getElementById("otp-success").innerText = "Email updated successfully";
+
+    setTimeout(()=>{
+      window.location.reload();
+    },1500);
+
+  }catch(err){
+    errorBox.innerText = "Something went wrong";
+  }
+
+});
+document.getElementById("resendOtpBtn").addEventListener("click", async ()=>{
+console.log("RESEND CLICKED");
+  const successBox = document.getElementById("otp-success");
+  const errorBox = document.getElementById("otp-error");
+
+  successBox.innerText = "";
+  errorBox.innerText = "";
+
+  try{
+    const res = await fetch("/user/resendEmailOtp", {
+  method:"POST",
+  credentials:"include"  
+});
+    const data = await res.json();
+
+    if(data.success){
+      successBox.innerText = "OTP sent successfully ";
+      clearInterval(interval);   // stop old timer
+      timer = 60;                // reset
+      startOtpTimer();           // restart
+    } else {
+      errorBox.innerText = data.message || "Failed to resend OTP";
+    }
+
+  }catch(err){
+    errorBox.innerText = "Something went wrong";
+  }
+
+});
+let timer = 60;
+let interval;
+
+function startOtpTimer(){
+  const timerBox = document.getElementById("otp-timer");
+  const resendBtn = document.getElementById("resendOtpBtn");
+
+  resendBtn.disabled = true;
+
+  interval = setInterval(()=>{
+    timer--;
+
+    timerBox.innerText = `Resend available in ${timer}s`;
+
+    if(timer <= 0){
+      timerBox.innerText = "You can resend OTP now";
+      resendBtn.disabled = false;
+    }
+
+  },1000);
+}
+const delInput = document.getElementById("del-input");
+const delBtn = document.getElementById("del-btn");
+
+if(delInput && delBtn){
+  delInput.addEventListener("input", function(){
+    if(this.value.trim() === "DELETE"){
+      delBtn.disabled = false;
+    } else {
+      delBtn.disabled = true;
+    }
+  });
+}
+document.getElementById("changePasswordForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+ const currentPasswordInput = document.getElementById("currentPassword");
+const currentPassword = currentPasswordInput ? currentPasswordInput.value.trim() : null;
+  const newPassword = document.getElementById("newPassword").value.trim();
+  const confirmPassword = document.getElementById("confirmPassword").value.trim();
+
+  const errorBox = document.getElementById("password-error");
+  const successBox = document.getElementById("password-success");
+
+  errorBox.innerText = "";
+  successBox.innerText = "";
+
+  // 1. Required check
+if(!newPassword || !confirmPassword){
+  errorBox.innerText = "All fields are required";
+  return;
+}
+
+// Only check currentPassword if it exists
+if(currentPasswordInput && !currentPassword){
+  errorBox.innerText = "Current password required";
+  return;
+}
+
+  // 2. Match check
+  if(newPassword !== confirmPassword){
+    errorBox.innerText = "Passwords do not match";
+    return;
+  }
+
+ // 3. current password and new not match
+  if(currentPasswordInput && currentPassword === newPassword){
+  errorBox.innerText = "New password must be different";
+  return;
+}
+
+  // 4. Strong password check
+  const passwordPattern =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  if(!passwordPattern.test(newPassword)){
+    errorBox.innerText = "Password must be strong";
+    return;
+  }
+
+  try{
+
+    const res = await fetch("/user/changePassword", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      credentials:"include",
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+        confirmPassword
+      })
+    });
+
+    const data = await res.json();
+
+   if(data.success){
+
+  successBox.innerText = "Password updated successfully";
+
+  document.getElementById("changePasswordForm").reset();
+
+  setTimeout(()=>{
+    window.location.reload();
+  },1000);
+
+}else{
+  errorBox.innerText = data.message || "Something went wrong";
+}
+
+  }catch(err){
+    errorBox.innerText = "Something went wrong";
+  }
+
+});
+
+
+const dropdownLi = document.querySelector('.nav-dropdown-li');
+const toggle     = document.querySelector('.nav-dropdown-toggle');
+
+// Toggle on click
+toggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdownLi.classList.toggle('open');
+});
+
+// Close when clicking anywhere outside
+document.addEventListener('click', () => {
+  dropdownLi.classList.remove('open');
+});
+
+
+</script>
+
