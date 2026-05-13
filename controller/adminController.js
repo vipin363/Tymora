@@ -7,6 +7,9 @@ import Category from "../model/categoryModel.js";
 import { v2 as cloudinary } from 'cloudinary';
 import Product from '../model/productModel.js';
 import Brand from '../model/brandModel.js';
+import Variant from '../model/variantModel.js';
+import Material from '../model/materialModel.js';
+import SavedColor from '../model/savedColorModel.js';
 
 export const loadLogin = (req, res) => {
   res.render("admin/login");
@@ -533,11 +536,28 @@ export const loadProductManagement = async (req, res) => {
     const query = { deleted_at: null };
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { sku: { $regex: search, $options: 'i' } },
-      ];
-    }
+  
+  const variantsBySkuSearch = await Variant.find({
+    sku: { $regex: search, $options: 'i' },
+    deleted_at: null
+  }).distinct('product');
+
+  const brandMatches = await Brand.find({ name: { $regex: search, $options: 'i' } });
+  const brandIds = brandMatches.map(b => b._id);
+
+  const orClauses = [
+    { name:  { $regex: search, $options: 'i' } },
+    { sku:   { $regex: search, $options: 'i' } },
+    { brand: { $in: brandIds } },
+    { _id:   { $in: variantsBySkuSearch } },
+  ];
+
+  if (!isNaN(parseFloat(search))) {
+    orClauses.push({ price: parseFloat(search) });
+  }
+
+  query.$or = orClauses;
+}
     if (status !== 'all') query.status = status;
     if (categoryFilter !== 'all') query.category = categoryFilter;
     if (brandFilter !== 'all') query.brand = brandFilter;
@@ -861,6 +881,248 @@ export const getProductDetail = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.redirect('/admin/products');
+  }
+};
+
+export const getVariants = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    const query = { product: productId, deleted_at: null };
+    const variants = await Variant.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const total = await Variant.countDocuments(query);
+
+    res.json({
+      success: true,
+      variants,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit) || 1,
+      total,
+    });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
+
+export const addVariant = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const {
+      name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial, price, stock, existingImages
+    } = req.body;
+
+     if (sku) {
+      const existing = await Variant.findOne({ sku });
+      if (existing) return res.json({ success: false, message: 'SKU already exists.' });
+    }
+
+    const uploadedImages = req.files ? req.files.map(f => f.path) : [];
+    const existingArr = Array.isArray(existingImages) ? existingImages
+      : existingImages ? [existingImages] : [];
+    const allImages = [...existingArr, ...uploadedImages];
+
+    if (allImages.length < 3) {
+      return res.json({ success: false, message: 'At least 3 images are required.' });
+    }
+
+    const variant = await Variant.create({
+      product: productId, name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial,
+      price: parseFloat(price), stock: parseInt(stock) || 0,
+      images: allImages,
+    });
+
+    res.json({ success: true, variant, message: 'Variant added.' });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
+
+export const editVariant = async (req, res) => {
+  try {
+    const { variantId } = req.params;
+    const {
+      name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial, price, stock, existingImages
+    } = req.body;
+
+      if (sku) {
+      const existing = await Variant.findOne({ sku, _id: { $ne: variantId } });
+      if (existing) return res.json({ success: false, message: 'SKU already exists.' });
+    }
+
+    const uploadedImages = req.files ? req.files.map(f => f.path) : [];
+    const existingArr = Array.isArray(existingImages) ? existingImages
+      : existingImages ? [existingImages] : [];
+    const allImages = [...existingArr, ...uploadedImages];
+
+    if (allImages.length < 3) {
+      return res.json({ success: false, message: 'At least 3 images are required.' });
+    }
+
+    const updated = await Variant.findByIdAndUpdate(variantId, {
+      name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial,
+      price: parseFloat(price), stock: parseInt(stock) || 0,
+      images: allImages,
+    }, { new: true });
+
+    res.json({ success: true, variant: updated, message: 'Variant updated.' });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
+
+export const getVariantJson = async (req, res) => {
+  try {
+    const variant = await Variant.findById(req.params.variantId);
+    if (!variant) return res.json({ success: false, message: 'Not found' });
+    res.json({ success: true, variant });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const softDeleteVariant = async (req, res) => {
+  try {
+    await Variant.findByIdAndUpdate(req.params.variantId, { deleted_at: new Date() });
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const getVariantTrash = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const trashed = await Variant.find({ product: productId, deleted_at: { $ne: null } })
+      .sort({ deleted_at: -1 });
+    res.json({ success: true, variants: trashed });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const restoreVariant = async (req, res) => {
+  try {
+    await Variant.findByIdAndUpdate(req.params.variantId, { deleted_at: null });
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const permanentDeleteVariant = async (req, res) => {
+  try {
+    await Variant.findByIdAndDelete(req.params.variantId);
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const getMaterials = async (req, res) => {
+  try {
+    const materials = await Material.find().sort({ name: 1 });
+    res.json({ success: true, materials });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const addMaterial = async (req, res) => {
+  try {
+    const { name, type } = req.body;
+    const existing = await Material.findOne({ name: { $regex: `^${name.trim()}$`, $options: 'i' } });
+    if (existing) return res.json({ success: false, message: 'Material already exists.' });
+    const material = await Material.create({ name: name.trim(), type: type || 'both' });
+    res.json({ success: true, material });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+};
+
+export const getSavedColors = async (req, res) => {
+  try {
+    const colors = await SavedColor.find().sort({ usedCount: -1 }).limit(30);
+    res.json({ success: true, colors });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const saveColor = async (req, res) => {
+  try {
+    const { hex, name } = req.body;
+    let color = await SavedColor.findOne({ hex: hex.toUpperCase() });
+    if (color) {
+      color.usedCount += 1;
+      if (name) color.name = name;
+      await color.save();
+    } else {
+      color = await SavedColor.create({ hex: hex.toUpperCase(), name: name || '' });
+    }
+    res.json({ success: true, color });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+
+export const generateProductSku = async (req, res) => {
+  try {
+    const { brand, model, collection } = req.query;
+    const b = (brand || '').replace(/\s+/g, '').toUpperCase().slice(0, 3);
+    const m = (model || '').replace(/\s+/g, '').toUpperCase().slice(0, 4);
+    const c = (collection || '').replace(/\s+/g, '').toUpperCase().slice(0, 3);
+    let base = [b, m, c].filter(Boolean).join('-');
+    if (!base) return res.json({ success: false, message: 'Provide at least brand/model' });
+
+  
+    let sku = base;
+    let counter = 1;
+    while (await Product.findOne({ sku })) {
+      sku = `${base}-${String(counter).padStart(2, '0')}`;
+      counter++;
+    }
+    res.json({ success: true, sku });
+  } catch (err) {
+    res.json({ success: false });
+  }
+};
+
+export const generateVariantSku = async (req, res) => {
+  try {
+    const { brand, productName, category, strapMaterial, strapColor, caseColor, dialColor, size } = req.query;
+
+    const short = (str, len) => (str || '').replace(/\s+/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, len);
+
+    const base = [
+      short(brand, 3),
+      short(productName, 4),
+      short(category, 3),
+      short(strapMaterial, 3),
+      short(strapColor, 3),
+      short(caseColor, 3),
+      short(dialColor, 3),
+      short(size, 3),
+    ].filter(Boolean).join('-');
+
+    if (!base) return res.json({ success: false, message: 'Not enough data' });
+
+    let sku = base;
+    let counter = 1;
+    while (await Variant.findOne({ sku })) {
+      sku = `${base}-${String(counter).padStart(2, '0')}`;
+      counter++;
+    }
+    res.json({ success: true, sku });
+  } catch (err) {
+    res.json({ success: false });
   }
 };
 

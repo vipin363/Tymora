@@ -370,51 +370,48 @@
   </div>
 
   <!-- VARIANT MANAGEMENT SECTION -->
-  <div class="pd-variant-section">
-    <div class="pd-variant-header">
-      <div class="pd-variant-header-left">
-        <h3 class="pd-variant-title">Variant Management</h3>
-        <span class="pd-variant-count" id="variantCountBadge">— Variants</span>
-      </div>
-      <div class="pd-variant-header-right">
-        <div class="pd-variant-search-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="variantSearchInput" placeholder="Search variants..." oninput="filterVariants(this.value)">
-        </div>
-        <select id="variantStockSort" class="sort-select" onchange="sortVariants(this.value)">
-          <option value="">All Stock</option>
-          <option value="in_stock">In Stock</option>
-          <option value="low_stock">Low Stock</option>
-          <option value="out_stock">Out of Stock</option>
-        </select>
-      </div>
+<div class="pd-variant-section">
+  <div class="pd-variant-header">
+    <div class="pd-variant-header-left">
+      <h3 class="pd-variant-title">Variant Management</h3>
+      <span class="pd-variant-count" id="variantCountBadge">— Variants</span>
     </div>
-
-    <!-- Variant Table -->
-    <div class="table-card" style="margin-top:0">
-      <table id="variantTable">
-        <thead>
-          <tr>
-            <th>Preview</th>
-            <th>Variant Name</th>
-            <th>Color</th>
-            <th>Size / Storage</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="variantTableBody">
-          <!-- Variants will be loaded here via JS -->
-          <tr>
-            <td colspan="7" style="text-align:center;padding:40px;color:#aaa">
-              Loading variants...
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="pd-variant-header-right">
+      <div class="pd-variant-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="variantSearchInput" placeholder="Search variants..." oninput="filterVariants(this.value)">
+      </div>
+      <select id="variantStockSort" class="sort-select" onchange="sortVariants(this.value)">
+        <option value="">All Stock</option>
+        <option value="in_stock">In Stock</option>
+        <option value="low_stock">Low Stock</option>
+        <option value="out_stock">Out of Stock</option>
+      </select>
+      <button class="act-btn" onclick="openVariantTrashModal()" title="Variant Trash">🗑 Trash</button>
     </div>
   </div>
+
+  <div class="table-card" style="margin-top:0">
+    <table id="variantTable">
+      <thead>
+        <tr>
+          <th>Preview</th>
+          <th>Variant Name</th>
+          <th>Strap / Dial / Case Color</th>
+          <th>Size</th>
+          <th>Materials</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="variantTableBody">
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa">Loading variants...</td></tr>
+      </tbody>
+    </table>
+    <div class="pagination" id="variantPagination"></div>
+  </div>
+</div>
 
 </div>
 {{/if}}
@@ -424,6 +421,7 @@
 </div>
 
 
+<!-- ══ ADD/EDIT DRAWER ══ -->
 <!-- ══ ADD/EDIT DRAWER ══ -->
 <div class="drawer-overlay" id="productDrawer">
   <div class="drawer">
@@ -435,7 +433,6 @@
       <form id="productForm">
         <input type="hidden" id="productId">
 
-        <!-- Basic Info -->
         <div class="drawer-section-label">Basic Information</div>
 
         <div class="form-group">
@@ -483,7 +480,6 @@
           <textarea id="fDesc" rows="3" placeholder="Product description..."></textarea>
         </div>
 
-        <!-- Pricing & Stock -->
         <div class="drawer-section-label">Pricing & Stock</div>
         <div class="form-row">
           <div class="form-group">
@@ -495,10 +491,14 @@
             <input type="number" id="fStock" placeholder="0" min="0" required>
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label>SKU</label>
-            <input type="text" id="fSku" placeholder="TYM-W-001">
+            <label>SKU <small style="color:#888;font-weight:400;">(auto-generated)</small></label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="fSku" placeholder="Auto-generated..." style="font-family:monospace;flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+              <button type="button" onclick="document.getElementById('fSku').value='';autoGenerateProductSku();" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;white-space:nowrap;">↻</button>
+            </div>
           </div>
           <div class="form-group">
             <label>Discount %</label>
@@ -506,7 +506,6 @@
           </div>
         </div>
 
-        <!-- Status -->
         <div class="form-row">
           <div class="form-group">
             <label>Status</label>
@@ -517,7 +516,6 @@
           </div>
         </div>
 
-        <!-- Visibility Toggles -->
         <div class="drawer-section-label">Visibility</div>
         <div class="toggle-row">
           <div class="toggle-item">
@@ -552,7 +550,6 @@
           </div>
         </div>
 
-        <!-- Images -->
         <div class="drawer-section-label">Product Images</div>
         <div class="form-group">
           <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('rawImageInput').click()">
@@ -570,6 +567,246 @@
     <div class="drawer-footer">
       <button class="btn-cancel-outline" onclick="closeDrawer()">Cancel</button>
       <button class="btn-primary" id="drawerSubmitBtn" onclick="submitProductForm()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VARIANT ADD/EDIT DRAWER ══ -->
+<div class="drawer-overlay" id="variantDrawer" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;align-items:flex-start;justify-content:flex-end;">
+  <div style="width:640px;max-width:100vw;height:100vh;background:#fff;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);" id="variantDrawerBox">
+    <div style="padding:20px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;background:#fafafa;flex-shrink:0;">
+      <h3 id="variantDrawerTitle" style="margin:0;font-size:17px;font-weight:700;">Add Variant</h3>
+      <button onclick="closeVariantDrawer()" style="width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:24px;" id="variantDrawerBody">
+      <form id="variantForm">
+        <input type="hidden" id="vProductId">
+        <input type="hidden" id="vVariantId">
+
+        <!-- Colors -->
+        <div class="drawer-section-label">Colors</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+          <!-- Strap Color -->
+          <div class="form-group">
+            <label>Strap Color <span style="color:#dc2626">*</span></label>
+            <div style="position:relative;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div id="strapColorSwatch" onclick="openColorPanel('strap')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;transition:border-color .2s;"></div>
+                <input type="text" id="vStrapColor" class="form-control" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncSwatchFromInput('strap')">
+              </div>
+              <div id="strapColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+                <!-- Gradient Canvas -->
+                <div style="position:relative;margin-bottom:10px;">
+                  <canvas id="strapCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
+                  <div id="strapCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
+                </div>
+                <!-- Hue -->
+                <div id="strapHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
+                  <div id="strapHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
+                </div>
+                <!-- Hex Input + Eyedropper -->
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                  <input type="text" id="strapHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onHexInput('strap')">
+                  <button type="button" onclick="startEyedropper('strap')" title="Pick from screen" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg>
+                  </button>
+                  <button type="button" onclick="saveCurrentColor('strap')" title="Save color" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
+                </div>
+                <!-- Saved Colors -->
+                <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+                <div id="strapSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+                <!-- Apply Button -->
+                <button type="button" onclick="applyColorPanel('strap')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dial Color -->
+          <div class="form-group">
+            <label>Dial Color <span style="color:#dc2626">*</span></label>
+            <div style="position:relative;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div id="dialColorSwatch" onclick="openColorPanel('dial')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+                <input type="text" id="vDialColor" class="form-control" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncSwatchFromInput('dial')">
+              </div>
+              <div id="dialColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+                <div style="position:relative;margin-bottom:10px;">
+                  <canvas id="dialCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
+                  <div id="dialCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
+                </div>
+                <div id="dialHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
+                  <div id="dialHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                  <input type="text" id="dialHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onHexInput('dial')">
+                  <button type="button" onclick="startEyedropper('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg>
+                  </button>
+                  <button type="button" onclick="saveCurrentColor('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
+                </div>
+                <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+                <div id="dialSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+                <button type="button" onclick="applyColorPanel('dial')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case Color -->
+          <div class="form-group">
+            <label>Case Color <span style="color:#dc2626">*</span></label>
+            <div style="position:relative;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div id="caseColorSwatch" onclick="openColorPanel('case')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+                <input type="text" id="vCaseColor" class="form-control" placeholder="#000000 or Gold" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncSwatchFromInput('case')">
+              </div>
+              <div id="caseColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+                <div style="position:relative;margin-bottom:10px;">
+                  <canvas id="caseCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
+                  <div id="caseCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
+                </div>
+                <div id="caseHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
+                  <div id="caseHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                  <input type="text" id="caseHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onHexInput('case')">
+                  <button type="button" onclick="startEyedropper('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg>
+                  </button>
+                  <button type="button" onclick="saveCurrentColor('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
+                </div>
+                <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+                <div id="caseSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+                <button type="button" onclick="applyColorPanel('case')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Materials -->
+        <div class="drawer-section-label">Materials</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+          <div class="form-group">
+            <label>Strap Material <span style="color:#dc2626">*</span></label>
+            <div style="display:flex;gap:8px;">
+              <select id="vStrapMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+                <option value="">Select...</option>
+              </select>
+              <button type="button" onclick="showAddMaterial('strap')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
+            </div>
+          <div id="strapMaterialNewRow" style="display:none;margin-top:8px;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="strapMaterialInput" placeholder="e.g. Silicone" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+                <button type="button" onclick="saveMaterial('strap')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+                <button type="button" onclick="hideAddMaterial('strap')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Case Material <span style="color:#dc2626">*</span></label>
+            <div style="display:flex;gap:8px;">
+              <select id="vCaseMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+                <option value="">Select...</option>
+              </select>
+              <button type="button" onclick="showAddMaterial('case')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
+            </div>
+            <div id="caseMaterialNewRow" style="display:none;margin-top:8px;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="caseMaterialInput" placeholder="e.g. Stainless Steel" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+                <button type="button" onclick="saveMaterial('case')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+                <button type="button" onclick="hideAddMaterial('case')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Size -->
+        <div class="drawer-section-label">Specifications</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+          <div class="form-group">
+            <label>Size <span style="color:#dc2626">*</span></label>
+            <input type="text" id="vSize" placeholder="e.g. 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;" oninput="autoGenerateVariantSku()">
+          </div>
+          <div class="form-group">
+            <label>Price (₹) <span style="color:#dc2626">*</span></label>
+            <input type="number" id="vPrice" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+          <div class="form-group">
+            <label>Stock <span style="color:#dc2626">*</span></label>
+            <input type="number" id="vStock" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+        </div>
+
+        <!-- SKU -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>SKU <small style="color:#888;font-weight:400;">(auto-generated, editable)</small></label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="vSku" placeholder="Auto-generated..." style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;font-family:monospace;">
+            <button type="button" onclick="autoGenerateVariantSku(true)" style="padding:9px 14px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">↻ Regen</button>
+          </div>
+        </div>
+
+        <!-- Variant Name -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Variant Name <span style="color:#dc2626">*</span> <small style="color:#888;font-weight:400;">(auto-suggested)</small></label>
+          <input type="text" id="vName" placeholder="e.g. Black Leather 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+
+        <!-- Images -->
+        <div class="drawer-section-label">Images <span style="color:#888;font-size:11px;font-weight:400;">(min 3 required)</span></div>
+        <div class="form-group">
+          <div onclick="document.getElementById('vRawImageInput').click()" style="border:2px dashed #e5e7eb;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color .2s;background:#fafafa;">
+            <div style="font-size:28px;margin-bottom:6px;">📁</div>
+            <p style="margin:0;color:#555;font-size:13.5px;">Click to select images</p>
+            <small style="color:#aaa;">JPG, PNG, WEBP — select multiple (min 3)</small>
+          </div>
+          <input type="file" id="vRawImageInput" accept="image/*" multiple style="display:none" onchange="handleVariantRawImages(event)">
+          <div id="vImagePreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px;"></div>
+          <div id="vImageCountNote" style="font-size:12px;margin-top:6px;color:#dc2626;">0 images — at least 3 required</div>
+        </div>
+      </form>
+    </div>
+    <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;background:#fafafa;flex-shrink:0;">
+      <button onclick="closeVariantDrawer()" style="padding:9px 20px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Cancel</button>
+      <button id="variantSubmitBtn" onclick="submitVariantForm()" style="padding:9px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Save Variant</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VARIANT TRASH MODAL ══ -->
+<div id="variantTrashModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;width:560px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:20px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;">
+      <h3 style="margin:0;">🗑 Variant Trash</h3>
+      <button onclick="closeVariantTrashModal()" style="border:none;background:#f0f0f0;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div id="variantTrashList" style="flex:1;overflow-y:auto;padding:20px;">
+      <div style="text-align:center;color:#aaa;padding:30px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VARIANT PERM DELETE CONFIRM ══ -->
+<div id="variantPermDeleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1300;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:32px;width:380px;max-width:95vw;text-align:center;">
+    <div style="font-size:36px;margin-bottom:16px;">⚠️</div>
+    <h3 style="margin:0 0 10px;">Permanently Delete?</h3>
+    <p style="color:#666;margin-bottom:24px;">This action <strong>cannot be undone</strong>. The variant will be removed forever.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closeVariantPermDeleteModal()" style="padding:10px 24px;background:#f3f4f6;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+      <button onclick="confirmVariantPermDelete()" style="padding:10px 24px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VARIANT SOFT DELETE CONFIRM ══ -->
+<div id="variantSoftDeleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1300;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:32px;width:380px;max-width:95vw;text-align:center;">
+    <div style="font-size:36px;margin-bottom:16px;">🗑</div>
+    <h3 style="margin:0 0 10px;">Move to Trash?</h3>
+    <p style="color:#666;margin-bottom:24px;">This variant will be moved to trash. You can restore it later.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closeVariantSoftDeleteModal()" style="padding:10px 24px;background:#f3f4f6;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancel</button>
+      <button onclick="confirmVariantSoftDelete()" style="padding:10px 24px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Move to Trash</button>
     </div>
   </div>
 </div>
@@ -673,7 +910,7 @@ function confirmLogout()    { window.location.href = '/admin/logout'; }
 function switchImage(src, el) {
   const main = document.getElementById('galleryMain');
   if (main) main.src = src;
-  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
 }
 
@@ -683,7 +920,7 @@ function handleBrandChange(val) {
   if (val !== 'other') document.getElementById('fNewBrand').value = '';
 }
 
-// ── DRAWER ────────────────────────────────────────────
+// ── DRAWER ───────────────────────────────────────────
 let drawerMode = 'add';
 
 function openAddModal() {
@@ -707,26 +944,24 @@ function openEditModal(id) {
   fetch(`/admin/products/${id}/json`)
     .then(r => r.json())
     .then(data => {
-      document.getElementById('fName').value     = data.name        || '';
-      document.getElementById('fDesc').value     = data.description || '';
-      document.getElementById('fPrice').value    = data.price       || '';
-      document.getElementById('fStock').value    = data.stock       || '';
-      document.getElementById('fSku').value      = data.sku         || '';
-      document.getElementById('fDiscount').value = data.discount    || '';
-      document.getElementById('fStatus').value   = data.status      || 'active';
-      document.getElementById('fGender').value   = data.gender      || 'unisex';
-      document.getElementById('fCategory').value = data.categoryId  || '';
+      document.getElementById('fName').value          = data.name        || '';
+      document.getElementById('fDesc').value          = data.description || '';
+      document.getElementById('fPrice').value         = data.price       || '';
+      document.getElementById('fStock').value         = data.stock       || '';
+      document.getElementById('fSku').value           = data.sku         || '';
+      document.getElementById('fDiscount').value      = data.discount    || '';
+      document.getElementById('fStatus').value        = data.status      || 'active';
+      document.getElementById('fGender').value        = data.gender      || 'unisex';
+      document.getElementById('fCategory').value      = data.categoryId  || '';
       document.getElementById('fFeatured').checked    = !!data.featured;
       document.getElementById('fDealOfDay').checked   = !!data.dealOfTheDay;
       document.getElementById('fOfferProduct').checked = !!data.offerProduct;
-
       const brandSelect = document.getElementById('fBrand');
       if (data.brandId) {
         const opt = brandSelect.querySelector(`option[value="${data.brandId}"]`);
         if (opt) brandSelect.value = data.brandId;
       }
       document.getElementById('newBrandWrap').style.display = 'none';
-
       if (data.images && data.images.length) {
         data.images.forEach(url => addExistingImagePreview(url));
       }
@@ -742,39 +977,39 @@ function closeDrawer() {
 }
 
 async function submitProductForm() {
-  const id = document.getElementById('productId').value;
-  const name = document.getElementById('fName').value.trim();
+  const id       = document.getElementById('productId').value;
+  const name     = document.getElementById('fName').value.trim();
   const category = document.getElementById('fCategory').value;
-  const brand = document.getElementById('fBrand').value;
+  const brand    = document.getElementById('fBrand').value;
   const newBrand = document.getElementById('fNewBrand').value.trim();
-  const price = document.getElementById('fPrice').value;
-  const stock = document.getElementById('fStock').value;
+  const price    = document.getElementById('fPrice').value;
+  const stock    = document.getElementById('fStock').value;
 
-  if (!name) { showToast('Product name is required', 'blue'); return; }
-  if (!category) { showToast('Please select a category', 'blue'); return; }
-  if (!brand) { showToast('Please select a brand', 'blue'); return; }
-  if (brand === 'other' && !newBrand) { showToast('Please enter new brand name', 'blue'); return; }
-  if (!price) { showToast('Price is required', 'blue'); return; }
-  if (!stock && stock !== '0') { showToast('Stock is required', 'blue'); return; }
-
-  const totalImages = croppedBlobs.length + existingImageUrls.length;
-  if (totalImages < 1) { showToast('Please add at least 1 image', 'blue'); return; }
+  if (!name)                              { showToast('Product name is required', 'blue'); return; }
+  if (!category)                          { showToast('Please select a category', 'blue'); return; }
+  if (!brand)                             { showToast('Please select a brand', 'blue'); return; }
+  if (brand === 'other' && !newBrand)     { showToast('Please enter new brand name', 'blue'); return; }
+  if (!price)                             { showToast('Price is required', 'blue'); return; }
+  if (!stock && stock !== '0')            { showToast('Stock is required', 'blue'); return; }
+  if (croppedBlobs.length + existingImageUrls.length < 1) {
+    showToast('Please add at least 1 image', 'blue'); return;
+  }
 
   const fd = new FormData();
-  fd.append('name', name);
-  fd.append('category', category);
-  fd.append('brand', brand);
+  fd.append('name',        name);
+  fd.append('category',    category);
+  fd.append('brand',       brand);
   if (brand === 'other') fd.append('newBrand', newBrand);
   fd.append('description', document.getElementById('fDesc').value);
-  fd.append('gender', document.getElementById('fGender').value);
-  fd.append('price', price);
-  fd.append('stock', stock);
-  fd.append('sku', document.getElementById('fSku').value);
-  fd.append('discount', document.getElementById('fDiscount').value || '0');
-  fd.append('status', document.getElementById('fStatus').value);
-  fd.append('featured', document.getElementById('fFeatured').checked);
-  fd.append('dealOfTheDay', document.getElementById('fDealOfDay').checked);
-  fd.append('offerProduct', document.getElementById('fOfferProduct').checked);
+  fd.append('gender',      document.getElementById('fGender').value);
+  fd.append('price',       price);
+  fd.append('stock',       stock);
+  fd.append('sku',         document.getElementById('fSku').value);
+  fd.append('discount',    document.getElementById('fDiscount').value || '0');
+  fd.append('status',      document.getElementById('fStatus').value);
+  fd.append('featured',    document.getElementById('fFeatured').checked);
+  fd.append('dealOfTheDay',  document.getElementById('fDealOfDay').checked);
+  fd.append('offerProduct',  document.getElementById('fOfferProduct').checked);
   existingImageUrls.forEach(url => fd.append('existingImages', url));
   croppedBlobs.forEach((blob, i) => fd.append('images', blob, `image_${i}.jpg`));
 
@@ -784,23 +1019,285 @@ async function submitProductForm() {
   btn.textContent = 'Saving...';
 
   try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      body: fd
-    });
+    const r    = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
     const data = await r.json();
     if (!data.success) { showToast(data.message || 'Error', 'red'); return; }
     closeDrawer();
     showToast(drawerMode === 'add' ? 'Product added!' : 'Product updated!', 'green');
-    await refreshProductTable(); // ← AJAX refresh instead of reload
-    await refreshBrandDropdown();
+
+    // ── KEY FIX: branch on which page we're on ──
+    const detailPage = document.getElementById('page-detail');
+    if (detailPage && drawerMode === 'edit') {
+      // On detail page: only update the detail UI, never touch the table
+      await refreshProductDetail(id);
+    } else {
+      // On list page: refresh table + brand dropdown
+      await refreshProductTable();
+      await refreshBrandDropdown();
+    }
   } catch (e) {
     showToast('Network error', 'red');
   } finally {
     btn.disabled = false;
     btn.textContent = drawerMode === 'add' ? 'Add Product' : 'Save Changes';
   }
+}
+
+// ── REFRESH DETAIL (AJAX, no layout side-effects) ────────────
+async function refreshProductDetail(productId) {
+  try {
+    const r    = await fetch(`/admin/products/${productId}/json`);
+    const data = await r.json();
+    if (!data) return;
+
+    // Title + breadcrumb
+    const titleEl = document.querySelector('.pd-title');
+    if (titleEl) titleEl.textContent = data.name || '';
+    const bc = document.querySelector('.pd-bc-cur');
+    if (bc) bc.textContent = data.name || '';
+
+    // Status badge + price tag + discount badge
+    const badgesEl = document.querySelector('.pd-badges');
+    if (badgesEl) {
+      const isActive = data.status === 'active';
+      const statusBadge = badgesEl.querySelector('.badge');
+      if (statusBadge) {
+        statusBadge.className   = `badge ${isActive ? 's-active' : 's-inactive'}`;
+        statusBadge.textContent = isActive ? '● Active' : '● Inactive';
+      }
+      const priceTag = badgesEl.querySelector('.pd-price-tag');
+      if (priceTag) priceTag.textContent = `BASE PRICE ₹${data.price}`;
+
+      // Discount badge (optional second badge)
+      let discountBadge = badgesEl.querySelectorAll('.badge')[1];
+      if (data.discount && data.discount > 0) {
+        if (!discountBadge) {
+          discountBadge = document.createElement('span');
+          discountBadge.className = 'badge s-active';
+          badgesEl.appendChild(discountBadge);
+        }
+        discountBadge.textContent = `${data.discount}% OFF`;
+      } else if (discountBadge) {
+        discountBadge.remove();
+      }
+    }
+
+    // Stock stat card (first pd-stat-value only)
+    const stockVal = document.querySelector('.pd-stat-value');
+    if (stockVal) stockVal.innerHTML = `${data.stock} <span class="pd-stat-unit">units</span>`;
+
+    // Gallery main image
+    const mainImg = document.getElementById('galleryMain');
+    if (mainImg && data.images && data.images.length) mainImg.src = data.images[0];
+
+    // Gallery thumbnails
+    const thumbsEl = document.querySelector('.pd-gallery-thumbs');
+    if (thumbsEl && data.images) {
+      thumbsEl.innerHTML = data.images.map((src, i) => `
+        <div class="pd-thumb${i === 0 ? ' active' : ''}" onclick="switchImage('${src}', this)">
+          <img src="${src}" alt="thumb ${i}">
+        </div>`).join('');
+    }
+
+    // Info grid rows — match by label text
+    document.querySelectorAll('.pd-info-row').forEach(row => {
+      const label   = row.querySelector('.pd-info-label')?.textContent?.trim().toLowerCase();
+      const valueEl = row.querySelector('.pd-info-value');
+      if (!valueEl) return;
+      if (label === 'sku')      valueEl.textContent = data.sku        || '-';
+      if (label === 'stock')    valueEl.textContent = `${data.stock} units`;
+      if (label === 'discount') valueEl.textContent = `${data.discount || 0}%`;
+      if (label === 'gender')   valueEl.textContent = data.gender     || '-';
+    });
+
+    // Visibility & Offers toggles
+    document.querySelectorAll('.pd-toggle-info').forEach(row => {
+      const label = row.querySelector('span:first-child')?.textContent?.trim().toLowerCase();
+      const badge = row.querySelector('.badge');
+      if (!badge) return;
+      let val = false;
+      if (label === 'featured product') val = !!data.featured;
+      if (label === 'deal of the day')  val = !!data.dealOfTheDay;
+      if (label === 'offer product')    val = !!data.offerProduct;
+      badge.className   = `badge ${val ? 's-active' : 's-inactive'}`;
+      badge.textContent = val ? 'Yes' : 'No';
+    });
+
+    // Description
+    const descEl = document.querySelector('.pd-description');
+    if (descEl) descEl.textContent = data.description || '';
+
+  } catch (e) {
+    console.error('refreshProductDetail failed:', e);
+    showToast('Detail refresh failed', 'red');
+  }
+}
+
+// ── REFRESH TABLE (list page only) ───────────────────
+async function refreshProductTable() {
+  // NEVER run on the detail page — it breaks the layout
+  if (document.getElementById('page-detail')) return;
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const r      = await fetch(`/admin/products?${params.toString()}`);
+    const html   = await r.text();
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(html, 'text/html');
+
+    // Table body
+    const newTbody = doc.querySelector('#page-list table tbody');
+    const curTbody = document.querySelector('#page-list table tbody');
+    if (newTbody && curTbody) curTbody.innerHTML = newTbody.innerHTML;
+
+    // Empty-state div
+    const newEmpty = doc.querySelector('#page-list .table-card > div[style*="text-align:center"]');
+    const curEmpty = document.querySelector('#page-list .table-card > div[style*="text-align:center"]');
+    if (newEmpty && !curEmpty) curTbody?.insertAdjacentHTML('afterend', newEmpty.outerHTML);
+    else if (!newEmpty && curEmpty) curEmpty.remove();
+
+    // Stat cards — update only the svalue text, never innerHTML of the whole card
+    const newCards = doc.querySelectorAll('#page-list .stat-card');
+    const curCards = document.querySelectorAll('#page-list .stat-card');
+    newCards.forEach((card, i) => {
+      if (!curCards[i]) return;
+      const newVal = card.querySelector('.svalue');
+      const curVal = curCards[i].querySelector('.svalue');
+      if (newVal && curVal) curVal.textContent = newVal.textContent;
+    });
+
+    // Pagination
+    const newPag = doc.querySelector('#page-list .pagination');
+    const curPag = document.querySelector('#page-list .pagination');
+    if (newPag && curPag) curPag.innerHTML = newPag.innerHTML;
+
+    // Trash badge
+    const newBadge = doc.querySelector('.trash-badge');
+    const curBadge = document.querySelector('.trash-badge');
+    if (newBadge && curBadge) curBadge.textContent = newBadge.textContent;
+
+  } catch (e) {
+    console.error('Table refresh failed:', e);
+  }
+}
+
+async function refreshBrandDropdown() {
+  try {
+    const r   = await fetch('/admin/products?_=' + Date.now());
+    const html = await r.text();
+    const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+    const newFilterBrand = doc.querySelector('select[name="brand"]');
+    const curBrand       = document.getElementById('fBrand');
+    if (!newFilterBrand || !curBrand) return;
+
+    const otherOpt = curBrand.querySelector('option[value="other"]');
+    curBrand.innerHTML = '<option value="">Select brand</option>';
+    newFilterBrand.querySelectorAll('option').forEach(opt => {
+      if (opt.value === 'all') return;
+      const o = document.createElement('option');
+      o.value = opt.value; o.textContent = opt.textContent;
+      curBrand.appendChild(o);
+    });
+    if (otherOpt) curBrand.appendChild(otherOpt);
+
+    // Also refresh the topbar filter brand select
+    const filterBrand = document.querySelector('select[name="brand"]');
+    if (filterBrand && newFilterBrand) filterBrand.innerHTML = newFilterBrand.innerHTML;
+  } catch (e) {
+    console.error('Brand dropdown refresh failed:', e);
+  }
+}
+
+// ── DELETE (SOFT) ─────────────────────────────────────
+let deleteProductId = null;
+
+function openDeleteModal(id, name) {
+  deleteProductId = id;
+  document.getElementById('delConfirmInput').value = '';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteProductId = null;
+}
+
+async function confirmDelete() {
+  if (!deleteProductId) return;
+  if (document.getElementById('delConfirmInput').value.trim() !== 'DELETE') {
+    showToast('Type DELETE to confirm', 'blue'); return;
+  }
+  const isDetail = !!document.getElementById('page-detail');
+  try {
+    const r    = await fetch(`/admin/products/delete/${deleteProductId}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await r.json();
+    if (!data.success) { showToast(data.message || 'Error', 'red'); return; }
+    closeDeleteModal();
+    showToast('Product moved to trash', 'red');
+    if (isDetail) {
+      setTimeout(() => window.location.href = '/admin/products', 1200);
+    } else {
+      await refreshProductTable();
+    }
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+// ── TRASH ─────────────────────────────────────────────
+async function openTrashModal() {
+  document.getElementById('trashModal').classList.add('open');
+  const list = document.getElementById('trashList');
+  list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">Loading...</div>';
+  try {
+    const r    = await fetch('/admin/products/trash');
+    const data = await r.json();
+    if (!data.success || !data.products.length) {
+      list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">Trash is empty.</div>';
+      return;
+    }
+    list.innerHTML = data.products.map(p => `
+      <div class="trash-item" id="trash-item-${p._id}">
+        <div class="trash-thumb">${p.image ? `<img src="${p.image}" alt="">` : `<span>${p.initials}</span>`}</div>
+        <div class="trash-info">
+          <div class="trash-name">${p.name}</div>
+          <div class="trash-meta">${p.category} · ${p.brand}</div>
+          <div class="trash-date">Deleted: ${p.deletedAt}</div>
+        </div>
+        <div class="trash-actions">
+          <button class="act-btn" onclick="restoreProduct('${p._id}')">↩ Restore</button>
+          <button class="act-btn danger" onclick="openPermDeleteModal('${p._id}','${p.name}')">🗑 Delete</button>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;color:#e53;padding:30px">Failed to load trash.</div>';
+  }
+}
+function closeTrashModal() { document.getElementById('trashModal').classList.remove('open'); }
+
+async function restoreProduct(id) {
+  try {
+    const r    = await fetch(`/admin/products/restore/${id}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await r.json();
+    if (!data.success) { showToast('Failed to restore', 'red'); return; }
+    document.getElementById(`trash-item-${id}`)?.remove();
+    showToast('Product restored!', 'green');
+    await refreshProductTable();
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+let permDeleteId = null;
+function openPermDeleteModal(id)  { permDeleteId = id; document.getElementById('permDeleteModal').classList.add('open'); }
+function closePermDeleteModal()   { document.getElementById('permDeleteModal').classList.remove('open'); permDeleteId = null; }
+async function confirmPermDelete() {
+  if (!permDeleteId) return;
+  try {
+    const r    = await fetch(`/admin/products/permanent-delete/${permDeleteId}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await r.json();
+    if (!data.success) { showToast('Failed to delete', 'red'); return; }
+    document.getElementById(`trash-item-${permDeleteId}`)?.remove();
+    closePermDeleteModal();
+    showToast('Product permanently deleted', 'red');
+    await refreshProductTable();
+  } catch (e) { showToast('Network error', 'red'); }
 }
 
 // ── IMAGE + CROPPER ───────────────────────────────────
@@ -820,7 +1317,6 @@ function handleRawImages(event) {
   event.target.value = '';
   processNextInQueue();
 }
-
 function processNextInQueue() {
   if (!rawFilesQueue.length) return;
   const file = rawFilesQueue.shift();
@@ -828,240 +1324,90 @@ function processNextInQueue() {
   reader.onload = e => openCropperModal(e.target.result);
   reader.readAsDataURL(file);
 }
-
 function openCropperModal(src) {
-  if (cropperInstance) {
-    try { cropperInstance.destroy(); } catch(e) {}
-    cropperInstance = null;
-  }
-
+  if (cropperInstance) { try { cropperInstance.destroy(); } catch(e){} cropperInstance = null; }
   const modal = document.getElementById('cropperModal');
   modal.classList.remove('open');
-
   const wrap = document.querySelector('.crop-img-wrap');
   wrap.innerHTML = '<img id="cropperImg" alt="crop">';
   const img = document.getElementById('cropperImg');
-
   modal.classList.add('open');
-
   img.onload = () => {
     try {
       cropperInstance = new Cropper(img, {
-        aspectRatio: 1,
-        viewMode: 1,
-        autoCropArea: 0.9,
-        dragMode: 'move',
-        movable: true,
-        zoomable: true,
-        scalable: false,
-        rotatable: false,
-        cropBoxMovable: false,
-        cropBoxResizable: false,
-        guides: true,
-        center: true,
-        highlight: true,
-        background: false
+        aspectRatio: 1, viewMode: 1, autoCropArea: 0.9,
+        dragMode: 'move', movable: true, zoomable: true,
+        scalable: false, rotatable: false,
+        cropBoxMovable: false, cropBoxResizable: false,
+        guides: true, center: true, highlight: true, background: false
       });
-    } catch(e) {
-      console.error('Cropper init failed:', e);
-    }
+    } catch(e) { console.error('Cropper init failed:', e); }
   };
-
   img.src = src;
 }
-
 function applyCrop() {
   if (!cropperInstance) return;
   cropperInstance.getCroppedCanvas({ width: 800, height: 800 }).toBlob(blob => {
-    const idx = croppedBlobs.length;
     croppedBlobs.push(blob);
-    addCroppedPreview(blob, idx);
+    addCroppedPreview(blob, croppedBlobs.length - 1);
     closeCropperModal();
     processNextInQueue();
     updateImageCount();
   }, 'image/jpeg', 0.9);
 }
-
 function skipCrop() {
   const img = document.getElementById('cropperImg');
-  fetch(img.src)
-    .then(r => r.blob())
-    .then(blob => {
-      const idx = croppedBlobs.length;
-      croppedBlobs.push(blob);
-      addCroppedPreview(blob, idx);
-      closeCropperModal();
-      processNextInQueue();
-      updateImageCount();
-    });
+  fetch(img.src).then(r => r.blob()).then(blob => {
+    croppedBlobs.push(blob);
+    addCroppedPreview(blob, croppedBlobs.length - 1);
+    closeCropperModal();
+    processNextInQueue();
+    updateImageCount();
+  });
 }
-
 function closeCropperModal() {
   document.getElementById('cropperModal').classList.remove('open');
   if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
 }
-
 function addCroppedPreview(blob, index) {
-  const url = URL.createObjectURL(blob);
+  const url  = URL.createObjectURL(blob);
   const grid = document.getElementById('imagePreviewGrid');
-  const div = document.createElement('div');
+  const div  = document.createElement('div');
   div.className = 'preview-item';
   div.id = `cropped-preview-${index}`;
-  div.innerHTML = `
-    <img src="${url}" alt="preview">
-    <button type="button" class="remove-img" onclick="removeCroppedImage(${index}, this.parentElement)">✕</button>
-    <span class="preview-label">New</span>`;
+  div.innerHTML = `<img src="${url}" alt="preview"><button type="button" class="remove-img" onclick="removeCroppedImage(${index},this.parentElement)">✕</button><span class="preview-label">New</span>`;
   grid.appendChild(div);
 }
-
 function addExistingImagePreview(url) {
   existingImageUrls.push(url);
   const grid = document.getElementById('imagePreviewGrid');
-  const div = document.createElement('div');
+  const div  = document.createElement('div');
   div.className = 'preview-item existing';
-  div.innerHTML = `
-    <img src="${url}" alt="existing">
-    <button type="button" class="remove-img" onclick="removeExistingImage('${url}', this.parentElement)">✕</button>
-    <span class="preview-label">Saved</span>`;
+  div.innerHTML = `<img src="${url}" alt="existing"><button type="button" class="remove-img" onclick="removeExistingImage('${url}',this.parentElement)">✕</button><span class="preview-label">Saved</span>`;
   grid.appendChild(div);
   updateImageCount();
 }
-
 function removeCroppedImage(index, el) {
   croppedBlobs.splice(index, 1);
   el.remove();
   document.querySelectorAll('#imagePreviewGrid .preview-item:not(.existing)').forEach((item, i) => {
     item.id = `cropped-preview-${i}`;
     const btn = item.querySelector('.remove-img');
-    if (btn) btn.setAttribute('onclick', `removeCroppedImage(${i}, this.parentElement)`);
+    if (btn) btn.setAttribute('onclick', `removeCroppedImage(${i},this.parentElement)`);
   });
   updateImageCount();
 }
-
 function removeExistingImage(url, el) {
   existingImageUrls = existingImageUrls.filter(u => u !== url);
   el.remove();
   updateImageCount();
 }
-
 function updateImageCount() {
   const total = croppedBlobs.length + existingImageUrls.length;
-  const note = document.getElementById('imageCountNote');
+  const note  = document.getElementById('imageCountNote');
   if (!note) return;
   note.textContent = `${total} image${total !== 1 ? 's' : ''} selected${total < 1 ? ' — at least 1 required' : ' ✓'}`;
   note.style.color = total < 1 ? '#dc2626' : '#16a34a';
-}
-
-// ── DELETE (SOFT) ─────────────────────────────────────
-let deleteProductId = null;
-
-function openDeleteModal(id, name) {
-  deleteProductId = id;
-  document.getElementById('delConfirmInput').value = '';
-  document.getElementById('deleteModal').classList.add('open');
-}
-
-function closeDeleteModal() {
-  document.getElementById('deleteModal').classList.remove('open');
-  deleteProductId = null;
-}
-
-async function confirmDelete() {
-  if (!deleteProductId) return;
-  if (document.getElementById('delConfirmInput').value.trim() !== 'DELETE') {
-    showToast('Type DELETE to confirm', 'blue'); return;
-  }
-  try {
-    const r = await fetch(`/admin/products/delete/${deleteProductId}`, {
-      method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    const data = await r.json();
-    if (!data.success) { showToast(data.message || 'Error', 'red'); return; }
-    closeDeleteModal();
-    showToast('Product moved to trash', 'red');
-    await refreshProductTable(); // ← AJAX refresh
-  } catch (e) {
-    showToast('Network error', 'red');
-  }
-}
-
-// ── TRASH ─────────────────────────────────────────────
-async function openTrashModal() {
-  document.getElementById('trashModal').classList.add('open');
-  const list = document.getElementById('trashList');
-  list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">Loading...</div>';
-  try {
-    const r = await fetch('/admin/products/trash');
-    const data = await r.json();
-    if (!data.success || !data.products.length) {
-      list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">Trash is empty.</div>';
-      return;
-    }
-    list.innerHTML = data.products.map(p => `
-      <div class="trash-item" id="trash-item-${p._id}">
-        <div class="trash-thumb">
-          ${p.image ? `<img src="${p.image}" alt="">` : `<span>${p.initials}</span>`}
-        </div>
-        <div class="trash-info">
-          <div class="trash-name">${p.name}</div>
-          <div class="trash-meta">${p.category} · ${p.brand}</div>
-          <div class="trash-date">Deleted: ${p.deletedAt}</div>
-        </div>
-        <div class="trash-actions">
-          <button class="act-btn" onclick="restoreProduct('${p._id}')">↩ Restore</button>
-          <button class="act-btn danger" onclick="openPermDeleteModal('${p._id}', '${p.name}')">🗑 Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    list.innerHTML = '<div style="text-align:center;color:#e53;padding:30px">Failed to load trash.</div>';
-  }
-}
-
-function closeTrashModal() {
-  document.getElementById('trashModal').classList.remove('open');
-}
-
-async function restoreProduct(id) {
-  try {
-    const r = await fetch(`/admin/products/restore/${id}`, {
-      method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    const data = await r.json();
-    if (!data.success) { showToast('Failed to restore', 'red'); return; }
-    document.getElementById(`trash-item-${id}`)?.remove();
-    showToast('Product restored!', 'green');
-    await refreshProductTable(); // ← AJAX refresh
-  } catch (e) {
-    showToast('Network error', 'red');
-  }
-}
-
-let permDeleteId = null;
-function openPermDeleteModal(id, name) {
-  permDeleteId = id;
-  document.getElementById('permDeleteModal').classList.add('open');
-}
-function closePermDeleteModal() {
-  document.getElementById('permDeleteModal').classList.remove('open');
-  permDeleteId = null;
-}
-async function confirmPermDelete() {
-
-  if (!permDeleteId) return;
-  try {
-    const r = await fetch(`/admin/products/permanent-delete/${permDeleteId}`, {
-      method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    const data = await r.json();
-    if (!data.success) { showToast('Failed to delete', 'red'); return; }
-    document.getElementById(`trash-item-${permDeleteId}`)?.remove();
-    closePermDeleteModal();
-    showToast('Product permanently deleted', 'red');
-    await refreshProductTable(); // ← add this
-  } catch (e) {
-    showToast('Network error', 'red');
-  }
 }
 
 // ── MODAL OVERLAY CLOSE ───────────────────────────────
@@ -1082,19 +1428,70 @@ function showToast(msg, type = 'green') {
     blue:  '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
   };
   const wrap = document.getElementById('toastWrap');
-  const t = document.createElement('div');
+  const t    = document.createElement('div');
   t.className = 'toast';
-  t.innerHTML = `
-    <div class="toast-icon ${type}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        ${icons[type] || icons.green}
-      </svg>
-    </div>
-    <span>${msg}</span>`;
+  t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
   wrap.appendChild(t);
   requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
 }
+
+// ── MOBILE SEARCH TOGGLE ──────────────────────────────
+// Adds a search icon button in the topbar on mobile that shows/hides the filter form
+(function setupMobileSearch() {
+  const topbar     = document.querySelector('.topbar');
+  const filterForm = document.getElementById('filterForm');
+  if (!topbar || !filterForm) return;
+
+  // Create toggle button
+  const btn = document.createElement('button');
+  btn.id        = 'mobileSearchBtn';
+  btn.className = 'hamburger';
+  btn.setAttribute('aria-label', 'Search');
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+  btn.style.cssText = 'display:none;';
+
+  // Insert after hamburger
+  const hamburger = topbar.querySelector('.hamburger');
+  if (hamburger) hamburger.insertAdjacentElement('afterend', btn);
+
+  btn.addEventListener('click', () => {
+    filterForm.classList.toggle('mobile-search-open');
+  });
+
+  // Inject responsive CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    @media (max-width: 768px) {
+      #mobileSearchBtn { display:flex !important; }
+      #filterForm {
+        display: none !important;
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        background: #fff;
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 200;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: 0 4px 16px rgba(0,0,0,.1);
+      }
+      #filterForm.mobile-search-open {
+        display: flex !important;
+      }
+      #filterForm input,
+      #filterForm select,
+      #filterForm .btn-search,
+      #filterForm .btn-clear {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .topbar { position: relative; }
+    }
+  `;
+  document.head.appendChild(style);
+})();
 
 // ── INIT ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -1102,199 +1499,548 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(id => document.getElementById(id)?.classList.remove('open'));
 });
 
+// ═══════════════════════════════════════════════════════════════
+//  VARIANT MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+let allVariants        = [];
+let variantDrawerMode  = 'add';
+let vRawFilesQueue     = [];
+let vCroppedBlobs      = [];
+let vExistingImageUrls = [];
+let variantCurrentPage = 1;
+let variantTotalPages  = 1;
+let currentProductId   = null;
 
-async function refreshProductTable() {
-  try {
-    // Fetch current page with existing search/filter params
-    const params = new URLSearchParams(window.location.search);
-    const r = await fetch(`/admin/products?${params.toString()}`, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest-table' }
-    });
-    const html = await r.text();
+const cpState = {};
+['strap','dial','case'].forEach(f => { cpState[f] = { hue: 0, hex: '' }; });
 
-    // Parse the returned HTML and extract just the tbody and stats
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    // Update table body
-   const newTbody = doc.querySelector('table tbody');
-const curTbody = document.querySelector('table tbody');
-if (newTbody && curTbody) curTbody.innerHTML = newTbody.innerHTML;
-
-// Also update the empty state message
-const tableCard = document.querySelector('.table-card');
-const newTableCard = doc.querySelector('.table-card');
-if (tableCard && newTableCard) {
-  // Update empty state div if it exists
-  const curEmpty = tableCard.querySelector('[style*="text-align:center"][style*="padding:40px"]');
-  const newEmpty = newTableCard.querySelector('[style*="text-align:center"][style*="padding:40px"]');
-  if (newEmpty && !curEmpty) {
-    curTbody.insertAdjacentHTML('afterend', newEmpty.outerHTML);
-  } else if (!newEmpty && curEmpty) {
-    curEmpty.remove();
+document.addEventListener('DOMContentLoaded', () => {
+  const detailPage = document.getElementById('page-detail');
+  if (detailPage) {
+    currentProductId = detailPage.dataset.productId;
+    if (currentProductId) { loadVariants(currentProductId, 1); loadMaterials(); loadSavedColors(); }
   }
-}
-    // Update stat cards
-    doc.querySelectorAll('.stat-card').forEach((card, i) => {
-      const cards = document.querySelectorAll('.stat-card');
-      if (cards[i]) cards[i].innerHTML = card.innerHTML;
-    });
-
-    // Update pagination
-    const newPag = doc.querySelector('.pagination');
-    const curPag = document.querySelector('.pagination');
-    if (newPag && curPag) curPag.innerHTML = newPag.innerHTML;
-
-    // Update trash badge count
-    const newBadge = doc.querySelector('.trash-badge');
-    const curBadge = document.querySelector('.trash-badge');
-    if (newBadge && curBadge) curBadge.textContent = newBadge.textContent;
-
-  } catch (e) {
-    console.error('Table refresh failed:', e);
-  }
-}
-
-
-async function refreshBrandDropdown() {
-  try {
-    const r = await fetch('/admin/products?_=' + Date.now());
-    const html = await r.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    // Get fresh brand options from the filter dropdown in the fetched page
-    const newBrandSelect = doc.querySelector('select[name="brand"]');
-    const curBrandSelect = document.getElementById('fBrand');
-
-    if (!newBrandSelect || !curBrandSelect) return;
-
-    // Preserve the "other" option and rebuild the rest
-    const otherOption = curBrandSelect.querySelector('option[value="other"]');
-    curBrandSelect.innerHTML = '<option value="">Select brand</option>';
-
-    newBrandSelect.querySelectorAll('option').forEach(opt => {
-      if (opt.value === 'all') return; // skip "All Brands" option
-      const newOpt = document.createElement('option');
-      newOpt.value = opt.value;
-      newOpt.textContent = opt.textContent;
-      curBrandSelect.appendChild(newOpt);
-    });
-
-    if (otherOption) curBrandSelect.appendChild(otherOption);
-
-    // Also refresh the filter bar brand select
-    const filterBrand = document.querySelector('select[name="brand"]');
-    if (filterBrand && newBrandSelect) {
-      filterBrand.innerHTML = newBrandSelect.innerHTML;
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.color-panel-popup') && !e.target.closest('[onclick*="openColorPanel"]')) {
+      document.querySelectorAll('.color-panel-popup').forEach(p => p.style.display = 'none');
     }
+  });
+  ['strap','dial','case'].forEach(f => initColorCanvas(f));
+});
 
-  } catch (e) {
-    console.error('Brand dropdown refresh failed:', e);
-  }
-}
-
-// ── VARIANT MANAGEMENT ────────────────────────────────
-let allVariants = [];
-
-async function loadVariants(productId) {
+async function loadVariants(productId, page = 1) {
+  variantCurrentPage = page;
   try {
-    const r = await fetch(`/admin/products/${productId}/variants`);
+    const r    = await fetch(`/admin/products/${productId}/variants?page=${page}`);
     const data = await r.json();
-    allVariants = data.variants || [];
-    updateVariantCount(allVariants.length);
+    allVariants       = data.variants || [];
+    variantTotalPages = data.totalPages || 1;
+    updateVariantCount(data.total || allVariants.length);
     renderVariantTable(allVariants);
+    renderVariantPagination(data.currentPage, data.totalPages, productId);
   } catch (e) {
     document.getElementById('variantTableBody').innerHTML =
-      '<tr><td colspan="7" style="text-align:center;padding:30px;color:#aaa">No variants found.</td></tr>';
+      '<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa">Failed to load variants.</td></tr>';
   }
 }
 
 function renderVariantTable(variants) {
   const tbody = document.getElementById('variantTableBody');
   if (!tbody) return;
-
   if (!variants.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">No variants found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa">No variants found. Click "Add Variant" to create one.</td></tr>';
     return;
   }
-
   tbody.innerHTML = variants.map(v => {
-    let stockBadge = '';
-    if (v.stock === 0) {
-      stockBadge = `<span class="stock-badge out-stock">Out of Stock</span>`;
-    } else if (v.stock <= 10) {
-      stockBadge = `<span class="stock-badge low-stock">${v.stock} Low</span>`;
-    } else {
-      stockBadge = `<span class="stock-badge in-stock">${v.stock} In Stock</span>`;
-    }
-
-    return `
-      <tr>
-        <td>
-          <div class="product-thumb">
-            ${v.image
-              ? `<img src="${v.image}" alt="${v.name}">`
-              : `<span>${(v.name || 'V').charAt(0).toUpperCase()}</span>`}
-          </div>
-        </td>
-        <td><div class="pname">${v.name || '-'}</div><div class="psku">${v.sku || ''}</div></td>
-        <td>${v.color || '-'}</td>
-        <td>${v.storage || v.size || '-'}</td>
-        <td>₹${v.price || '-'}</td>
-        <td>${stockBadge}</td>
-        <td>
-          <button class="act-btn" title="Edit" onclick="openEditVariantModal('${v._id}')">✏️</button>
-          <button class="act-btn danger" title="Delete" onclick="openDeleteVariantModal('${v._id}','${v.name}')">🗑</button>
-        </td>
-      </tr>`;
+    const stockBadge = v.stock === 0
+      ? `<span class="stock-badge out-stock">Out of Stock</span>`
+      : v.stock <= 10
+        ? `<span class="stock-badge low-stock">${v.stock} Low</span>`
+        : `<span class="stock-badge in-stock">${v.stock} In Stock</span>`;
+    const colorDots = [
+      v.strapColor ? `<span title="Strap:${v.strapColor}" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${v.strapColor};border:1.5px solid #ddd;vertical-align:middle;"></span>` : '',
+      v.dialColor  ? `<span title="Dial:${v.dialColor}"   style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${v.dialColor};border:1.5px solid #ddd;vertical-align:middle;"></span>` : '',
+      v.caseColor  ? `<span title="Case:${v.caseColor}"   style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${v.caseColor};border:1.5px solid #ddd;vertical-align:middle;"></span>` : '',
+    ].filter(Boolean).join(' ');
+    return `<tr id="variant-row-${v._id}">
+      <td><div class="product-thumb">${v.images?.[0]?`<img src="${v.images[0]}" alt="">`:`<span>${(v.name||'V').charAt(0).toUpperCase()}</span>`}</div></td>
+      <td><div class="pname">${v.name||'-'}</div><div class="psku">${v.sku||''}</div></td>
+      <td>${colorDots||'-'}<br><small style="color:#888;font-size:11px;">${[v.strapColor,v.dialColor,v.caseColor].filter(Boolean).join(' / ')||''}</small></td>
+      <td>${v.size||'-'}</td>
+      <td><small>${v.strapMaterial||''} / ${v.caseMaterial||''}</small></td>
+      <td>₹${v.price||'-'}</td>
+      <td>${stockBadge}</td>
+      <td>
+        <button class="act-btn" onclick="openEditVariantModal('${v._id}')">✏️</button>
+        <button class="act-btn danger" onclick="openVariantSoftDeleteModal('${v._id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑</button>
+      </td></tr>`;
   }).join('');
 }
 
-function updateVariantCount(count) {
-  const badge = document.getElementById('variantCountBadge');
-  if (badge) badge.textContent = `${count} Variant${count !== 1 ? 's' : ''}`;
+function renderVariantPagination(current, total, productId) {
+  const pg = document.getElementById('variantPagination');
+  if (!pg || total <= 1) { if (pg) pg.innerHTML = ''; return; }
+  pg.innerHTML = `
+    ${current > 1 ? `<a href="#" onclick="loadVariants('${productId}',${current-1});return false;">Prev</a>` : ''}
+    <span>Page ${current} of ${total}</span>
+    ${current < total ? `<a href="#" onclick="loadVariants('${productId}',${current+1});return false;">Next</a>` : ''}`;
 }
-
+function updateVariantCount(count) {
+  const b = document.getElementById('variantCountBadge');
+  if (b) b.textContent = `${count} Variant${count!==1?'s':''}`;
+}
 function filterVariants(search) {
   const s = search.toLowerCase();
-  const filtered = allVariants.filter(v =>
-    (v.name || '').toLowerCase().includes(s) ||
-    (v.sku || '').toLowerCase().includes(s) ||
-    (v.color || '').toLowerCase().includes(s)
-  );
-  renderVariantTable(filtered);
-  updateVariantCount(filtered.length);
+  const f = allVariants.filter(v =>
+    (v.name||'').toLowerCase().includes(s)||(v.sku||'').toLowerCase().includes(s)||
+    (v.strapColor||'').toLowerCase().includes(s)||(v.dialColor||'').toLowerCase().includes(s));
+  renderVariantTable(f); updateVariantCount(f.length);
 }
-
 function sortVariants(val) {
-  let filtered = [...allVariants];
-  if (val === 'in_stock')  filtered = filtered.filter(v => v.stock > 10);
-  if (val === 'low_stock') filtered = filtered.filter(v => v.stock > 0 && v.stock <= 10);
-  if (val === 'out_stock') filtered = filtered.filter(v => v.stock === 0);
-  renderVariantTable(filtered);
-  updateVariantCount(filtered.length);
+  let f = [...allVariants];
+  if (val==='in_stock')  f=f.filter(v=>v.stock>10);
+  if (val==='low_stock') f=f.filter(v=>v.stock>0&&v.stock<=10);
+  if (val==='out_stock') f=f.filter(v=>v.stock===0);
+  renderVariantTable(f); updateVariantCount(f.length);
 }
 
-// Placeholder stubs — wire these to your actual modals/routes
 function openAddVariantModal(productId) {
-  showToast('Add Variant — connect to your variant drawer', 'blue');
+  variantDrawerMode = 'add';
+  currentProductId  = productId;
+  document.getElementById('variantDrawerTitle').textContent = 'Add Variant';
+  document.getElementById('variantSubmitBtn').textContent   = 'Add Variant';
+  document.getElementById('variantForm').reset();
+  document.getElementById('vVariantId').value  = '';
+  document.getElementById('vProductId').value  = productId;
+  clearVariantImagePreviews();
+  resetColorPanels();
+  const overlay = document.getElementById('variantDrawer');
+  overlay.style.display = 'flex';
+  setTimeout(()=>document.getElementById('variantDrawerBox').style.transform='translateX(0)',10);
+  ['strap','dial','case'].forEach(f=>{initColorCanvas(f);loadSavedColorSwatches(f);});
 }
-function openEditVariantModal(variantId) {
-  showToast('Edit Variant ' + variantId, 'blue');
+async function openEditVariantModal(variantId) {
+  variantDrawerMode = 'edit';
+  document.getElementById('variantDrawerTitle').textContent = 'Edit Variant';
+  document.getElementById('variantSubmitBtn').textContent   = 'Save Changes';
+  document.getElementById('vVariantId').value = variantId;
+  clearVariantImagePreviews();
+  resetColorPanels();
+  try {
+    const r    = await fetch(`/admin/products/variants/${variantId}/json`);
+    const data = await r.json();
+    if (!data.success) { showToast('Failed to load variant','red'); return; }
+    const v = data.variant;
+    document.getElementById('vProductId').value      = v.product;
+    document.getElementById('vName').value           = v.name||'';
+    document.getElementById('vSku').value            = v.sku||'';
+    document.getElementById('vSize').value           = v.size||'';
+    document.getElementById('vPrice').value          = v.price||'';
+    document.getElementById('vStock').value          = v.stock||'';
+    document.getElementById('vStrapColor').value     = v.strapColor||'';
+    document.getElementById('vDialColor').value      = v.dialColor||'';
+    document.getElementById('vCaseColor').value      = v.caseColor||'';
+    document.getElementById('vStrapMaterial').value  = v.strapMaterial||'';
+    document.getElementById('vCaseMaterial').value   = v.caseMaterial||'';
+    ['strap','dial','case'].forEach(f=>syncSwatchFromInput(f));
+    if (v.images?.length) v.images.forEach(url=>addVExistingImagePreview(url));
+  } catch(e) { showToast('Failed to load variant','red'); return; }
+  const overlay = document.getElementById('variantDrawer');
+  overlay.style.display = 'flex';
+  setTimeout(()=>document.getElementById('variantDrawerBox').style.transform='translateX(0)',10);
+  ['strap','dial','case'].forEach(f=>{initColorCanvas(f);loadSavedColorSwatches(f);});
 }
-function openDeleteVariantModal(variantId, name) {
-  showToast('Delete Variant: ' + name, 'red');
+function closeVariantDrawer() {
+  document.getElementById('variantDrawerBox').style.transform='translateX(100%)';
+  setTimeout(()=>{document.getElementById('variantDrawer').style.display='none';},300);
 }
 
-// Auto-load variants when detail page is shown
-document.addEventListener('DOMContentLoaded', () => {
-  const detailPage = document.getElementById('page-detail');
-  if (detailPage) {
-    // Read product id from the edit button's onclick or embed it as data attribute
-    // Simplest: add data-product-id to page-detail div and read it here
-    const pid = detailPage.dataset.productId;
-    if (pid) loadVariants(pid);
+async function submitVariantForm() {
+  const productId     = document.getElementById('vProductId').value;
+  const variantId     = document.getElementById('vVariantId').value;
+  const name          = document.getElementById('vName').value.trim();
+  const sku           = document.getElementById('vSku').value.trim();
+  const size          = document.getElementById('vSize').value.trim();
+  const price         = document.getElementById('vPrice').value;
+  const stock         = document.getElementById('vStock').value;
+  const strapColor    = document.getElementById('vStrapColor').value.trim();
+  const dialColor     = document.getElementById('vDialColor').value.trim();
+  const caseColor     = document.getElementById('vCaseColor').value.trim();
+  const strapMaterial = document.getElementById('vStrapMaterial').value;
+  const caseMaterial  = document.getElementById('vCaseMaterial').value;
+
+  if (!name)          { showToast('Variant name is required','blue'); return; }
+  if (!strapColor)    { showToast('Strap color is required','blue');  return; }
+  if (!dialColor)     { showToast('Dial color is required','blue');   return; }
+  if (!caseColor)     { showToast('Case color is required','blue');   return; }
+  if (!size)          { showToast('Size is required','blue');         return; }
+  if (!strapMaterial) { showToast('Strap material is required','blue'); return; }
+  if (!caseMaterial)  { showToast('Case material is required','blue');  return; }
+  if (!price)         { showToast('Price is required','blue');        return; }
+  if (vCroppedBlobs.length + vExistingImageUrls.length < 3) { showToast('At least 3 images required','blue'); return; }
+
+  const fd = new FormData();
+  fd.append('name',name); fd.append('sku',sku); fd.append('size',size);
+  fd.append('price',price); fd.append('stock',stock||'0');
+  fd.append('strapColor',strapColor); fd.append('dialColor',dialColor); fd.append('caseColor',caseColor);
+  fd.append('strapMaterial',strapMaterial); fd.append('caseMaterial',caseMaterial);
+  vExistingImageUrls.forEach(url=>fd.append('existingImages',url));
+  vCroppedBlobs.forEach((blob,i)=>fd.append('images',blob,`vimg_${i}.jpg`));
+
+  const url = variantDrawerMode==='add'
+    ? `/admin/products/${productId}/variants/add`
+    : `/admin/products/variants/${variantId}/edit`;
+  const btn = document.getElementById('variantSubmitBtn');
+  btn.disabled=true; btn.textContent='Saving...';
+  try {
+    const r    = await fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd});
+    const data = await r.json();
+    if (!data.success) { showToast(data.message||'Error','red'); return; }
+    closeVariantDrawer();
+    showToast(variantDrawerMode==='add'?'Variant added!':'Variant updated!','green');
+    await loadVariants(productId, variantCurrentPage);
+  } catch(e) { showToast('Network error','red'); }
+  finally { btn.disabled=false; btn.textContent=variantDrawerMode==='add'?'Add Variant':'Save Changes'; }
+}
+
+let variantToDelete = null;
+function openVariantSoftDeleteModal(id)  { variantToDelete=id; document.getElementById('variantSoftDeleteModal').style.display='flex'; }
+function closeVariantSoftDeleteModal()   { document.getElementById('variantSoftDeleteModal').style.display='none'; variantToDelete=null; }
+async function confirmVariantSoftDelete() {
+  if (!variantToDelete) return;
+  try {
+    const r=await fetch(`/admin/products/variants/${variantToDelete}/delete`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const data=await r.json();
+    if (!data.success) { showToast('Failed to delete','red'); return; }
+    closeVariantSoftDeleteModal();
+    showToast('Variant moved to trash','red');
+    await loadVariants(currentProductId, variantCurrentPage);
+  } catch(e) { showToast('Network error','red'); }
+}
+
+async function openVariantTrashModal() {
+  document.getElementById('variantTrashModal').style.display='flex';
+  await refreshVariantTrash();
+}
+function closeVariantTrashModal() { document.getElementById('variantTrashModal').style.display='none'; }
+async function refreshVariantTrash() {
+  const list=document.getElementById('variantTrashList');
+  list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;">Loading...</div>';
+  try {
+    const r=await fetch(`/admin/products/${currentProductId}/variants/trash`);
+    const data=await r.json();
+    if (!data.success||!data.variants.length) { list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;">Variant trash is empty.</div>'; return; }
+    list.innerHTML=data.variants.map(v=>`
+      <div id="vtrash-${v._id}" style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #f0f0f0;border-radius:10px;margin-bottom:10px;">
+        <div class="product-thumb">${v.images?.[0]?`<img src="${v.images[0]}" alt="">`:`<span>${(v.name||'V').charAt(0).toUpperCase()}</span>`}</div>
+        <div style="flex:1;"><div class="pname">${v.name}</div><div class="psku">${v.sku||''}</div><div style="font-size:11px;color:#aaa;margin-top:2px;">Deleted: ${v.deleted_at?new Date(v.deleted_at).toDateString():'-'}</div></div>
+        <button class="act-btn" onclick="restoreVariant('${v._id}')">↩ Restore</button>
+        <button class="act-btn danger" onclick="openVariantPermDeleteModal('${v._id}')">🗑 Delete</button>
+      </div>`).join('');
+  } catch(e) { list.innerHTML='<div style="text-align:center;color:#e53;padding:30px;">Failed to load trash.</div>'; }
+}
+async function restoreVariant(variantId) {
+  try {
+    const r=await fetch(`/admin/products/variants/${variantId}/restore`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const data=await r.json();
+    if (!data.success) { showToast('Failed to restore','red'); return; }
+    document.getElementById(`vtrash-${variantId}`)?.remove();
+    showToast('Variant restored!','green');
+    await loadVariants(currentProductId, variantCurrentPage);
+  } catch(e) { showToast('Network error','red'); }
+}
+let variantPermDeleteId=null;
+function openVariantPermDeleteModal(id)  { variantPermDeleteId=id; document.getElementById('variantPermDeleteModal').style.display='flex'; }
+function closeVariantPermDeleteModal()   { document.getElementById('variantPermDeleteModal').style.display='none'; variantPermDeleteId=null; }
+async function confirmVariantPermDelete() {
+  if (!variantPermDeleteId) return;
+  try {
+    const r=await fetch(`/admin/products/variants/${variantPermDeleteId}/permanent-delete`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const data=await r.json();
+    if (!data.success) { showToast('Failed','red'); return; }
+    document.getElementById(`vtrash-${variantPermDeleteId}`)?.remove();
+    closeVariantPermDeleteModal();
+    showToast('Permanently deleted','red');
+  } catch(e) { showToast('Network error','red'); }
+}
+
+// ── VARIANT IMAGE + CROPPER ───────────────────────────
+function clearVariantImagePreviews() {
+  vCroppedBlobs=[]; vExistingImageUrls=[]; vRawFilesQueue=[];
+  const grid=document.getElementById('vImagePreviewGrid');
+  if (grid) grid.innerHTML='';
+  updateVImageCount();
+}
+function handleVariantRawImages(event) {
+  vRawFilesQueue=Array.from(event.target.files);
+  event.target.value='';
+  processNextVInQueue();
+}
+function processNextVInQueue() {
+  if (!vRawFilesQueue.length) return;
+  const file=vRawFilesQueue.shift();
+  const reader=new FileReader();
+  reader.onload=e=>openVCropperModal(e.target.result);
+  reader.readAsDataURL(file);
+}
+function openVCropperModal(src) {
+  if (cropperInstance) { try{cropperInstance.destroy();}catch(e){} cropperInstance=null; }
+  const modal=document.getElementById('cropperModal');
+  const wrap=document.querySelector('.crop-img-wrap');
+  wrap.innerHTML='<img id="cropperImg" alt="crop">';
+  const img=document.getElementById('cropperImg');
+  modal.classList.add('open');
+  img.onload=()=>{ try{ cropperInstance=new Cropper(img,{aspectRatio:1,viewMode:1,autoCropArea:0.9,dragMode:'move',movable:true,zoomable:true,scalable:false,rotatable:false,cropBoxMovable:false,cropBoxResizable:false,guides:true,center:true,highlight:true,background:false}); }catch(e){console.error(e);} };
+  img.src=src;
+  document.querySelector('#cropperModal .btn-confirm.green').onclick=applyVCrop;
+  document.querySelector('#cropperModal .btn-cancel').onclick=skipVCrop;
+}
+function applyVCrop() {
+  if (!cropperInstance) return;
+  cropperInstance.getCroppedCanvas({width:800,height:800}).toBlob(blob=>{
+    vCroppedBlobs.push(blob);
+    addVCroppedPreview(blob,vCroppedBlobs.length-1);
+    document.getElementById('cropperModal').classList.remove('open');
+    if (cropperInstance){cropperInstance.destroy();cropperInstance=null;}
+    processNextVInQueue(); updateVImageCount();
+  },'image/jpeg',0.9);
+}
+function skipVCrop() {
+  const img=document.getElementById('cropperImg');
+  fetch(img.src).then(r=>r.blob()).then(blob=>{
+    vCroppedBlobs.push(blob);
+    addVCroppedPreview(blob,vCroppedBlobs.length-1);
+    document.getElementById('cropperModal').classList.remove('open');
+    if (cropperInstance){cropperInstance.destroy();cropperInstance=null;}
+    processNextVInQueue(); updateVImageCount();
+  });
+}
+function addVCroppedPreview(blob,index) {
+  const url=URL.createObjectURL(blob);
+  const grid=document.getElementById('vImagePreviewGrid');
+  const div=document.createElement('div');
+  div.style.cssText='position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+  div.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="removeVCroppedImage(${index},this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button><span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">New</span>`;
+  grid.appendChild(div);
+}
+function addVExistingImagePreview(url) {
+  vExistingImageUrls.push(url);
+  const grid=document.getElementById('vImagePreviewGrid');
+  const div=document.createElement('div');
+  div.style.cssText='position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+  div.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="removeVExistingImage('${url}',this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button><span style="position:absolute;bottom:4px;left:4px;background:rgba(0,128,0,.7);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">Saved</span>`;
+  grid.appendChild(div);
+  updateVImageCount();
+}
+function removeVCroppedImage(index,el) { vCroppedBlobs.splice(index,1); el.remove(); updateVImageCount(); }
+function removeVExistingImage(url,el)  { vExistingImageUrls=vExistingImageUrls.filter(u=>u!==url); el.remove(); updateVImageCount(); }
+function updateVImageCount() {
+  const total=vCroppedBlobs.length+vExistingImageUrls.length;
+  const note=document.getElementById('vImageCountNote');
+  if (!note) return;
+  note.textContent=`${total} image${total!==1?'s':''} selected${total<3?' — at least 3 required':' ✓'}`;
+  note.style.color=total<3?'#dc2626':'#16a34a';
+}
+
+// ── MATERIALS ─────────────────────────────────────────
+async function loadMaterials() {
+  try {
+    const r=await fetch('/admin/materials');
+    const data=await r.json();
+    if (!data.success) return;
+    populateMaterialSelect('vStrapMaterial',data.materials);
+    populateMaterialSelect('vCaseMaterial',data.materials);
+  } catch(e) { console.error(e); }
+}
+function populateMaterialSelect(selectId,materials) {
+  const sel=document.getElementById(selectId);
+  if (!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select...</option>';
+  materials.forEach(m=>{ const o=document.createElement('option'); o.value=m.name; o.textContent=m.name; sel.appendChild(o); });
+  if (cur) sel.value=cur;
+}
+function showAddMaterial(type) { document.getElementById(`${type}MaterialNewRow`).style.display='block'; }
+function hideAddMaterial(type) { document.getElementById(`${type}MaterialNewRow`).style.display='none'; document.getElementById(`${type}MaterialInput`).value=''; }
+async function saveMaterial(type) {
+  const name=document.getElementById(`${type}MaterialInput`).value.trim();
+  if (!name) { showToast('Enter material name','blue'); return; }
+  try {
+    const r=await fetch('/admin/materials/add',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({name,type:type==='strap'?'strap':'case'})});
+    const data=await r.json();
+    if (!data.success) { showToast(data.message||'Error','red'); return; }
+    hideAddMaterial(type);
+    showToast(`Material "${name}" saved!`,'green');
+    await loadMaterials();
+    document.getElementById(type==='strap'?'vStrapMaterial':'vCaseMaterial').value=name;
+  } catch(e) { showToast('Network error','red'); }
+}
+
+// ── COLOR PANEL ───────────────────────────────────────
+function initColorCanvas(field) {
+  const canvas=document.getElementById(`${field}CpCanvas`);
+  if (!canvas) return;
+  drawColorCanvas(canvas,cpState[field].hue||0);
+  canvas.addEventListener('mousedown',e=>{
+    const onMove=ev=>{
+      const rect=canvas.getBoundingClientRect();
+      const x=Math.max(0,Math.min(1,(ev.clientX-rect.left)/rect.width));
+      const y=Math.max(0,Math.min(1,(ev.clientY-rect.top)/rect.height));
+      const hex=sampleCanvasColor(canvas,x,y);
+      document.getElementById(`${field}HexInput`).value=hex;
+      document.getElementById(`${field}CpCursor`).style.left=(x*100)+'%';
+      document.getElementById(`${field}CpCursor`).style.top=(y*100)+'%';
+      cpState[field].hex=hex;
+    };
+    onMove(e);
+    const up=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',up);};
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',up);
+  });
+  const hueTrack=document.getElementById(`${field}HueTrack`);
+  if (hueTrack) {
+    hueTrack.addEventListener('mousedown',e=>{
+      const onMove=ev=>{
+        const rect=hueTrack.getBoundingClientRect();
+        const pct=Math.max(0,Math.min(1,(ev.clientX-rect.left)/rect.width));
+        const hue=Math.round(pct*360);
+        cpState[field].hue=hue;
+        document.getElementById(`${field}HueThumb`).style.left=(pct*100)+'%';
+        document.getElementById(`${field}HueThumb`).style.background=`hsl(${hue},100%,50%)`;
+        drawColorCanvas(canvas,hue);
+      };
+      onMove(e);
+      const up=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',up);};
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',up);
+    });
   }
-});
+}
+function drawColorCanvas(canvas,hue) {
+  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+  ctx.fillStyle=`hsl(${hue},100%,50%)`; ctx.fillRect(0,0,w,h);
+  const wg=ctx.createLinearGradient(0,0,w,0); wg.addColorStop(0,'rgba(255,255,255,1)'); wg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=wg; ctx.fillRect(0,0,w,h);
+  const bg=ctx.createLinearGradient(0,0,0,h); bg.addColorStop(0,'rgba(0,0,0,0)'); bg.addColorStop(1,'rgba(0,0,0,1)');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+}
+function sampleCanvasColor(canvas,x,y) {
+  const ctx=canvas.getContext('2d');
+  const d=ctx.getImageData(Math.round(x*(canvas.width-1)),Math.round(y*(canvas.height-1)),1,1).data;
+  return '#'+[d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function openColorPanel(field) {
+  ['strap','dial','case'].forEach(f=>{if(f!==field)document.getElementById(`${f}ColorPanel`).style.display='none';});
+  const panel=document.getElementById(`${field}ColorPanel`);
+  panel.style.display=panel.style.display==='block'?'none':'block';
+  if (panel.style.display==='block') { initColorCanvas(field); loadSavedColorSwatches(field); }
+}
+function onHexInput(field) {
+  const hex=document.getElementById(`${field}HexInput`).value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) cpState[field].hex=hex.toUpperCase();
+}
+function applyColorPanel(field) {
+  const hex=document.getElementById(`${field}HexInput`).value.trim().toUpperCase();
+  const inputMap={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
+  if (hex) { document.getElementById(inputMap[field]).value=hex; syncSwatchFromInput(field); }
+  document.getElementById(`${field}ColorPanel`).style.display='none';
+  autoGenerateVariantName(); autoGenerateVariantSku();
+}
+function syncSwatchFromInput(field) {
+  const inputMap ={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
+  const swatchMap={strap:'strapColorSwatch',dial:'dialColorSwatch',case:'caseColorSwatch'};
+  const val=document.getElementById(inputMap[field]).value.trim();
+  const sw=document.getElementById(swatchMap[field]);
+  if (sw&&val) sw.style.background=val;
+  autoGenerateVariantName();
+}
+function saveCurrentColor(field) {
+  const hex=document.getElementById(`${field}HexInput`).value.trim();
+  if (!hex) { showToast('Pick a color first','blue'); return; }
+  fetch('/admin/saved-colors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hex})})
+    .then(r=>r.json()).then(data=>{ if(data.success){showToast('Color saved!','green');loadSavedColorSwatches(field);} });
+}
+async function loadSavedColors() {
+  try {
+    const r=await fetch('/admin/saved-colors');
+    const data=await r.json();
+    if (data.success) ['strap','dial','case'].forEach(f=>loadSavedColorSwatches(f,data.colors));
+  } catch(e) {}
+}
+async function loadSavedColorSwatches(field,colors) {
+  const container=document.getElementById(`${field}SavedSwatches`);
+  if (!container) return;
+  if (!colors) {
+    try { const r=await fetch('/admin/saved-colors'); const data=await r.json(); colors=data.colors||[]; } catch(e){return;}
+  }
+  if (!colors.length) { container.innerHTML='<span style="color:#555;font-size:11px;">No saved colors yet</span>'; return; }
+  container.innerHTML=colors.map(c=>`<div onclick="selectSavedColor('${field}','${c.hex}')" title="${c.name||c.hex}" style="width:22px;height:22px;border-radius:5px;background:${c.hex};border:1.5px solid rgba(255,255,255,.2);cursor:pointer;flex-shrink:0;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`).join('');
+}
+function selectSavedColor(field,hex) {
+  document.getElementById(`${field}HexInput`).value=hex;
+  const inputMap ={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
+  const swatchMap={strap:'strapColorSwatch',dial:'dialColorSwatch',case:'caseColorSwatch'};
+  document.getElementById(inputMap[field]).value=hex;
+  document.getElementById(swatchMap[field]).style.background=hex;
+  cpState[field].hex=hex;
+}
+async function startEyedropper(field) {
+  if (!window.EyeDropper) { showToast('Eyedropper not supported (use Chrome)','blue'); return; }
+  try {
+    const result=await new EyeDropper().open();
+    const hex=result.sRGBHex.toUpperCase();
+    document.getElementById(`${field}HexInput`).value=hex;
+    selectSavedColor(field,hex);
+    showToast(`Color picked: ${hex}`,'green');
+  } catch(e) {}
+}
+function resetColorPanels() {
+  ['strap','dial','case'].forEach(f=>{
+    const panel=document.getElementById(`${f}ColorPanel`);
+    if (panel) panel.style.display='none';
+    const inputMap ={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
+    const swatchMap={strap:'strapColorSwatch',dial:'dialColorSwatch',case:'caseColorSwatch'};
+    document.getElementById(inputMap[f]).value='';
+    document.getElementById(swatchMap[f]).style.background='#e5e7eb';
+  });
+}
+
+// ── AUTO SKU ──────────────────────────────────────────
+let skuDebounceTimer=null;
+async function autoGenerateVariantSku(force=false) {
+  clearTimeout(skuDebounceTimer);
+  skuDebounceTimer=setTimeout(async()=>{
+    const skuField=document.getElementById('vSku');
+    if (!force&&skuField.value.trim()) return;
+    const productName=document.querySelector('.pd-title')?.textContent?.trim()||'';
+    const brandName  =document.querySelector('.pd-info-value')?.textContent?.trim()||'';
+    const categoryEl =document.querySelectorAll('.pd-info-value')[0]?.textContent?.trim()||'';
+    const params=new URLSearchParams({brand:brandName,productName,category:categoryEl,strapMaterial:document.getElementById('vStrapMaterial').value||'',strapColor:document.getElementById('vStrapColor').value||'',caseColor:document.getElementById('vCaseColor').value||'',dialColor:document.getElementById('vDialColor').value||'',size:document.getElementById('vSize').value||''});
+    try { const r=await fetch(`/admin/sku/variant?${params}`); const data=await r.json(); if(data.success)skuField.value=data.sku; } catch(e){}
+  },600);
+}
+document.getElementById('fBrand')?.addEventListener('change',autoGenerateProductSku);
+document.getElementById('fName')?.addEventListener('input',autoGenerateProductSku);
+let productSkuDebounce=null;
+async function autoGenerateProductSku() {
+  clearTimeout(productSkuDebounce);
+  productSkuDebounce=setTimeout(async()=>{
+    const skuField=document.getElementById('fSku');
+    if (skuField.value.trim()) return;
+    const brandSel=document.getElementById('fBrand');
+    const brandText=(brandSel.options[brandSel.selectedIndex]?.text||'').replace('Select brand','').replace('+ Other Brand','').trim();
+    const model=document.getElementById('fName').value.trim();
+    if (!model) return;
+    try { const r=await fetch(`/admin/sku/product?${new URLSearchParams({brand:brandText||'GEN',model})}`); const data=await r.json(); if(data.success)skuField.value=data.sku; } catch(e){}
+  },700);
+}
+function autoGenerateVariantName() {
+  const strapColor=document.getElementById('vStrapColor').value.trim();
+  const size      =document.getElementById('vSize').value.trim();
+  const mat       =document.getElementById('vStrapMaterial').value;
+  const parts     =[strapColor,mat,size].filter(Boolean);
+  if (parts.length&&!document.getElementById('vName').value) document.getElementById('vName').value=parts.join(' ');
+}
+['vStrapMaterial','vCaseMaterial'].forEach(id=>{document.getElementById(id)?.addEventListener('change',()=>autoGenerateVariantSku());});
+document.getElementById('vSize')?.addEventListener('input',()=>autoGenerateVariantSku());
 </script>

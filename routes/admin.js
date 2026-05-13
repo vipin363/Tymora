@@ -6,7 +6,9 @@ import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,
        loadCategoryManagement,addCategory,editCategory,deleteCategory,permanentDeleteCategory, 
        restoreCategory, loadTrash,getCategoryStats,loadProductManagement, addProduct, editProduct,
        getProductJson, softDeleteProduct, loadProductTrash,restoreProduct, permanentDeleteProduct, 
-       getProductDetail} from '../controller/adminController.js';
+       getProductDetail, getVariants, addVariant, editVariant, getVariantJson,softDeleteVariant, 
+       getVariantTrash, restoreVariant, permanentDeleteVariant,getMaterials, addMaterial, 
+       getSavedColors, saveColor,generateProductSku, generateVariantSku,} from '../controller/adminController.js';
 import { loadAdminOtpPage, verifyAdminForgotOtp,resendAdminOtp } from '../controller/otpController.js';
 import upload from '../middleware/uploard.js';
 import Category from '../model/categoryModel.js';
@@ -70,6 +72,25 @@ router.post('/products/edit/:id', isAdminAuth, uploadProduct.array('images', 10)
 router.post('/products/delete/:id', isAdminAuth, softDeleteProduct);
 router.post('/products/restore/:id', isAdminAuth, restoreProduct);
 router.post('/products/permanent-delete/:id', isAdminAuth, permanentDeleteProduct);
+
+
+router.get('/products/:productId/variants', getVariants);
+router.get('/products/variants/:variantId/json', getVariantJson);
+router.post('/products/:productId/variants/add', upload.array('images', 10), addVariant);
+router.post('/products/variants/:variantId/edit', upload.array('images', 10), editVariant);
+router.post('/products/variants/:variantId/delete', softDeleteVariant);
+router.get('/products/:productId/variants/trash', getVariantTrash);
+router.post('/products/variants/:variantId/restore', restoreVariant);
+router.post('/products/variants/:variantId/permanent-delete', permanentDeleteVariant);
+
+router.get('/materials', getMaterials);
+router.post('/materials/add', addMaterial);
+
+router.get('/saved-colors', getSavedColors);
+router.post('/saved-colors', saveColor);
+
+router.get('/sku/product', generateProductSku);
+router.get('/sku/variant', generateVariantSku);
 
 router.get("/logout", logout);
 
