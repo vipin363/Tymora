@@ -635,50 +635,81 @@ export const addProduct = async (req, res) => {
   try {
     const {
       name, category, brand, newBrand, description, gender,
-      price, stock, sku, discount, status,
-      featured, dealOfTheDay, offerProduct,
-      existingImages
+      status, featured, dealOfTheDay,
+      // default variant fields
+      variantName, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial, price, stock, offerProduct,
+      existingImages,
     } = req.body;
 
-    let brandId = brand;
+    if (!name || !category || !brand) {
+      return res.json({ success: false, message: 'Name, category and brand are required.' });
+    }
 
+    // Validate default variant required fields
+    if (!strapColor || !dialColor || !caseColor || !size || !strapMaterial || !caseMaterial || !price) {
+      return res.json({ success: false, message: 'All default variant fields are required.' });
+    }
+
+    let brandId = brand;
     if (brand === 'other' && newBrand?.trim()) {
       let existing = await Brand.findOne({ name: { $regex: `^${newBrand.trim()}$`, $options: 'i' } });
-      if (!existing) {
-        existing = await Brand.create({ name: newBrand.trim() });
-      }
+      if (!existing) existing = await Brand.create({ name: newBrand.trim() });
       brandId = existing._id;
     }
 
+    // Images come from variant image section (min 3)
     const uploadedImages = req.files ? req.files.map(f => f.path) : [];
     const existingArr = Array.isArray(existingImages)
-      ? existingImages
-      : existingImages ? [existingImages] : [];
+      ? existingImages : existingImages ? [existingImages] : [];
     const allImages = [...existingArr, ...uploadedImages];
 
-    if (allImages.length < 1) {
-      return res.json({ success: false, message: 'At least 1 image is required.' });
+    if (allImages.length < 3) {
+      return res.json({ success: false, message: 'At least 3 images are required for the default variant.' });
     }
 
+    // Check SKU uniqueness if provided
+    if (sku) {
+      const skuExists = await Variant.findOne({ sku });
+      if (skuExists) return res.json({ success: false, message: 'SKU already exists.' });
+    }
+
+    // Create product (images mirrored from default variant for list display)
     const product = new Product({
       name: name.trim(),
       category,
       brand: brandId,
       description: description || '',
       gender: gender || 'unisex',
-      price: parseFloat(price),
-      stock: parseInt(stock) || 0,
-      sku: sku?.trim() || undefined,
-      discount: parseFloat(discount) || 0,
       images: allImages,
       status: status || 'active',
       featured: featured === 'true' || featured === true,
       dealOfTheDay: dealOfTheDay === 'true' || dealOfTheDay === true,
+      price: parseFloat(price) || 0,
+      stock: parseInt(stock) || 0,
+    });
+    await product.save();
+
+    // Create default variant
+    const variant = await Variant.create({
+      product: product._id,
+      name: variantName?.trim() || name.trim(),
+      sku: sku || undefined,
+      strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial,
+      price: parseFloat(price),
+      stock: parseInt(stock) || 0,
+      images: allImages,
+      status: status || 'active',
       offerProduct: offerProduct === 'true' || offerProduct === true,
+      isDefault: true,
     });
 
+    // Link default variant back to product
+    product.defaultVariant = variant._id;
     await product.save();
-    res.json({ success: true, message: 'Product added successfully.' });
+
+    res.json({ success: true, message: 'Product and default variant created successfully.', productId: product._id });
   } catch (err) {
     console.log(err);
     res.json({ success: false, message: err.message || 'Failed to add product.' });
@@ -689,9 +720,7 @@ export const editProduct = async (req, res) => {
   try {
     const {
       name, category, brand, newBrand, description, gender,
-      price, stock, sku, discount, status,
-      featured, dealOfTheDay, offerProduct,
-      existingImages
+      status, featured, dealOfTheDay,
     } = req.body;
 
     let brandId = brand;
@@ -701,30 +730,23 @@ export const editProduct = async (req, res) => {
       brandId = existing._id;
     }
 
-    const uploadedImages = req.files ? req.files.map(f => f.path) : [];
-    const existingArr = Array.isArray(existingImages)
-      ? existingImages
-      : existingImages ? [existingImages] : [];
-    const allImages = [...existingArr, ...uploadedImages];
-
     const updateData = {
       name: name.trim(),
       category,
       brand: brandId,
       description: description || '',
       gender: gender || 'unisex',
-      price: parseFloat(price),
-      stock: parseInt(stock) || 0,
-      sku: sku?.trim() || undefined,
-      discount: parseFloat(discount) || 0,
-      images: allImages,
       status: status || 'active',
       featured: featured === 'true' || featured === true,
       dealOfTheDay: dealOfTheDay === 'true' || dealOfTheDay === true,
-      offerProduct: offerProduct === 'true' || offerProduct === true,
     };
 
     await Product.findByIdAndUpdate(req.params.id, updateData);
+
+    if (status === 'inactive') {
+      await Variant.updateMany({ product: req.params.id }, { status: 'inactive' });
+    }
+
     res.json({ success: true, message: 'Product updated.' });
   } catch (err) {
     console.log(err);
@@ -738,23 +760,18 @@ export const getProductJson = async (req, res) => {
       .populate('category', 'name _id')
       .populate('brand', 'name _id');
     if (!product) return res.json({ success: false, message: 'Not found' });
-    res.json({
-      _id: product._id,
-      name: product.name,
-      categoryId: product.category?._id,
-      brandId: product.brand?._id,
-      description: product.description,
-      gender: product.gender,
-      price: product.price,
-      stock: product.stock,
-      sku: product.sku,
-      discount: product.discount,
-      images: product.images,
-      status: product.status,
-      featured: product.featured,
-      dealOfTheDay: product.dealOfTheDay,
-      offerProduct: product.offerProduct,
-    });
+   res.json({
+  _id: product._id,
+  name: product.name,
+  categoryId: product.category?._id,
+  brandId: product.brand?._id,
+  description: product.description,
+  gender: product.gender,
+  images: product.images,
+  status: product.status,
+  featured: product.featured,
+  dealOfTheDay: product.dealOfTheDay,
+});
   } catch (err) {
     res.json({ success: false });
   }
@@ -815,6 +832,18 @@ export const getProductDetail = async (req, res) => {
       .populate('brand', 'name');
     if (!product) return res.redirect('/admin/products');
 
+    // Find default variant (fallback to first active variant)
+    let defaultVariant = null;
+    if (product.defaultVariant) {
+      defaultVariant = await Variant.findOne({ _id: product.defaultVariant, deleted_at: null });
+    }
+    if (!defaultVariant) {
+      defaultVariant = await Variant.findOne({ product: product._id, deleted_at: null, isDefault: true });
+    }
+    if (!defaultVariant) {
+      defaultVariant = await Variant.findOne({ product: product._id, deleted_at: null }).sort({ createdAt: 1 });
+    }
+
     const categories = await Category.find({ deleted_at: null, is_visible: true });
     const brands = await Brand.find().sort({ name: 1 });
 
@@ -835,9 +864,11 @@ export const getProductDetail = async (req, res) => {
       };
     });
 
+    // Merge: product info + default variant data
+    const dvStock = defaultVariant?.stock ?? product.stock ?? 0;
     let stockStatus = 'IN_STOCK';
-    if (product.stock === 0) stockStatus = 'OUT_OF_STOCK';
-    else if (product.stock <= 10) stockStatus = 'LOW_STOCK';
+    if (dvStock === 0) stockStatus = 'OUT_OF_STOCK';
+    else if (dvStock <= 10) stockStatus = 'LOW_STOCK';
 
     const selectedProduct = {
       _id: product._id,
@@ -846,16 +877,26 @@ export const getProductDetail = async (req, res) => {
       brand: product.brand?.name,
       description: product.description,
       gender: product.gender,
-      price: product.price,
-      stock: product.stock,
-      stockStatus,
-      sku: product.sku,
-      discount: product.discount,
-      images: product.images,
       status: product.status,
       featured: product.featured,
       dealOfTheDay: product.dealOfTheDay,
-      offerProduct: product.offerProduct,
+      discount: product.discount,
+      // from default variant
+      price: defaultVariant?.price ?? product.price,
+      stock: dvStock,
+      stockStatus,
+      sku: defaultVariant?.sku || product.sku || '',
+      images: defaultVariant?.images?.length ? defaultVariant.images : product.images,
+      offerProduct: defaultVariant?.offerProduct,
+      strapColor: defaultVariant?.strapColor,
+      dialColor: defaultVariant?.dialColor,
+      caseColor: defaultVariant?.caseColor,
+      size: defaultVariant?.size,
+      strapMaterial: defaultVariant?.strapMaterial,
+      caseMaterial: defaultVariant?.caseMaterial,
+      variantStatus: defaultVariant?.status,
+      variantName: defaultVariant?.name,
+      defaultVariantId: defaultVariant?._id?.toString(),
     };
 
     const totalProducts = await Product.countDocuments({ deleted_at: null });
@@ -875,12 +916,44 @@ export const getProductDetail = async (req, res) => {
       sort: 'latest',
       status: 'all',
       category: 'all',
+      brand: 'all',
       activePage: 'products',
       stats: { totalProducts, activeProducts, inactiveProducts, outOfStock, trashCount },
     });
   } catch (err) {
     console.log(err);
     res.redirect('/admin/products');
+  }
+};
+
+export const setDefaultVariant = async (req, res) => {
+  try {
+    const { productId, variantId } = req.params;
+
+    // Unset all current defaults for this product
+    await Variant.updateMany({ product: productId }, { isDefault: false });
+
+    // Set new default
+    const variant = await Variant.findByIdAndUpdate(
+      variantId,
+      { isDefault: true },
+      { new: true }
+    );
+
+    if (!variant) return res.json({ success: false, message: 'Variant not found.' });
+
+    // Mirror default variant data onto product for list display
+    await Product.findByIdAndUpdate(productId, {
+      images: variant.images,
+      price: variant.price,
+      stock: variant.stock,
+      defaultVariant: variant._id,
+    });
+
+    res.json({ success: true, message: 'Default variant updated.' });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: err.message });
   }
 };
 
@@ -911,9 +984,10 @@ export const addVariant = async (req, res) => {
   try {
     const { productId } = req.params;
     const {
-      name, sku, strapColor, dialColor, caseColor,
-      size, strapMaterial, caseMaterial, price, stock, existingImages
-    } = req.body;
+  name, sku, strapColor, dialColor, caseColor,
+  size, strapMaterial, caseMaterial, price, stock,
+  status, offerProduct, existingImages
+} = req.body;
 
      if (sku) {
       const existing = await Variant.findOne({ sku });
@@ -930,11 +1004,13 @@ export const addVariant = async (req, res) => {
     }
 
     const variant = await Variant.create({
-      product: productId, name, sku, strapColor, dialColor, caseColor,
-      size, strapMaterial, caseMaterial,
-      price: parseFloat(price), stock: parseInt(stock) || 0,
-      images: allImages,
-    });
+  product: productId, name, sku, strapColor, dialColor, caseColor,
+  size, strapMaterial, caseMaterial,
+  price: parseFloat(price), stock: parseInt(stock) || 0,
+  images: allImages,
+  status: status || 'active',
+  offerProduct: offerProduct === 'true' || offerProduct === true,
+});
 
     res.json({ success: true, variant, message: 'Variant added.' });
   } catch (err) {
@@ -945,10 +1021,11 @@ export const addVariant = async (req, res) => {
 export const editVariant = async (req, res) => {
   try {
     const { variantId } = req.params;
-    const {
-      name, sku, strapColor, dialColor, caseColor,
-      size, strapMaterial, caseMaterial, price, stock, existingImages
-    } = req.body;
+   const {
+  name, sku, strapColor, dialColor, caseColor,
+  size, strapMaterial, caseMaterial, price, stock,
+  status, offerProduct, existingImages
+} = req.body;
 
       if (sku) {
       const existing = await Variant.findOne({ sku, _id: { $ne: variantId } });
@@ -965,11 +1042,13 @@ export const editVariant = async (req, res) => {
     }
 
     const updated = await Variant.findByIdAndUpdate(variantId, {
-      name, sku, strapColor, dialColor, caseColor,
-      size, strapMaterial, caseMaterial,
-      price: parseFloat(price), stock: parseInt(stock) || 0,
-      images: allImages,
-    }, { new: true });
+  name, sku, strapColor, dialColor, caseColor,
+  size, strapMaterial, caseMaterial,
+  price: parseFloat(price), stock: parseInt(stock) || 0,
+  images: allImages,
+  status: status || 'active',
+  offerProduct: offerProduct === 'true' || offerProduct === true,
+}, { new: true });
 
     res.json({ success: true, variant: updated, message: 'Variant updated.' });
   } catch (err) {
@@ -1071,7 +1150,6 @@ export const saveColor = async (req, res) => {
     res.json({ success: false });
   }
 };
-
 
 export const generateProductSku = async (req, res) => {
   try {
