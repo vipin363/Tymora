@@ -196,6 +196,9 @@
                                     {{/if}}
                                 </td>
                                 <td>
+                                    {{#if this.isTrashed}}
+                                    <span style="color:#aaa;font-size:12px;">—</span>
+                                    {{else}}
                                     <div class="toggle-cell">
                                         <label class="toggle">
                                             <input type="checkbox" {{#if this.isVisible}}checked{{/if}}
@@ -205,6 +208,7 @@
                                         <span class="toggle-label">{{#if
                                             this.isVisible}}Visible{{else}}Hidden{{/if}}</span>
                                     </div>
+                                    {{/if}}
                                 </td>
                                <td>
     <div class="action-btns">

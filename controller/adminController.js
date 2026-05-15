@@ -760,19 +760,34 @@ export const getProductJson = async (req, res) => {
       .populate('category', 'name _id')
       .populate('brand', 'name _id');
     if (!product) return res.json({ success: false, message: 'Not found' });
-   res.json({
-  _id: product._id,
-  name: product.name,
-  categoryId: product.category?._id,
-  brandId: product.brand?._id,
-  description: product.description,
-  gender: product.gender,
-  images: product.images,
-  status: product.status,
-  featured: product.featured,
-  dealOfTheDay: product.dealOfTheDay,
-});
+
+    let defaultVariant = null;
+    if (product.defaultVariant) {
+      defaultVariant = await Variant.findOne({ _id: product.defaultVariant, deleted_at: null });
+    }
+    if (!defaultVariant) {
+      defaultVariant = await Variant.findOne({ product: product._id, isDefault: true, deleted_at: null });
+    }
+
+    res.json({
+      _id:          product._id,
+      name:         product.name,
+      categoryId:   product.category?._id,
+      brandId:      product.brand?._id,
+      description:  product.description,
+      gender:       product.gender,
+      images:       defaultVariant?.images?.length ? defaultVariant.images : product.images,
+      status:       product.status,
+      featured:     product.featured,
+      dealOfTheDay: product.dealOfTheDay,
+      discount:     product.discount || 0,
+      price:        defaultVariant?.price ?? product.price,
+      stock:        defaultVariant?.stock ?? product.stock,
+      sku:          defaultVariant?.sku || product.sku || '',
+      offerProduct: defaultVariant?.offerProduct || false,
+    });
   } catch (err) {
+    console.log(err);
     res.json({ success: false });
   }
 };
@@ -809,19 +824,33 @@ export const loadProductTrash = async (req, res) => {
 
 export const restoreProduct = async (req, res) => {
   try {
-    await Product.findByIdAndUpdate(req.params.id, { deleted_at: null, status: 'active' });
+    const result = await Product.findByIdAndUpdate(
+      req.params.id, 
+      { $set: { deleted_at: null, status: 'active' } },  // use $set explicitly
+      { new: true }
+    );
+    if (!result) return res.json({ success: false, message: 'Product not found' });
     res.json({ success: true });
   } catch (err) {
+    console.log(err);
     res.json({ success: false });
   }
 };
 
 export const permanentDeleteProduct = async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    const productId = req.params.id;
+
+    // Delete all variants (including trashed ones) belonging to this product
+    await Variant.deleteMany({ product: productId });
+
+    // Delete the product itself
+    await Product.findByIdAndDelete(productId);
+
     res.json({ success: true });
   } catch (err) {
-    res.json({ success: false });
+    console.log(err);
+    res.json({ success: false, message: err.message });
   }
 };
 
@@ -1068,10 +1097,42 @@ export const getVariantJson = async (req, res) => {
 
 export const softDeleteVariant = async (req, res) => {
   try {
-    await Variant.findByIdAndUpdate(req.params.variantId, { deleted_at: new Date() });
+    const variant = await Variant.findById(req.params.variantId);
+    if (!variant) return res.json({ success: false, message: 'Variant not found' });
+
+    const wasDefault = variant.isDefault;
+    
+    // Soft delete it
+    await Variant.findByIdAndUpdate(req.params.variantId, { 
+      deleted_at: new Date(),
+      isDefault: false 
+    });
+
+    // If it was default, promote next available variant
+    if (wasDefault) {
+      const nextVariant = await Variant.findOne({ 
+        product: variant.product, 
+        deleted_at: null,
+        _id: { $ne: req.params.variantId }
+      }).sort({ createdAt: 1 });
+
+      if (nextVariant) {
+        await Variant.findByIdAndUpdate(nextVariant._id, { isDefault: true });
+
+        // Mirror new default onto product
+        await Product.findByIdAndUpdate(variant.product, {
+          images: nextVariant.images,
+          price: nextVariant.price,
+          stock: nextVariant.stock,
+          defaultVariant: nextVariant._id,
+        });
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
-    res.json({ success: false });
+    console.log(err);
+    res.json({ success: false, message: err.message });
   }
 };
 
@@ -1088,10 +1149,38 @@ export const getVariantTrash = async (req, res) => {
 
 export const restoreVariant = async (req, res) => {
   try {
-    await Variant.findByIdAndUpdate(req.params.variantId, { deleted_at: null });
+    const variant = await Variant.findById(req.params.variantId);
+    if (!variant) return res.json({ success: false, message: 'Not found' });
+
+    // Restore it (but NOT as default automatically)
+    await Variant.findByIdAndUpdate(req.params.variantId, { 
+      deleted_at: null,
+      isDefault: false  // always restore as non-default
+    });
+
+    // Check if this product has any default variant at all
+    const existingDefault = await Variant.findOne({ 
+      product: variant.product, 
+      deleted_at: null, 
+      isDefault: true,
+      _id: { $ne: req.params.variantId }
+    });
+
+    // If no default exists anywhere, make the restored one default
+    if (!existingDefault) {
+      await Variant.findByIdAndUpdate(req.params.variantId, { isDefault: true });
+      await Product.findByIdAndUpdate(variant.product, {
+        images: variant.images,
+        price: variant.price,
+        stock: variant.stock,
+        defaultVariant: variant._id,
+      });
+    }
+
     res.json({ success: true });
   } catch (err) {
-    res.json({ success: false });
+    console.log(err);
+    res.json({ success: false, message: err.message });
   }
 };
 

@@ -126,8 +126,6 @@
                 <th>Product</th>
                 <th>Category</th>
                 <th>Brand</th>
-                <th>Price</th>
-                <th>Stock</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -152,16 +150,7 @@
                 </td>
                 <td>{{this.category}}</td>
                 <td>{{this.brand}}</td>
-                <td>₹{{this.price}}</td>
-                <td>
-                  {{#if (eq this.stockStatus "IN_STOCK")}}
-                    <span class="stock-badge in-stock">{{this.stock}} In Stock</span>
-                  {{else if (eq this.stockStatus "LOW_STOCK")}}
-                    <span class="stock-badge low-stock">{{this.stock}} Low</span>
-                  {{else}}
-                    <span class="stock-badge out-stock">Out of Stock</span>
-                  {{/if}}
-                </td>
+                
                 <td>
                   {{#if (eq this.status "active")}}
                     <span class="badge s-active">ACTIVE</span>
@@ -285,6 +274,7 @@
   <!-- MAIN BODY: GALLERY + DETAILS SIDE BY SIDE -->
   <div class="pd-body-grid">
 
+<!-- Pre-populate default variant detail fields on page load -->
     <!-- GALLERY COLUMN -->
     <div class="pd-gallery-col">
       <div class="pd-gallery-main">
@@ -322,18 +312,30 @@
             <span class="pd-info-label">Gender</span>
             <span class="pd-info-value">{{selectedProduct.gender}}</span>
           </div>
-          <div class="pd-info-row">
-            <span class="pd-info-label">SKU</span>
-            <span class="pd-info-value mono">{{selectedProduct.sku}}</span>
-          </div>
-          <div class="pd-info-row">
-            <span class="pd-info-label">Stock</span>
-            <span class="pd-info-value">{{selectedProduct.stock}} units</span>
-          </div>
-          <div class="pd-info-row">
-            <span class="pd-info-label">Discount</span>
-            <span class="pd-info-value">{{selectedProduct.discount}}%</span>
-          </div>
+<div class="pd-info-row" id="detailSkuRow">
+  <span class="pd-info-label">SKU</span>
+  <span class="pd-info-value mono" id="detailSku">—</span>
+</div>
+<div class="pd-info-row" id="detailStockRow">
+  <span class="pd-info-label">Stock</span>
+  <span class="pd-info-value" id="detailStock">—</span>
+</div>
+<div class="pd-info-row" id="detailPriceRow">
+  <span class="pd-info-label">Price</span>
+  <span class="pd-info-value" id="detailPrice">—</span>
+</div>
+<div class="pd-info-row" id="detailSizeRow">
+  <span class="pd-info-label">Size</span>
+  <span class="pd-info-value" id="detailSize">—</span>
+</div>
+<div class="pd-info-row" id="detailColorsRow">
+  <span class="pd-info-label">Colors</span>
+  <span class="pd-info-value" id="detailColors">—</span>
+</div>
+<div class="pd-info-row" id="detailMaterialsRow">
+  <span class="pd-info-label">Materials</span>
+  <span class="pd-info-value" id="detailMaterials">—</span>
+</div>
         </div>
       </div>
 
@@ -352,12 +354,14 @@
             {{#if selectedProduct.dealOfTheDay}}Yes{{else}}No{{/if}}
           </span>
         </div>
-        <div class="pd-toggle-info">
-          <span>Offer Product</span>
-          <span class="badge {{#if selectedProduct.offerProduct}}s-active{{else}}s-inactive{{/if}}">
-            {{#if selectedProduct.offerProduct}}Yes{{else}}No{{/if}}
-          </span>
-        </div>
+        <div class="pd-toggle-info" id="detailOfferProductRow" style="display:none;">
+  <span>Offer Product</span>
+  <span class="badge s-inactive" id="detailOfferProduct">No</span>
+</div>
+<div class="pd-toggle-info" id="detailVariantStatusRow" style="display:none;">
+  <span>Variant Status</span>
+  <span class="badge s-inactive" id="detailVariantStatus">—</span>
+</div>
       </div>
 
       <!-- Description Card -->
@@ -368,6 +372,67 @@
 
     </div>
   </div>
+
+  <script>
+(function populateDefaultVariant() {
+  const sp = {
+    sku:         '{{selectedProduct.sku}}',
+    stock:       '{{selectedProduct.stock}}',
+    price:       '{{selectedProduct.price}}',
+    size:        '{{selectedProduct.size}}',
+    strapColor:  '{{selectedProduct.strapColor}}',
+    dialColor:   '{{selectedProduct.dialColor}}',
+    caseColor:   '{{selectedProduct.caseColor}}',
+    strapMat:    '{{selectedProduct.strapMaterial}}',
+    caseMat:     '{{selectedProduct.caseMaterial}}',
+    offerProduct: {{#if selectedProduct.offerProduct}}true{{else}}false{{/if}},
+    variantStatus: '{{selectedProduct.variantStatus}}',
+  };
+
+  function run() {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('detailSku',   sp.sku   || '—');
+    set('detailStock', sp.stock ? sp.stock + ' units' : '—');
+    set('detailPrice', sp.price ? '₹' + sp.price : '—');
+    set('detailSize',  sp.size  || '—');
+
+    const colorsEl = document.getElementById('detailColors');
+    if (colorsEl) {
+      const dots = [
+        sp.strapColor ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${sp.strapColor};border:1px solid #ddd;margin-right:3px;"></span>${sp.strapColor}` : '',
+        sp.dialColor  ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${sp.dialColor};border:1px solid #ddd;margin-right:3px;"></span>${sp.dialColor}` : '',
+        sp.caseColor  ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${sp.caseColor};border:1px solid #ddd;margin-right:3px;"></span>${sp.caseColor}` : '',
+      ].filter(Boolean).join(' / ');
+      colorsEl.innerHTML = dots || '—';
+    }
+
+    const matEl = document.getElementById('detailMaterials');
+    if (matEl) matEl.textContent = (sp.strapMat && sp.caseMat) ? `${sp.strapMat} / ${sp.caseMat}` : '—';
+
+    const offerRow   = document.getElementById('detailOfferProductRow');
+    const offerBadge = document.getElementById('detailOfferProduct');
+    if (offerRow && offerBadge) {
+      offerRow.style.display = 'flex';
+      offerBadge.className   = `badge ${sp.offerProduct ? 's-active' : 's-inactive'}`;
+      offerBadge.textContent = sp.offerProduct ? 'Yes' : 'No';
+    }
+
+    const varStatusRow   = document.getElementById('detailVariantStatusRow');
+    const varStatusBadge = document.getElementById('detailVariantStatus');
+    if (varStatusRow && varStatusBadge) {
+      varStatusRow.style.display = 'flex';
+      varStatusBadge.className   = `badge ${sp.variantStatus === 'active' ? 's-active' : 's-inactive'}`;
+      varStatusBadge.textContent = sp.variantStatus === 'active' ? 'Active' : 'Inactive';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+})();
+</script>
 
   <!-- VARIANT MANAGEMENT SECTION -->
 <div class="pd-variant-section">
@@ -402,6 +467,7 @@
           <th>Materials</th>
           <th>Price</th>
           <th>Stock</th>
+          <th>Default</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -424,7 +490,7 @@
 <!-- ══ ADD/EDIT DRAWER ══ -->
 <!-- ══ ADD/EDIT DRAWER ══ -->
 <div class="drawer-overlay" id="productDrawer">
-  <div class="drawer">
+  <div class="drawer" style="width:700px;max-width:100vw;">
     <div class="drawer-header">
       <h3 id="drawerTitle">Add Product</h3>
       <button class="drawer-close" onclick="closeDrawer()">✕</button>
@@ -433,13 +499,12 @@
       <form id="productForm">
         <input type="hidden" id="productId">
 
+        <!-- ── PRODUCT INFO ── -->
         <div class="drawer-section-label">Basic Information</div>
-
         <div class="form-group">
           <label>Product Name *</label>
           <input type="text" id="fName" placeholder="e.g. Heritage Automatic 42mm" required>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Category *</label>
@@ -459,7 +524,6 @@
             </select>
           </div>
         </div>
-
         <div class="form-group">
           <label>Brand *</label>
           <select id="fBrand" required onchange="handleBrandChange(this.value)">
@@ -474,38 +538,10 @@
           <label>New Brand Name *</label>
           <input type="text" id="fNewBrand" placeholder="Enter new brand name">
         </div>
-
         <div class="form-group">
           <label>Description</label>
           <textarea id="fDesc" rows="3" placeholder="Product description..."></textarea>
         </div>
-
-        <div class="drawer-section-label">Pricing & Stock</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Price (₹) *</label>
-            <input type="number" id="fPrice" placeholder="0" min="0" required>
-          </div>
-          <div class="form-group">
-            <label>Stock *</label>
-            <input type="number" id="fStock" placeholder="0" min="0" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>SKU <small style="color:#888;font-weight:400;">(auto-generated)</small></label>
-            <div style="display:flex;gap:8px;">
-              <input type="text" id="fSku" placeholder="Auto-generated..." style="font-family:monospace;flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
-              <button type="button" onclick="document.getElementById('fSku').value='';autoGenerateProductSku();" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;white-space:nowrap;">↻</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Discount %</label>
-            <input type="number" id="fDiscount" placeholder="0" min="0" max="100">
-          </div>
-        </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Status</label>
@@ -515,7 +551,6 @@
             </select>
           </div>
         </div>
-
         <div class="drawer-section-label">Visibility</div>
         <div class="toggle-row">
           <div class="toggle-item">
@@ -523,44 +558,177 @@
               <div class="toggle-label">Featured Product</div>
               <div class="toggle-sub">Show in featured section</div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="fFeatured">
-              <span class="slider"></span>
-            </label>
+            <label class="toggle-switch"><input type="checkbox" id="fFeatured"><span class="slider"></span></label>
           </div>
           <div class="toggle-item">
             <div>
               <div class="toggle-label">Deal of the Day</div>
               <div class="toggle-sub">Highlight as daily deal</div>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="fDealOfDay">
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="toggle-item">
-            <div>
-              <div class="toggle-label">Offer Product</div>
-              <div class="toggle-sub">Mark as special offer</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="fOfferProduct">
-              <span class="slider"></span>
-            </label>
+            <label class="toggle-switch"><input type="checkbox" id="fDealOfDay"><span class="slider"></span></label>
           </div>
         </div>
 
-        <div class="drawer-section-label">Product Images</div>
-        <div class="form-group">
-          <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('rawImageInput').click()">
-            <div class="upload-icon">📁</div>
-            <p>Click to select images</p>
-            <small>JPG, PNG, WEBP — select multiple</small>
+        <!-- ── DEFAULT VARIANT SECTION (add mode only) ── -->
+        <div id="defaultVariantSection">
+          <div class="drawer-section-label" style="margin-top:24px;background:#fef3c7;color:#92400e;padding:8px 12px;border-radius:6px;border-left:3px solid #f59e0b;">
+             Default Variant <small style="font-weight:400;color:#b45309;">(required — product cannot be created without this)</small>
           </div>
-          <input type="file" id="rawImageInput" accept="image/*" multiple style="display:none" onchange="handleRawImages(event)">
-          <div class="image-preview-grid" id="imagePreviewGrid"></div>
-          <div class="image-count-note" id="imageCountNote"></div>
+
+          <!-- Colors -->
+          <div class="drawer-section-label" style="margin-top:16px;">Colors</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+            <!-- Strap Color -->
+            <div class="form-group">
+              <label>Strap Color *</label>
+              <div style="position:relative;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <div id="strapColorSwatch" onclick="openPdColorPanel('strap')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+                  <input type="text" id="vStrapColor" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncPdSwatchFromInput('strap')">
+                </div>
+                <div id="strapColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+                  <div style="position:relative;margin-bottom:10px;"><canvas id="strapCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas><div id="strapCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div></div>
+                  <div id="strapHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;"><div id="strapHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div></div>
+                  <div style="display:flex;gap:6px;margin-bottom:8px;"><input type="text" id="strapHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onPdHexInput('strap')"><button type="button" onclick="startPdEyedropper('strap')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg></button><button type="button" onclick="savePdCurrentColor('strap')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button></div>
+                  <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+                  <div id="strapSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+                  <button type="button" onclick="applyPdColorPanel('strap')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+                </div>
+              </div>
+            </div>
+            <!-- Dial Color -->
+            <div class="form-group">
+              <label>Dial Color *</label>
+              <div style="position:relative;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <div id="dialColorSwatch" onclick="openPdColorPanel('dial')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+                  <input type="text" id="vDialColor" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncPdSwatchFromInput('dial')">
+                </div>
+                <div id="dialColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+                  <div style="position:relative;margin-bottom:10px;"><canvas id="dialCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas><div id="dialCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div></div>
+                  <div id="dialHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;"><div id="dialHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div></div>
+                  <div style="display:flex;gap:6px;margin-bottom:8px;"><input type="text" id="dialHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onPdHexInput('dial')"><button type="button" onclick="startPdEyedropper('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg></button><button type="button" onclick="savePdCurrentColor('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button></div>
+                  <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+                  <div id="dialSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+                  <button type="button" onclick="applyPdColorPanel('dial')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+                </div>
+              </div>
+            </div>
+            <!-- Case Color -->
+            <div class="form-group">
+              <label>Case Color *</label>
+              <div style="position:relative;">
+                <div style="display:flex;gap:8px;align-items:center;">
+<div id="caseColorSwatch" onclick="openPdColorPanel('case')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+                  <input type="text" id="vCaseColor" placeholder="#000000 or Gold" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncPdSwatchFromInput('case')">
+                </div>
+                <div id="caseColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+                  <div style="position:relative;margin-bottom:10px;"><canvas id="caseCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas><div id="caseCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div></div>
+                  <div id="caseHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;"><div id="caseHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div></div>
+                  <div style="display:flex;gap:6px;margin-bottom:8px;"><input type="text" id="caseHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onPdHexInput('case')"><button type="button" onclick="startPdEyedropper('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg></button><button type="button" onclick="savePdCurrentColor('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button></div>
+                  <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+                  <div id="caseSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+                  <button type="button" onclick="applyPdColorPanel('case')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Materials -->
+          <div class="drawer-section-label">Materials</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="form-group">
+              <label>Strap Material *</label>
+              <div style="display:flex;gap:8px;">
+                <select id="vStrapMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;"><option value="">Select...</option></select>
+                <button type="button" onclick="showAddMaterial('strap')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
+              </div>
+              <div id="strapMaterialNewRow" style="display:none;margin-top:8px;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" id="strapMaterialInput" placeholder="e.g. Silicone" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+                  <button type="button" onclick="saveMaterial('strap')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+                  <button type="button" onclick="hideAddMaterial('strap')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Case Material *</label>
+              <div style="display:flex;gap:8px;">
+                <select id="vCaseMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;"><option value="">Select...</option></select>
+                <button type="button" onclick="showAddMaterial('case')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
+              </div>
+              <div id="caseMaterialNewRow" style="display:none;margin-top:8px;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" id="caseMaterialInput" placeholder="e.g. Stainless Steel" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+                  <button type="button" onclick="saveMaterial('case')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+                  <button type="button" onclick="hideAddMaterial('case')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Specs -->
+          <div class="drawer-section-label">Specifications</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="form-group">
+              <label>Size *</label>
+              <input type="text" id="vSize" placeholder="e.g. 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+            </div>
+            <div class="form-group">
+              <label>Price (₹) *</label>
+              <input type="number" id="vPrice" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+            </div>
+            <div class="form-group">
+              <label>Stock *</label>
+              <input type="number" id="vStock" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="vStatus" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- SKU -->
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>SKU <small style="color:#888;font-weight:400;">(auto-generated, editable)</small></label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="vSku" placeholder="Auto-generated..." style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;font-family:monospace;">
+              <button type="button" onclick="autoGenerateVariantSku(true)" style="padding:9px 14px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">↻ Regen</button>
+            </div>
+          </div>
+
+          <!-- Variant Name -->
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Variant Name * <small style="color:#888;font-weight:400;">(auto-suggested)</small></label>
+            <input type="text" id="vName" placeholder="e.g. Black Leather 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+          </div>
+
+          <!-- Offer Product toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;margin-bottom:16px;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#333;">Offer Product</div>
+              <div style="font-size:12px;color:#888;">Mark this variant as special offer</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="vOfferProduct"><span class="slider"></span></label>
+          </div>
+
+          <!-- Images -->
+          <div class="drawer-section-label">Variant Images <span style="color:#888;font-size:11px;font-weight:400;">(min 3 required)</span></div>
+          <div class="form-group">
+            <div onclick="document.getElementById('vRawImageInput').click()" style="border:2px dashed #e5e7eb;border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:#fafafa;">
+              <div style="font-size:28px;margin-bottom:6px;">📁</div>
+              <p style="margin:0;color:#555;font-size:13.5px;">Click to select images</p>
+              <small style="color:#aaa;">JPG, PNG, WEBP — select multiple (min 3)</small>
+            </div>
+<input type="file" id="vRawImageInput" accept="image/*" multiple style="display:none" onchange="handleProductRawImages(event)">
+            <div id="vImagePreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px;"></div>
+            <div id="vImageCountNote" style="font-size:12px;margin-top:6px;color:#dc2626;">0 images — at least 3 required</div>
+          </div>
         </div>
+        <!-- end defaultVariantSection -->
 
       </form>
     </div>
@@ -575,199 +743,202 @@
 <div class="drawer-overlay" id="variantDrawer" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;align-items:flex-start;justify-content:flex-end;">
   <div style="width:640px;max-width:100vw;height:100vh;background:#fff;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);" id="variantDrawerBox">
     <div style="padding:20px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;background:#fafafa;flex-shrink:0;">
-      <h3 id="variantDrawerTitle" style="margin:0;font-size:17px;font-weight:700;">Add Variant</h3>
+      <h3 id="vd-variantDrawerTitle" style="margin:0;font-size:17px;font-weight:700;">Add Variant</h3>
       <button onclick="closeVariantDrawer()" style="width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;cursor:pointer;font-size:16px;">✕</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:24px;" id="variantDrawerBody">
       <form id="variantForm">
-        <input type="hidden" id="vProductId">
-        <input type="hidden" id="vVariantId">
+  <input type="hidden" id="vd-vProductId">
+  <input type="hidden" id="vd-vVariantId">
 
-        <!-- Colors -->
-        <div class="drawer-section-label">Colors</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
-          <!-- Strap Color -->
-          <div class="form-group">
-            <label>Strap Color <span style="color:#dc2626">*</span></label>
-            <div style="position:relative;">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <div id="strapColorSwatch" onclick="openColorPanel('strap')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;transition:border-color .2s;"></div>
-                <input type="text" id="vStrapColor" class="form-control" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncSwatchFromInput('strap')">
-              </div>
-              <div id="strapColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
-                <!-- Gradient Canvas -->
-                <div style="position:relative;margin-bottom:10px;">
-                  <canvas id="strapCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
-                  <div id="strapCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
-                </div>
-                <!-- Hue -->
-                <div id="strapHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
-                  <div id="strapHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
-                </div>
-                <!-- Hex Input + Eyedropper -->
-                <div style="display:flex;gap:6px;margin-bottom:8px;">
-                  <input type="text" id="strapHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onHexInput('strap')">
-                  <button type="button" onclick="startEyedropper('strap')" title="Pick from screen" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg>
-                  </button>
-                  <button type="button" onclick="saveCurrentColor('strap')" title="Save color" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
-                </div>
-                <!-- Saved Colors -->
-                <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
-                <div id="strapSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
-                <!-- Apply Button -->
-                <button type="button" onclick="applyColorPanel('strap')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
-              </div>
-            </div>
-          </div>
+  <!-- Colors -->
+  <div class="drawer-section-label">Colors</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
 
-          <!-- Dial Color -->
-          <div class="form-group">
-            <label>Dial Color <span style="color:#dc2626">*</span></label>
-            <div style="position:relative;">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <div id="dialColorSwatch" onclick="openColorPanel('dial')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
-                <input type="text" id="vDialColor" class="form-control" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncSwatchFromInput('dial')">
-              </div>
-              <div id="dialColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
-                <div style="position:relative;margin-bottom:10px;">
-                  <canvas id="dialCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
-                  <div id="dialCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
-                </div>
-                <div id="dialHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
-                  <div id="dialHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
-                </div>
-                <div style="display:flex;gap:6px;margin-bottom:8px;">
-                  <input type="text" id="dialHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onHexInput('dial')">
-                  <button type="button" onclick="startEyedropper('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg>
-                  </button>
-                  <button type="button" onclick="saveCurrentColor('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
-                </div>
-                <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
-                <div id="dialSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
-                <button type="button" onclick="applyColorPanel('dial')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Case Color -->
-          <div class="form-group">
-            <label>Case Color <span style="color:#dc2626">*</span></label>
-            <div style="position:relative;">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <div id="caseColorSwatch" onclick="openColorPanel('case')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
-                <input type="text" id="vCaseColor" class="form-control" placeholder="#000000 or Gold" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncSwatchFromInput('case')">
-              </div>
-              <div id="caseColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
-                <div style="position:relative;margin-bottom:10px;">
-                  <canvas id="caseCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
-                  <div id="caseCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
-                </div>
-                <div id="caseHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
-                  <div id="caseHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
-                </div>
-                <div style="display:flex;gap:6px;margin-bottom:8px;">
-                  <input type="text" id="caseHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onHexInput('case')">
-                  <button type="button" onclick="startEyedropper('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg>
-                  </button>
-                  <button type="button" onclick="saveCurrentColor('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
-                </div>
-                <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
-                <div id="caseSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
-                <button type="button" onclick="applyColorPanel('case')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
-              </div>
-            </div>
-          </div>
+    <!-- Strap Color -->
+    <div class="form-group">
+      <label>Strap Color <span style="color:#dc2626">*</span></label>
+      <div style="position:relative;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="vd-strapColorSwatch" onclick="openPdColorPanel('strap')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;transition:border-color .2s;"></div>
+          <input type="text" id="vd-vStrapColor" class="form-control" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncPdSwatchFromInput('strap')">
         </div>
-
-        <!-- Materials -->
-        <div class="drawer-section-label">Materials</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
-          <div class="form-group">
-            <label>Strap Material <span style="color:#dc2626">*</span></label>
-            <div style="display:flex;gap:8px;">
-              <select id="vStrapMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
-                <option value="">Select...</option>
-              </select>
-              <button type="button" onclick="showAddMaterial('strap')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
-            </div>
-          <div id="strapMaterialNewRow" style="display:none;margin-top:8px;">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input type="text" id="strapMaterialInput" placeholder="e.g. Silicone" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
-                <button type="button" onclick="saveMaterial('strap')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
-                <button type="button" onclick="hideAddMaterial('strap')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
-              </div>
-            </div>
+        <div id="vd-strapColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+          <div style="position:relative;margin-bottom:10px;">
+            <canvas id="vd-strapCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
+            <div id="vd-strapCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
           </div>
-          <div class="form-group">
-            <label>Case Material <span style="color:#dc2626">*</span></label>
-            <div style="display:flex;gap:8px;">
-              <select id="vCaseMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
-                <option value="">Select...</option>
-              </select>
-              <button type="button" onclick="showAddMaterial('case')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
-            </div>
-            <div id="caseMaterialNewRow" style="display:none;margin-top:8px;">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input type="text" id="caseMaterialInput" placeholder="e.g. Stainless Steel" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
-                <button type="button" onclick="saveMaterial('case')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
-                <button type="button" onclick="hideAddMaterial('case')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
-              </div>
-            </div>
+          <div id="vd-strapHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
+            <div id="vd-strapHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
           </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="text" id="vd-strapHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onPdHexInput('strap')">
+            <button type="button" onclick="startPdEyedropper('strap')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg></button>
+            <button type="button" onclick="savePdCurrentColor('strap')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
+          </div>
+          <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+          <div id="vd-strapSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+          <button type="button" onclick="applyPdColorPanel('strap')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
         </div>
+      </div>
+    </div>
 
-        <!-- Size -->
-        <div class="drawer-section-label">Specifications</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
-          <div class="form-group">
-            <label>Size <span style="color:#dc2626">*</span></label>
-            <input type="text" id="vSize" placeholder="e.g. 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;" oninput="autoGenerateVariantSku()">
-          </div>
-          <div class="form-group">
-            <label>Price (₹) <span style="color:#dc2626">*</span></label>
-            <input type="number" id="vPrice" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
-          </div>
-          <div class="form-group">
-            <label>Stock <span style="color:#dc2626">*</span></label>
-            <input type="number" id="vStock" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
-          </div>
+    <!-- Dial Color -->
+    <div class="form-group">
+      <label>Dial Color <span style="color:#dc2626">*</span></label>
+      <div style="position:relative;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="vd-dialColorSwatch" onclick="openPdColorPanel('dial')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+          <input type="text" id="vd-vDialColor" class="form-control" placeholder="#000000 or Black" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncPdSwatchFromInput('dial')">
         </div>
+        <div id="vd-dialColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+          <div style="position:relative;margin-bottom:10px;">
+            <canvas id="vd-dialCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
+            <div id="vd-dialCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
+          </div>
+          <div id="vd-dialHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
+            <div id="vd-dialHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="text" id="vd-dialHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onPdHexInput('dial')">
+            <button type="button" onclick="startPdEyedropper('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg></button>
+            <button type="button" onclick="savePdCurrentColor('dial')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
+          </div>
+          <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+          <div id="vd-dialSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+          <button type="button" onclick="applyPdColorPanel('dial')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
+        </div>
+      </div>
+    </div>
 
-        <!-- SKU -->
-        <div class="form-group" style="margin-bottom:16px;">
-          <label>SKU <small style="color:#888;font-weight:400;">(auto-generated, editable)</small></label>
-          <div style="display:flex;gap:8px;">
-            <input type="text" id="vSku" placeholder="Auto-generated..." style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;font-family:monospace;">
-            <button type="button" onclick="autoGenerateVariantSku(true)" style="padding:9px 14px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">↻ Regen</button>
+    <!-- Case Color -->
+    <div class="form-group">
+      <label>Case Color <span style="color:#dc2626">*</span></label>
+      <div style="position:relative;">
+        <div style="display:flex;gap:8px;align-items:center;">
+        <div id="vd-caseColorSwatch" onclick="openPdColorPanel('case')" style="width:38px;height:38px;border-radius:8px;border:2px solid #e5e7eb;cursor:pointer;background:#e5e7eb;flex-shrink:0;"></div>
+          <input type="text" id="vd-vCaseColor" class="form-control" placeholder="#000000 or Gold" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;" oninput="syncPdSwatchFromInput('case')">
+        </div>
+        <div id="vd-caseColorPanel" class="color-panel-popup" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:400;background:#1e1e1e;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:14px;width:280px;">
+          <div style="position:relative;margin-bottom:10px;">
+            <canvas id="vd-caseCpCanvas" width="252" height="150" style="width:100%;height:150px;border-radius:8px;cursor:crosshair;display:block;"></canvas>
+            <div id="vd-caseCpCursor" style="position:absolute;width:14px;height:14px;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;top:50%;left:50%;"></div>
           </div>
-        </div>
-
-        <!-- Variant Name -->
-        <div class="form-group" style="margin-bottom:16px;">
-          <label>Variant Name <span style="color:#dc2626">*</span> <small style="color:#888;font-weight:400;">(auto-suggested)</small></label>
-          <input type="text" id="vName" placeholder="e.g. Black Leather 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
-        </div>
-
-        <!-- Images -->
-        <div class="drawer-section-label">Images <span style="color:#888;font-size:11px;font-weight:400;">(min 3 required)</span></div>
-        <div class="form-group">
-          <div onclick="document.getElementById('vRawImageInput').click()" style="border:2px dashed #e5e7eb;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color .2s;background:#fafafa;">
-            <div style="font-size:28px;margin-bottom:6px;">📁</div>
-            <p style="margin:0;color:#555;font-size:13.5px;">Click to select images</p>
-            <small style="color:#aaa;">JPG, PNG, WEBP — select multiple (min 3)</small>
+          <div id="vd-caseHueTrack" style="height:14px;border-radius:7px;margin-bottom:8px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);position:relative;cursor:pointer;">
+            <div id="vd-caseHueThumb" style="position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);background:#f00;cursor:grab;left:0;"></div>
           </div>
-          <input type="file" id="vRawImageInput" accept="image/*" multiple style="display:none" onchange="handleVariantRawImages(event)">
-          <div id="vImagePreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px;"></div>
-          <div id="vImageCountNote" style="font-size:12px;margin-top:6px;color:#dc2626;">0 images — at least 3 required</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="text" id="vd-caseHexInput" style="flex:1;background:#2a2a2a;border:1px solid #3a3a3a;color:#fff;border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;outline:none;text-transform:uppercase;" placeholder="#FF0000" oninput="onPdHexInput('case')">
+          <button type="button" onclick="startPdEyedropper('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l8-8"/><path d="M17.5 2.5a2.83 2.83 0 014 4L8 20l-5 1 1-5z"/></svg></button>
+           <button type="button" onclick="savePdCurrentColor('case')" style="width:32px;height:32px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#aaa;display:flex;align-items:center;justify-content:center;">💾</button>
+          </div>
+          <div style="font-size:10px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Saved Colors</div>
+          <div id="vd-caseSavedSwatches" style="display:flex;flex-wrap:wrap;gap:5px;min-height:20px;margin-bottom:6px;"></div>
+          <button type="button" onclick="applyPdColorPanel('case')" style="width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-top:6px;">Apply</button>
         </div>
-      </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materials -->
+  <div class="drawer-section-label">Materials</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+    <div class="form-group">
+      <label>Strap Material <span style="color:#dc2626">*</span></label>
+      <div style="display:flex;gap:8px;">
+        <select id="vd-vStrapMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;"><option value="">Select...</option></select>
+        <button type="button" onclick="showAddMaterial('strap')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
+      </div>
+      <div id="vd-strapMaterialNewRow" style="display:none;margin-top:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="vd-strapMaterialInput" placeholder="e.g. Silicone" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+          <button type="button" onclick="saveMaterial('strap')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+          <button type="button" onclick="hideAddMaterial('strap')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Case Material <span style="color:#dc2626">*</span></label>
+      <div style="display:flex;gap:8px;">
+        <select id="vd-vCaseMaterial" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;"><option value="">Select...</option></select>
+        <button type="button" onclick="showAddMaterial('case')" style="padding:9px 12px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">+ New</button>
+      </div>
+      <div id="vd-caseMaterialNewRow" style="display:none;margin-top:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="vd-caseMaterialInput" placeholder="e.g. Stainless Steel" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+          <button type="button" onclick="saveMaterial('case')" style="padding:9px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+          <button type="button" onclick="hideAddMaterial('case')" style="padding:9px 14px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Specifications -->
+  <div class="drawer-section-label">Specifications</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+    <div class="form-group">
+      <label>Size <span style="color:#dc2626">*</span></label>
+      <input type="text" id="vd-vSize" placeholder="e.g. 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;" oninput="autoGenerateVariantSku()">
+    </div>
+    <div class="form-group">
+      <label>Price (₹) <span style="color:#dc2626">*</span></label>
+      <input type="number" id="vd-vPrice" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+    </div>
+    <div class="form-group">
+      <label>Stock <span style="color:#dc2626">*</span></label>
+      <input type="number" id="vd-vStock" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="vd-vStatus" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SKU -->
+  <div class="form-group" style="margin-bottom:16px;">
+    <label>SKU <small style="color:#888;font-weight:400;">(auto-generated, editable)</small></label>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="vd-vSku" placeholder="Auto-generated..." style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;font-family:monospace;">
+      <button type="button" onclick="autoGenerateVariantSku(true)" style="padding:9px 14px;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:8px;cursor:pointer;color:#2563eb;font-size:13px;font-weight:600;">↻ Regen</button>
+    </div>
+  </div>
+
+  <!-- Variant Name -->
+  <div class="form-group" style="margin-bottom:16px;">
+    <label>Variant Name <span style="color:#dc2626">*</span> <small style="color:#888;font-weight:400;">(auto-suggested)</small></label>
+    <input type="text" id="vd-vName" placeholder="e.g. Black Leather 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+  </div>
+
+  <!-- Offer Product -->
+  <div class="drawer-section-label">Display</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;margin-bottom:16px;">
+    <div>
+      <div style="font-size:13px;font-weight:600;color:#333;">Offer Product</div>
+      <div style="font-size:12px;color:#888;">Mark this variant as special offer</div>
+    </div>
+    <label class="toggle-switch"><input type="checkbox" id="vd-vOfferProduct"><span class="slider"></span></label>
+  </div>
+
+  <!-- Images -->
+  <div class="drawer-section-label">Images <span style="color:#888;font-size:11px;font-weight:400;">(min 3 required)</span></div>
+  <div class="form-group">
+    <div onclick="document.getElementById('vd-vRawImageInput').click()" style="border:2px dashed #e5e7eb;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color .2s;background:#fafafa;">
+      <div style="font-size:28px;margin-bottom:6px;">📁</div>
+      <p style="margin:0;color:#555;font-size:13.5px;">Click to select images</p>
+      <small style="color:#aaa;">JPG, PNG, WEBP — select multiple (min 3)</small>
+    </div>
+    <input type="file" id="vd-vRawImageInput" accept="image/*" multiple style="display:none" onchange="handleVariantRawImages(event)">
+    <div id="vd-vImagePreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px;"></div>
+    <div id="vd-vImageCountNote" style="font-size:12px;margin-top:6px;color:#dc2626;">0 images — at least 3 required</div>
+  </div>
+</form>
     </div>
     <div style="padding:16px 24px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:flex-end;background:#fafafa;flex-shrink:0;">
       <button onclick="closeVariantDrawer()" style="padding:9px 20px;background:#f3f4f6;color:#555;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Cancel</button>
-      <button id="variantSubmitBtn" onclick="submitVariantForm()" style="padding:9px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Save Variant</button>
+      <button id="vd-variantSubmitBtn" onclick="submitVariantForm()" style="padding:9px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Save Variant</button>
     </div>
   </div>
 </div>
@@ -930,7 +1101,21 @@ function openAddModal() {
   document.getElementById('productForm').reset();
   document.getElementById('productId').value = '';
   document.getElementById('newBrandWrap').style.display = 'none';
-  clearImagePreviews();
+  const dvSection = document.getElementById('defaultVariantSection');
+  if (dvSection) dvSection.style.display = 'block';
+  clearPdImagePreviews();
+  ['strap','dial','case'].forEach(f => {
+    const panel = pdGet(`${f}ColorPanel`);
+    if (panel) panel.style.display = 'none';
+    const inp = pdGet(`v${f.charAt(0).toUpperCase()+f.slice(1)}Color`);
+    if (inp) inp.value = '';
+    const sw = pdGet(`${f}ColorSwatch`);
+    if (sw) sw.style.background = '#e5e7eb';
+    pdCpState[f] = { hue: 0, hex: '' };
+    pdCpListenersAttached[f] = false;
+  });
+  loadMaterials();
+  loadPdSavedColors();
   document.getElementById('productDrawer').classList.add('open');
 }
 
@@ -939,32 +1124,25 @@ function openEditModal(id) {
   document.getElementById('drawerTitle').textContent = 'Edit Product';
   document.getElementById('drawerSubmitBtn').textContent = 'Save Changes';
   document.getElementById('productId').value = id;
-  clearImagePreviews();
+  const dvSection = document.getElementById('defaultVariantSection');
+  if (dvSection) dvSection.style.display = 'none';
 
   fetch(`/admin/products/${id}/json`)
     .then(r => r.json())
     .then(data => {
-      document.getElementById('fName').value          = data.name        || '';
-      document.getElementById('fDesc').value          = data.description || '';
-      document.getElementById('fPrice').value         = data.price       || '';
-      document.getElementById('fStock').value         = data.stock       || '';
-      document.getElementById('fSku').value           = data.sku         || '';
-      document.getElementById('fDiscount').value      = data.discount    || '';
-      document.getElementById('fStatus').value        = data.status      || 'active';
-      document.getElementById('fGender').value        = data.gender      || 'unisex';
-      document.getElementById('fCategory').value      = data.categoryId  || '';
-      document.getElementById('fFeatured').checked    = !!data.featured;
-      document.getElementById('fDealOfDay').checked   = !!data.dealOfTheDay;
-      document.getElementById('fOfferProduct').checked = !!data.offerProduct;
+      document.getElementById('fName').value        = data.name        || '';
+      document.getElementById('fDesc').value        = data.description || '';
+      document.getElementById('fStatus').value      = data.status      || 'active';
+      document.getElementById('fGender').value      = data.gender      || 'unisex';
+      document.getElementById('fCategory').value    = data.categoryId  || '';
+      document.getElementById('fFeatured').checked  = !!data.featured;
+      document.getElementById('fDealOfDay').checked = !!data.dealOfTheDay;
       const brandSelect = document.getElementById('fBrand');
       if (data.brandId) {
         const opt = brandSelect.querySelector(`option[value="${data.brandId}"]`);
         if (opt) brandSelect.value = data.brandId;
       }
       document.getElementById('newBrandWrap').style.display = 'none';
-      if (data.images && data.images.length) {
-        data.images.forEach(url => addExistingImagePreview(url));
-      }
     })
     .catch(() => showToast('Failed to load product data', 'red'));
 
@@ -982,18 +1160,11 @@ async function submitProductForm() {
   const category = document.getElementById('fCategory').value;
   const brand    = document.getElementById('fBrand').value;
   const newBrand = document.getElementById('fNewBrand').value.trim();
-  const price    = document.getElementById('fPrice').value;
-  const stock    = document.getElementById('fStock').value;
 
-  if (!name)                              { showToast('Product name is required', 'blue'); return; }
-  if (!category)                          { showToast('Please select a category', 'blue'); return; }
-  if (!brand)                             { showToast('Please select a brand', 'blue'); return; }
-  if (brand === 'other' && !newBrand)     { showToast('Please enter new brand name', 'blue'); return; }
-  if (!price)                             { showToast('Price is required', 'blue'); return; }
-  if (!stock && stock !== '0')            { showToast('Stock is required', 'blue'); return; }
-  if (croppedBlobs.length + existingImageUrls.length < 1) {
-    showToast('Please add at least 1 image', 'blue'); return;
-  }
+  if (!name)                          { showToast('Product name is required', 'blue'); return; }
+  if (!category)                      { showToast('Please select a category', 'blue'); return; }
+  if (!brand)                         { showToast('Please select a brand', 'blue'); return; }
+  if (brand === 'other' && !newBrand) { showToast('Please enter new brand name', 'blue'); return; }
 
   const fd = new FormData();
   fd.append('name',        name);
@@ -1002,21 +1173,51 @@ async function submitProductForm() {
   if (brand === 'other') fd.append('newBrand', newBrand);
   fd.append('description', document.getElementById('fDesc').value);
   fd.append('gender',      document.getElementById('fGender').value);
-  fd.append('price',       price);
-  fd.append('stock',       stock);
-  fd.append('sku',         document.getElementById('fSku').value);
-  fd.append('discount',    document.getElementById('fDiscount').value || '0');
   fd.append('status',      document.getElementById('fStatus').value);
   fd.append('featured',    document.getElementById('fFeatured').checked);
-  fd.append('dealOfTheDay',  document.getElementById('fDealOfDay').checked);
-  fd.append('offerProduct',  document.getElementById('fOfferProduct').checked);
-  existingImageUrls.forEach(url => fd.append('existingImages', url));
-  croppedBlobs.forEach((blob, i) => fd.append('images', blob, `image_${i}.jpg`));
+  fd.append('dealOfTheDay', document.getElementById('fDealOfDay').checked);
+
+  if (drawerMode === 'add') {
+    const strapColor    = document.getElementById('vStrapColor').value.trim();
+    const dialColor     = document.getElementById('vDialColor').value.trim();
+    const caseColor     = document.getElementById('vCaseColor').value.trim();
+    const size          = document.getElementById('vSize').value.trim();
+    const strapMaterial = document.getElementById('vStrapMaterial').value;
+    const caseMaterial  = document.getElementById('vCaseMaterial').value;
+    const price         = document.getElementById('vPrice').value;
+    const stock         = document.getElementById('vStock').value;
+    const vName         = document.getElementById('vName').value.trim();
+
+    if (!strapColor)    { showToast('Strap color is required', 'blue'); return; }
+    if (!dialColor)     { showToast('Dial color is required', 'blue'); return; }
+    if (!caseColor)     { showToast('Case color is required', 'blue'); return; }
+    if (!size)          { showToast('Size is required', 'blue'); return; }
+    if (!strapMaterial) { showToast('Strap material is required', 'blue'); return; }
+    if (!caseMaterial)  { showToast('Case material is required', 'blue'); return; }
+    if (!price)         { showToast('Price is required', 'blue'); return; }
+    if (!vName)         { showToast('Variant name is required', 'blue'); return; }
+    if (pdCroppedBlobs.length + pdExistingImageUrls.length < 3) {
+      showToast('At least 3 variant images required', 'blue'); return;
+    }
+
+    fd.append('variantName',   vName);
+    fd.append('sku',           document.getElementById('vSku').value.trim());
+    fd.append('strapColor',    strapColor);
+    fd.append('dialColor',     dialColor);
+    fd.append('caseColor',     caseColor);
+    fd.append('size',          size);
+    fd.append('strapMaterial', strapMaterial);
+    fd.append('caseMaterial',  caseMaterial);
+    fd.append('price',         price);
+    fd.append('stock',         stock || '0');
+    fd.append('offerProduct',  document.getElementById('vOfferProduct').checked);
+    pdExistingImageUrls.forEach(url => fd.append('existingImages', url));
+    pdCroppedBlobs.forEach((blob, i) => fd.append('images', blob, `vimg_${i}.jpg`));
+  }
 
   const url = drawerMode === 'add' ? '/admin/products/add' : `/admin/products/edit/${id}`;
   const btn = document.getElementById('drawerSubmitBtn');
-  btn.disabled = true;
-  btn.textContent = 'Saving...';
+  btn.disabled = true; btn.textContent = 'Saving...';
 
   try {
     const r    = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
@@ -1024,14 +1225,10 @@ async function submitProductForm() {
     if (!data.success) { showToast(data.message || 'Error', 'red'); return; }
     closeDrawer();
     showToast(drawerMode === 'add' ? 'Product added!' : 'Product updated!', 'green');
-
-    // ── KEY FIX: branch on which page we're on ──
     const detailPage = document.getElementById('page-detail');
     if (detailPage && drawerMode === 'edit') {
-      // On detail page: only update the detail UI, never touch the table
       await refreshProductDetail(id);
     } else {
-      // On list page: refresh table + brand dropdown
       await refreshProductTable();
       await refreshBrandDropdown();
     }
@@ -1043,20 +1240,18 @@ async function submitProductForm() {
   }
 }
 
-// ── REFRESH DETAIL (AJAX, no layout side-effects) ────────────
+// ── REFRESH DETAIL ────────────────────────────────────
 async function refreshProductDetail(productId) {
   try {
     const r    = await fetch(`/admin/products/${productId}/json`);
     const data = await r.json();
     if (!data) return;
 
-    // Title + breadcrumb
     const titleEl = document.querySelector('.pd-title');
     if (titleEl) titleEl.textContent = data.name || '';
     const bc = document.querySelector('.pd-bc-cur');
     if (bc) bc.textContent = data.name || '';
 
-    // Status badge + price tag + discount badge
     const badgesEl = document.querySelector('.pd-badges');
     if (badgesEl) {
       const isActive = data.status === 'active';
@@ -1068,7 +1263,6 @@ async function refreshProductDetail(productId) {
       const priceTag = badgesEl.querySelector('.pd-price-tag');
       if (priceTag) priceTag.textContent = `BASE PRICE ₹${data.price}`;
 
-      // Discount badge (optional second badge)
       let discountBadge = badgesEl.querySelectorAll('.badge')[1];
       if (data.discount && data.discount > 0) {
         if (!discountBadge) {
@@ -1082,15 +1276,12 @@ async function refreshProductDetail(productId) {
       }
     }
 
-    // Stock stat card (first pd-stat-value only)
     const stockVal = document.querySelector('.pd-stat-value');
     if (stockVal) stockVal.innerHTML = `${data.stock} <span class="pd-stat-unit">units</span>`;
 
-    // Gallery main image
     const mainImg = document.getElementById('galleryMain');
     if (mainImg && data.images && data.images.length) mainImg.src = data.images[0];
 
-    // Gallery thumbnails
     const thumbsEl = document.querySelector('.pd-gallery-thumbs');
     if (thumbsEl && data.images) {
       thumbsEl.innerHTML = data.images.map((src, i) => `
@@ -1099,7 +1290,6 @@ async function refreshProductDetail(productId) {
         </div>`).join('');
     }
 
-    // Info grid rows — match by label text
     document.querySelectorAll('.pd-info-row').forEach(row => {
       const label   = row.querySelector('.pd-info-label')?.textContent?.trim().toLowerCase();
       const valueEl = row.querySelector('.pd-info-value');
@@ -1110,7 +1300,6 @@ async function refreshProductDetail(productId) {
       if (label === 'gender')   valueEl.textContent = data.gender     || '-';
     });
 
-    // Visibility & Offers toggles
     document.querySelectorAll('.pd-toggle-info').forEach(row => {
       const label = row.querySelector('span:first-child')?.textContent?.trim().toLowerCase();
       const badge = row.querySelector('.badge');
@@ -1123,7 +1312,6 @@ async function refreshProductDetail(productId) {
       badge.textContent = val ? 'Yes' : 'No';
     });
 
-    // Description
     const descEl = document.querySelector('.pd-description');
     if (descEl) descEl.textContent = data.description || '';
 
@@ -1133,11 +1321,9 @@ async function refreshProductDetail(productId) {
   }
 }
 
-// ── REFRESH TABLE (list page only) ───────────────────
+// ── REFRESH TABLE ─────────────────────────────────────
 async function refreshProductTable() {
-  // NEVER run on the detail page — it breaks the layout
   if (document.getElementById('page-detail')) return;
-
   try {
     const params = new URLSearchParams(window.location.search);
     const r      = await fetch(`/admin/products?${params.toString()}`);
@@ -1145,18 +1331,10 @@ async function refreshProductTable() {
     const parser = new DOMParser();
     const doc    = parser.parseFromString(html, 'text/html');
 
-    // Table body
     const newTbody = doc.querySelector('#page-list table tbody');
     const curTbody = document.querySelector('#page-list table tbody');
     if (newTbody && curTbody) curTbody.innerHTML = newTbody.innerHTML;
 
-    // Empty-state div
-    const newEmpty = doc.querySelector('#page-list .table-card > div[style*="text-align:center"]');
-    const curEmpty = document.querySelector('#page-list .table-card > div[style*="text-align:center"]');
-    if (newEmpty && !curEmpty) curTbody?.insertAdjacentHTML('afterend', newEmpty.outerHTML);
-    else if (!newEmpty && curEmpty) curEmpty.remove();
-
-    // Stat cards — update only the svalue text, never innerHTML of the whole card
     const newCards = doc.querySelectorAll('#page-list .stat-card');
     const curCards = document.querySelectorAll('#page-list .stat-card');
     newCards.forEach((card, i) => {
@@ -1166,12 +1344,10 @@ async function refreshProductTable() {
       if (newVal && curVal) curVal.textContent = newVal.textContent;
     });
 
-    // Pagination
     const newPag = doc.querySelector('#page-list .pagination');
     const curPag = document.querySelector('#page-list .pagination');
     if (newPag && curPag) curPag.innerHTML = newPag.innerHTML;
 
-    // Trash badge
     const newBadge = doc.querySelector('.trash-badge');
     const curBadge = document.querySelector('.trash-badge');
     if (newBadge && curBadge) curBadge.textContent = newBadge.textContent;
@@ -1201,7 +1377,6 @@ async function refreshBrandDropdown() {
     });
     if (otherOpt) curBrand.appendChild(otherOpt);
 
-    // Also refresh the topbar filter brand select
     const filterBrand = document.querySelector('select[name="brand"]');
     if (filterBrand && newFilterBrand) filterBrand.innerHTML = newFilterBrand.innerHTML;
   } catch (e) {
@@ -1280,7 +1455,7 @@ async function restoreProduct(id) {
     if (!data.success) { showToast('Failed to restore', 'red'); return; }
     document.getElementById(`trash-item-${id}`)?.remove();
     showToast('Product restored!', 'green');
-    await refreshProductTable();
+    setTimeout(() => window.location.reload(), 800);
   } catch (e) { showToast('Network error', 'red'); }
 }
 
@@ -1300,35 +1475,37 @@ async function confirmPermDelete() {
   } catch (e) { showToast('Network error', 'red'); }
 }
 
-// ── IMAGE + CROPPER ───────────────────────────────────
+// ── PRODUCT DRAWER IMAGE HANDLING ─────────────────────
 let cropperInstance   = null;
-let rawFilesQueue     = [];
-let croppedBlobs      = [];
-let existingImageUrls = [];
+let pdRawFilesQueue   = [];
+let pdCroppedBlobs    = [];
+let pdExistingImageUrls = [];
 
-function clearImagePreviews() {
-  croppedBlobs = []; existingImageUrls = []; rawFilesQueue = [];
-  document.getElementById('imagePreviewGrid').innerHTML = '';
-  updateImageCount();
+function clearPdImagePreviews() {
+  pdCroppedBlobs = []; pdExistingImageUrls = []; pdRawFilesQueue = [];
+  const grid = document.getElementById('vImagePreviewGrid');
+  if (grid) grid.innerHTML = '';
+  updatePdImageCount();
 }
 
-function handleRawImages(event) {
-  rawFilesQueue = Array.from(event.target.files);
+function handleProductRawImages(event) {
+  pdRawFilesQueue = Array.from(event.target.files);
   event.target.value = '';
-  processNextInQueue();
+  processNextPdInQueue();
 }
-function processNextInQueue() {
-  if (!rawFilesQueue.length) return;
-  const file = rawFilesQueue.shift();
+
+function processNextPdInQueue() {
+  if (!pdRawFilesQueue.length) return;
+  const file = pdRawFilesQueue.shift();
   const reader = new FileReader();
-  reader.onload = e => openCropperModal(e.target.result);
+  reader.onload = e => openPdCropperModal(e.target.result);
   reader.readAsDataURL(file);
 }
-function openCropperModal(src) {
+
+function openPdCropperModal(src) {
   if (cropperInstance) { try { cropperInstance.destroy(); } catch(e){} cropperInstance = null; }
   const modal = document.getElementById('cropperModal');
-  modal.classList.remove('open');
-  const wrap = document.querySelector('.crop-img-wrap');
+  const wrap  = document.querySelector('.crop-img-wrap');
   wrap.innerHTML = '<img id="cropperImg" alt="crop">';
   const img = document.getElementById('cropperImg');
   modal.classList.add('open');
@@ -1344,70 +1521,58 @@ function openCropperModal(src) {
     } catch(e) { console.error('Cropper init failed:', e); }
   };
   img.src = src;
+  document.querySelector('#cropperModal .btn-confirm.green').onclick = applyPdCrop;
+  document.querySelector('#cropperModal .btn-cancel').onclick        = skipPdCrop;
 }
-function applyCrop() {
+
+function applyPdCrop() {
   if (!cropperInstance) return;
   cropperInstance.getCroppedCanvas({ width: 800, height: 800 }).toBlob(blob => {
-    croppedBlobs.push(blob);
-    addCroppedPreview(blob, croppedBlobs.length - 1);
-    closeCropperModal();
-    processNextInQueue();
-    updateImageCount();
+    pdCroppedBlobs.push(blob);
+    addPdCroppedPreview(blob, pdCroppedBlobs.length - 1);
+    document.getElementById('cropperModal').classList.remove('open');
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    processNextPdInQueue();
+    updatePdImageCount();
   }, 'image/jpeg', 0.9);
 }
-function skipCrop() {
+
+function skipPdCrop() {
   const img = document.getElementById('cropperImg');
   fetch(img.src).then(r => r.blob()).then(blob => {
-    croppedBlobs.push(blob);
-    addCroppedPreview(blob, croppedBlobs.length - 1);
-    closeCropperModal();
-    processNextInQueue();
-    updateImageCount();
+    pdCroppedBlobs.push(blob);
+    addPdCroppedPreview(blob, pdCroppedBlobs.length - 1);
+    document.getElementById('cropperModal').classList.remove('open');
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    processNextPdInQueue();
+    updatePdImageCount();
   });
 }
-function closeCropperModal() {
-  document.getElementById('cropperModal').classList.remove('open');
-  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-}
-function addCroppedPreview(blob, index) {
+
+function addPdCroppedPreview(blob, index) {
   const url  = URL.createObjectURL(blob);
-  const grid = document.getElementById('imagePreviewGrid');
-  const div  = document.createElement('div');
-  div.className = 'preview-item';
-  div.id = `cropped-preview-${index}`;
-  div.innerHTML = `<img src="${url}" alt="preview"><button type="button" class="remove-img" onclick="removeCroppedImage(${index},this.parentElement)">✕</button><span class="preview-label">New</span>`;
+  const grid = document.getElementById('vImagePreviewGrid');
+  if (!grid) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+  div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;">
+    <button type="button" onclick="removePdCroppedImage(${index},this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button>
+    <span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">New</span>`;
   grid.appendChild(div);
 }
-function addExistingImagePreview(url) {
-  existingImageUrls.push(url);
-  const grid = document.getElementById('imagePreviewGrid');
-  const div  = document.createElement('div');
-  div.className = 'preview-item existing';
-  div.innerHTML = `<img src="${url}" alt="existing"><button type="button" class="remove-img" onclick="removeExistingImage('${url}',this.parentElement)">✕</button><span class="preview-label">Saved</span>`;
-  grid.appendChild(div);
-  updateImageCount();
-}
-function removeCroppedImage(index, el) {
-  croppedBlobs.splice(index, 1);
+
+function removePdCroppedImage(index, el) {
+  pdCroppedBlobs.splice(index, 1);
   el.remove();
-  document.querySelectorAll('#imagePreviewGrid .preview-item:not(.existing)').forEach((item, i) => {
-    item.id = `cropped-preview-${i}`;
-    const btn = item.querySelector('.remove-img');
-    if (btn) btn.setAttribute('onclick', `removeCroppedImage(${i},this.parentElement)`);
-  });
-  updateImageCount();
+  updatePdImageCount();
 }
-function removeExistingImage(url, el) {
-  existingImageUrls = existingImageUrls.filter(u => u !== url);
-  el.remove();
-  updateImageCount();
-}
-function updateImageCount() {
-  const total = croppedBlobs.length + existingImageUrls.length;
-  const note  = document.getElementById('imageCountNote');
+
+function updatePdImageCount() {
+  const total = pdCroppedBlobs.length + pdExistingImageUrls.length;
+  const note  = document.getElementById('vImageCountNote');
   if (!note) return;
-  note.textContent = `${total} image${total !== 1 ? 's' : ''} selected${total < 1 ? ' — at least 1 required' : ' ✓'}`;
-  note.style.color = total < 1 ? '#dc2626' : '#16a34a';
+  note.textContent = `${total} image${total !== 1 ? 's' : ''} selected${total < 3 ? ' — at least 3 required' : ' ✓'}`;
+  note.style.color = total < 3 ? '#dc2626' : '#16a34a';
 }
 
 // ── MODAL OVERLAY CLOSE ───────────────────────────────
@@ -1437,29 +1602,19 @@ function showToast(msg, type = 'green') {
 }
 
 // ── MOBILE SEARCH TOGGLE ──────────────────────────────
-// Adds a search icon button in the topbar on mobile that shows/hides the filter form
 (function setupMobileSearch() {
   const topbar     = document.querySelector('.topbar');
   const filterForm = document.getElementById('filterForm');
   if (!topbar || !filterForm) return;
-
-  // Create toggle button
   const btn = document.createElement('button');
   btn.id        = 'mobileSearchBtn';
   btn.className = 'hamburger';
   btn.setAttribute('aria-label', 'Search');
   btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
   btn.style.cssText = 'display:none;';
-
-  // Insert after hamburger
   const hamburger = topbar.querySelector('.hamburger');
   if (hamburger) hamburger.insertAdjacentElement('afterend', btn);
-
-  btn.addEventListener('click', () => {
-    filterForm.classList.toggle('mobile-search-open');
-  });
-
-  // Inject responsive CSS
+  btn.addEventListener('click', () => { filterForm.classList.toggle('mobile-search-open'); });
   const style = document.createElement('style');
   style.textContent = `
     @media (max-width: 768px) {
@@ -1477,19 +1632,12 @@ function showToast(msg, type = 'green') {
         border-bottom: 1px solid #e5e7eb;
         box-shadow: 0 4px 16px rgba(0,0,0,.1);
       }
-      #filterForm.mobile-search-open {
-        display: flex !important;
-      }
-      #filterForm input,
-      #filterForm select,
-      #filterForm .btn-search,
-      #filterForm .btn-clear {
-        width: 100%;
-        box-sizing: border-box;
+      #filterForm.mobile-search-open { display: flex !important; }
+      #filterForm input, #filterForm select, #filterForm .btn-search, #filterForm .btn-clear {
+        width: 100%; box-sizing: border-box;
       }
       .topbar { position: relative; }
-    }
-  `;
+    }`;
   document.head.appendChild(style);
 })();
 
@@ -1510,6 +1658,12 @@ let vExistingImageUrls = [];
 let variantCurrentPage = 1;
 let variantTotalPages  = 1;
 let currentProductId   = null;
+let currentDefaultVariantId = null;
+let activeDrawerContext = 'product';
+
+function vd(id) {
+  return document.getElementById('vd-' + id) || document.getElementById(id);
+}
 
 const cpState = {};
 ['strap','dial','case'].forEach(f => { cpState[f] = { hue: 0, hex: '' }; });
@@ -1518,16 +1672,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const detailPage = document.getElementById('page-detail');
   if (detailPage) {
     currentProductId = detailPage.dataset.productId;
-    if (currentProductId) { loadVariants(currentProductId, 1); loadMaterials(); loadSavedColors(); }
+    currentDefaultVariantId = detailPage.dataset.defaultVariantId || null;
+    if (currentProductId) { loadVariants(currentProductId, 1); }
   }
   document.addEventListener('click', e => {
-    if (!e.target.closest('.color-panel-popup') && !e.target.closest('[onclick*="openColorPanel"]')) {
-      document.querySelectorAll('.color-panel-popup').forEach(p => p.style.display = 'none');
+    if (!e.target.closest('.color-panel-popup') && !e.target.closest('[onclick*="openColorPanel"]') && !e.target.closest('[onclick*="openPdColorPanel"]')) {
+      ['strap','dial','case'].forEach(f => {
+        ['', 'vd-'].forEach(prefix => {
+          const p = document.getElementById(`${prefix}${f}ColorPanel`);
+          if (p) p.style.display = 'none';
+        });
+      });
     }
   });
-  ['strap','dial','case'].forEach(f => initColorCanvas(f));
 });
 
+// ── VARIANT TABLE ─────────────────────────────────────
 async function loadVariants(productId, page = 1) {
   variantCurrentPage = page;
   try {
@@ -1540,7 +1700,7 @@ async function loadVariants(productId, page = 1) {
     renderVariantPagination(data.currentPage, data.totalPages, productId);
   } catch (e) {
     document.getElementById('variantTableBody').innerHTML =
-      '<tr><td colspan="8" style="text-align:center;padding:30px;color:#aaa">Failed to load variants.</td></tr>';
+      '<tr><td colspan="9" style="text-align:center;padding:30px;color:#aaa">Failed to load variants.</td></tr>';
   }
 }
 
@@ -1548,10 +1708,12 @@ function renderVariantTable(variants) {
   const tbody = document.getElementById('variantTableBody');
   if (!tbody) return;
   if (!variants.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa">No variants found. Click "Add Variant" to create one.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#aaa">No variants found. Click "Add Variant" to create one.</td></tr>';
     return;
   }
+  const isOnlyOne = variants.length === 1;
   tbody.innerHTML = variants.map(v => {
+    const isDefault  = v.isDefault || v._id === currentDefaultVariantId;
     const stockBadge = v.stock === 0
       ? `<span class="stock-badge out-stock">Out of Stock</span>`
       : v.stock <= 10
@@ -1562,7 +1724,10 @@ function renderVariantTable(variants) {
       v.dialColor  ? `<span title="Dial:${v.dialColor}"   style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${v.dialColor};border:1.5px solid #ddd;vertical-align:middle;"></span>` : '',
       v.caseColor  ? `<span title="Case:${v.caseColor}"   style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${v.caseColor};border:1.5px solid #ddd;vertical-align:middle;"></span>` : '',
     ].filter(Boolean).join(' ');
-    return `<tr id="variant-row-${v._id}">
+    const defaultBtn = isDefault
+      ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">Default</span>`
+      : `<button class="act-btn" onclick="setAsDefault('${v._id}')" style="font-size:11px;padding:3px 8px;white-space:nowrap;">Set Default</button>`;
+    return `<tr id="variant-row-${v._id}" ${isDefault ? 'style="background:#fffbeb;"' : ''}>
       <td><div class="product-thumb">${v.images?.[0]?`<img src="${v.images[0]}" alt="">`:`<span>${(v.name||'V').charAt(0).toUpperCase()}</span>`}</div></td>
       <td><div class="pname">${v.name||'-'}</div><div class="psku">${v.sku||''}</div></td>
       <td>${colorDots||'-'}<br><small style="color:#888;font-size:11px;">${[v.strapColor,v.dialColor,v.caseColor].filter(Boolean).join(' / ')||''}</small></td>
@@ -1570,9 +1735,14 @@ function renderVariantTable(variants) {
       <td><small>${v.strapMaterial||''} / ${v.caseMaterial||''}</small></td>
       <td>₹${v.price||'-'}</td>
       <td>${stockBadge}</td>
+      <td>${defaultBtn}</td>
       <td>
+        <button class="act-btn" onclick="selectVariant('${v._id}')">👁</button>
         <button class="act-btn" onclick="openEditVariantModal('${v._id}')">✏️</button>
-        <button class="act-btn danger" onclick="openVariantSoftDeleteModal('${v._id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑</button>
+        ${isOnlyOne
+          ? `<button class="act-btn danger" title="Cannot delete last variant" disabled style="opacity:0.35;cursor:not-allowed;">🗑</button>`
+          : `<button class="act-btn danger" onclick="openVariantSoftDeleteModal('${v._id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑</button>`
+        }
       </td></tr>`;
   }).join('');
 }
@@ -1585,10 +1755,12 @@ function renderVariantPagination(current, total, productId) {
     <span>Page ${current} of ${total}</span>
     ${current < total ? `<a href="#" onclick="loadVariants('${productId}',${current+1});return false;">Next</a>` : ''}`;
 }
+
 function updateVariantCount(count) {
   const b = document.getElementById('variantCountBadge');
   if (b) b.textContent = `${count} Variant${count!==1?'s':''}`;
 }
+
 function filterVariants(search) {
   const s = search.toLowerCase();
   const f = allVariants.filter(v =>
@@ -1596,6 +1768,7 @@ function filterVariants(search) {
     (v.strapColor||'').toLowerCase().includes(s)||(v.dialColor||'').toLowerCase().includes(s));
   renderVariantTable(f); updateVariantCount(f.length);
 }
+
 function sortVariants(val) {
   let f = [...allVariants];
   if (val==='in_stock')  f=f.filter(v=>v.stock>10);
@@ -1604,70 +1777,97 @@ function sortVariants(val) {
   renderVariantTable(f); updateVariantCount(f.length);
 }
 
-function openAddVariantModal(productId) {
+// ── VARIANT DRAWER OPEN/CLOSE ─────────────────────────
+async function openAddVariantModal(productId) {
   variantDrawerMode = 'add';
   currentProductId  = productId;
-  document.getElementById('variantDrawerTitle').textContent = 'Add Variant';
-  document.getElementById('variantSubmitBtn').textContent   = 'Add Variant';
+  document.getElementById('vd-variantDrawerTitle').textContent = 'Add Variant';
+  document.getElementById('vd-variantSubmitBtn').textContent   = 'Add Variant';
   document.getElementById('variantForm').reset();
-  document.getElementById('vVariantId').value  = '';
-  document.getElementById('vProductId').value  = productId;
+  document.getElementById('vd-vVariantId').value = '';
+  document.getElementById('vd-vProductId').value = productId;
   clearVariantImagePreviews();
-  resetColorPanels();
+  resetVColorPanels();
+  await loadMaterials();
+  setTimeout(() => autoGenerateVariantSku(true), 300);
+  loadSavedColors();
   const overlay = document.getElementById('variantDrawer');
   overlay.style.display = 'flex';
-  setTimeout(()=>document.getElementById('variantDrawerBox').style.transform='translateX(0)',10);
-  ['strap','dial','case'].forEach(f=>{initColorCanvas(f);loadSavedColorSwatches(f);});
+  setTimeout(() => document.getElementById('variantDrawerBox').style.transform = 'translateX(0)', 10);
+  ['strap','dial','case'].forEach(f => { initColorCanvas(f); loadSavedColorSwatches(f); });
 }
+
 async function openEditVariantModal(variantId) {
   variantDrawerMode = 'edit';
-  document.getElementById('variantDrawerTitle').textContent = 'Edit Variant';
-  document.getElementById('variantSubmitBtn').textContent   = 'Save Changes';
-  document.getElementById('vVariantId').value = variantId;
+  document.getElementById('vd-variantDrawerTitle').textContent = 'Edit Variant';
+  document.getElementById('vd-variantSubmitBtn').textContent   = 'Save Changes';
+  document.getElementById('vd-vVariantId').value = variantId;
   clearVariantImagePreviews();
-  resetColorPanels();
+  resetVColorPanels();
   try {
     const r    = await fetch(`/admin/products/variants/${variantId}/json`);
     const data = await r.json();
     if (!data.success) { showToast('Failed to load variant','red'); return; }
     const v = data.variant;
-    document.getElementById('vProductId').value      = v.product;
-    document.getElementById('vName').value           = v.name||'';
-    document.getElementById('vSku').value            = v.sku||'';
-    document.getElementById('vSize').value           = v.size||'';
-    document.getElementById('vPrice').value          = v.price||'';
-    document.getElementById('vStock').value          = v.stock||'';
-    document.getElementById('vStrapColor').value     = v.strapColor||'';
-    document.getElementById('vDialColor').value      = v.dialColor||'';
-    document.getElementById('vCaseColor').value      = v.caseColor||'';
-    document.getElementById('vStrapMaterial').value  = v.strapMaterial||'';
-    document.getElementById('vCaseMaterial').value   = v.caseMaterial||'';
-    ['strap','dial','case'].forEach(f=>syncSwatchFromInput(f));
-    if (v.images?.length) v.images.forEach(url=>addVExistingImagePreview(url));
+    document.getElementById('vd-vProductId').value      = v.product;
+    document.getElementById('vd-vName').value           = v.name||'';
+    document.getElementById('vd-vSku').value            = v.sku||'';
+    document.getElementById('vd-vSize').value           = v.size||'';
+    document.getElementById('vd-vPrice').value          = v.price||'';
+    document.getElementById('vd-vStock').value          = v.stock||'';
+    document.getElementById('vd-vStrapColor').value     = v.strapColor||'';
+    document.getElementById('vd-vDialColor').value      = v.dialColor||'';
+    document.getElementById('vd-vCaseColor').value      = v.caseColor||'';
+    document.getElementById('vd-vStatus').value         = v.status||'active';
+    document.getElementById('vd-vOfferProduct').checked = !!v.offerProduct;
+    await loadMaterials();
+    document.getElementById('vd-vStrapMaterial').value = v.strapMaterial||'';
+    document.getElementById('vd-vCaseMaterial').value  = v.caseMaterial||'';
+    ['strap','dial','case'].forEach(f => {
+      const colorMap  = { strap: 'vd-vStrapColor', dial: 'vd-vDialColor', case: 'vd-vCaseColor' };
+      const swatchMap = { strap: 'vd-strapColorSwatch', dial: 'vd-dialColorSwatch', case: 'vd-caseColorSwatch' };
+      const val = document.getElementById(colorMap[f])?.value;
+      const sw  = document.getElementById(swatchMap[f]);
+      if (sw && val) sw.style.background = val;
+    });
+    if (v.images?.length) v.images.forEach(url => addVExistingImagePreview(url));
   } catch(e) { showToast('Failed to load variant','red'); return; }
   const overlay = document.getElementById('variantDrawer');
   overlay.style.display = 'flex';
-  setTimeout(()=>document.getElementById('variantDrawerBox').style.transform='translateX(0)',10);
-  ['strap','dial','case'].forEach(f=>{initColorCanvas(f);loadSavedColorSwatches(f);});
-}
-function closeVariantDrawer() {
-  document.getElementById('variantDrawerBox').style.transform='translateX(100%)';
-  setTimeout(()=>{document.getElementById('variantDrawer').style.display='none';},300);
+  setTimeout(() => document.getElementById('variantDrawerBox').style.transform = 'translateX(0)', 10);
+  ['strap','dial','case'].forEach(f => { initColorCanvas(f); loadSavedColorSwatches(f); });
 }
 
+function closeVariantDrawer() {
+  document.getElementById('variantDrawerBox').style.transform = 'translateX(100%)';
+  setTimeout(() => { document.getElementById('variantDrawer').style.display = 'none'; }, 300);
+}
+
+function resetVColorPanels() {
+  ['strap','dial','case'].forEach(f => {
+    const panel = document.getElementById(`vd-${f}ColorPanel`);
+    if (panel) panel.style.display = 'none';
+    const inp   = document.getElementById(`vd-v${f.charAt(0).toUpperCase()+f.slice(1)}Color`);
+    if (inp) inp.value = '';
+    const sw    = document.getElementById(`vd-${f}ColorSwatch`);
+    if (sw) sw.style.background = '#e5e7eb';
+  });
+}
+
+// ── VARIANT SUBMIT ────────────────────────────────────
 async function submitVariantForm() {
-  const productId     = document.getElementById('vProductId').value;
-  const variantId     = document.getElementById('vVariantId').value;
-  const name          = document.getElementById('vName').value.trim();
-  const sku           = document.getElementById('vSku').value.trim();
-  const size          = document.getElementById('vSize').value.trim();
-  const price         = document.getElementById('vPrice').value;
-  const stock         = document.getElementById('vStock').value;
-  const strapColor    = document.getElementById('vStrapColor').value.trim();
-  const dialColor     = document.getElementById('vDialColor').value.trim();
-  const caseColor     = document.getElementById('vCaseColor').value.trim();
-  const strapMaterial = document.getElementById('vStrapMaterial').value;
-  const caseMaterial  = document.getElementById('vCaseMaterial').value;
+  const productId     = document.getElementById('vd-vProductId').value;
+  const variantId     = document.getElementById('vd-vVariantId').value;
+  const name          = document.getElementById('vd-vName').value.trim();
+  const sku           = document.getElementById('vd-vSku').value.trim();
+  const size          = document.getElementById('vd-vSize').value.trim();
+  const price         = document.getElementById('vd-vPrice').value;
+  const stock         = document.getElementById('vd-vStock').value;
+  const strapColor    = document.getElementById('vd-vStrapColor').value.trim();
+  const dialColor     = document.getElementById('vd-vDialColor').value.trim();
+  const caseColor     = document.getElementById('vd-vCaseColor').value.trim();
+  const strapMaterial = document.getElementById('vd-vStrapMaterial').value;
+  const caseMaterial  = document.getElementById('vd-vCaseMaterial').value;
 
   if (!name)          { showToast('Variant name is required','blue'); return; }
   if (!strapColor)    { showToast('Strap color is required','blue');  return; }
@@ -1684,16 +1884,18 @@ async function submitVariantForm() {
   fd.append('price',price); fd.append('stock',stock||'0');
   fd.append('strapColor',strapColor); fd.append('dialColor',dialColor); fd.append('caseColor',caseColor);
   fd.append('strapMaterial',strapMaterial); fd.append('caseMaterial',caseMaterial);
-  vExistingImageUrls.forEach(url=>fd.append('existingImages',url));
-  vCroppedBlobs.forEach((blob,i)=>fd.append('images',blob,`vimg_${i}.jpg`));
+  fd.append('status', document.getElementById('vd-vStatus').value);
+  fd.append('offerProduct', document.getElementById('vd-vOfferProduct').checked);
+  vExistingImageUrls.forEach(url => fd.append('existingImages', url));
+  vCroppedBlobs.forEach((blob,i) => fd.append('images', blob, `vimg_${i}.jpg`));
 
-  const url = variantDrawerMode==='add'
+  const url = variantDrawerMode === 'add'
     ? `/admin/products/${productId}/variants/add`
     : `/admin/products/variants/${variantId}/edit`;
-  const btn = document.getElementById('variantSubmitBtn');
-  btn.disabled=true; btn.textContent='Saving...';
+  const btn = document.getElementById('vd-variantSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const r    = await fetch(url,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd});
+    const r    = await fetch(url, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body:fd });
     const data = await r.json();
     if (!data.success) { showToast(data.message||'Error','red'); return; }
     closeVariantDrawer();
@@ -1703,60 +1905,583 @@ async function submitVariantForm() {
   finally { btn.disabled=false; btn.textContent=variantDrawerMode==='add'?'Add Variant':'Save Changes'; }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  COLOR PANEL — UNIFIED (handles both product drawer and variant drawer)
+// ═══════════════════════════════════════════════════════════════
+
+const _cpListenersAttached = {};
+
+function isVariantDrawerOpen() {
+  return document.getElementById('variantDrawer')?.style.display === 'flex';
+}
+
+// Called by both drawers' color swatches (onclick="openPdColorPanel('strap')" etc.)
+function openPdColorPanel(field) {
+  const variantOpen = isVariantDrawerOpen();
+  const prefix = variantOpen ? 'vd-' : '';
+
+  ['strap','dial','case'].forEach(f => {
+    if (f !== field) {
+      const p = document.getElementById(`${prefix}${f}ColorPanel`);
+      if (p) p.style.display = 'none';
+    }
+  });
+
+  const panel = document.getElementById(`${prefix}${field}ColorPanel`);
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  if (panel.style.display === 'block') {
+    if (variantOpen) {
+      initColorCanvas(field);
+      loadSavedColorSwatches(field);
+    } else {
+      initPdColorCanvas(field);
+      loadPdSavedColorSwatches(field);
+    }
+  }
+}
+
+// Also keep openColorPanel as alias (used nowhere in HTML but kept for safety)
+function openColorPanel(field) {
+  openPdColorPanel(field);
+}
+
+function drawColorCanvas(canvas, hue) {
+  const ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height;
+  ctx.fillStyle=`hsl(${hue},100%,50%)`; ctx.fillRect(0,0,w,h);
+  const wg=ctx.createLinearGradient(0,0,w,0); wg.addColorStop(0,'rgba(255,255,255,1)'); wg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=wg; ctx.fillRect(0,0,w,h);
+  const bg=ctx.createLinearGradient(0,0,0,h); bg.addColorStop(0,'rgba(0,0,0,0)'); bg.addColorStop(1,'rgba(0,0,0,1)');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+}
+
+function sampleCanvasColor(canvas, x, y) {
+  const ctx=canvas.getContext('2d');
+  const d=ctx.getImageData(Math.round(x*(canvas.width-1)),Math.round(y*(canvas.height-1)),1,1).data;
+  return '#'+[d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+// ── VARIANT DRAWER canvas init (vd- prefix) ───────────
+function initColorCanvas(field) {
+  const canvas = document.getElementById(`vd-${field}CpCanvas`);
+  if (!canvas) return;
+  const key = canvas.id;
+  drawColorCanvas(canvas, cpState[field].hue || 0);
+  if (_cpListenersAttached[key]) return;
+  _cpListenersAttached[key] = true;
+
+  canvas.addEventListener('mousedown', e => {
+    const onMove = ev => {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+      const y = Math.max(0, Math.min(1, (ev.clientY - rect.top)  / rect.height));
+      const hex = sampleCanvasColor(canvas, x, y);
+      const hexInp = document.getElementById(`vd-${field}HexInput`);
+      if (hexInp) hexInp.value = hex;
+      const cursor = document.getElementById(`vd-${field}CpCursor`);
+      if (cursor) { cursor.style.left = (x*100)+'%'; cursor.style.top = (y*100)+'%'; }
+      cpState[field].hex = hex;
+    };
+    onMove(e);
+    const up = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', up);
+  });
+
+  const hueTrack = document.getElementById(`vd-${field}HueTrack`);
+  if (hueTrack) {
+    hueTrack.addEventListener('mousedown', e => {
+      const onMove = ev => {
+        const rect = hueTrack.getBoundingClientRect();
+        const pct  = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+        const hue  = Math.round(pct * 360);
+        cpState[field].hue = hue;
+        const thumb = document.getElementById(`vd-${field}HueThumb`);
+        if (thumb) { thumb.style.left = (pct*100)+'%'; thumb.style.background = `hsl(${hue},100%,50%)`; }
+        drawColorCanvas(canvas, hue);
+      };
+      onMove(e);
+      const up = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', up);
+    });
+  }
+}
+
+// ── PRODUCT DRAWER canvas init (plain prefix) ─────────
+const pdCpState = {};
+['strap','dial','case'].forEach(f => { pdCpState[f] = { hue: 0, hex: '' }; });
+const pdCpListenersAttached = {};
+
+function pdGet(id) { return document.getElementById(id); }
+
+function initPdColorCanvas(field) {
+  const canvas = pdGet(`${field}CpCanvas`);
+  if (!canvas) return;
+  drawColorCanvas(canvas, pdCpState[field].hue || 0);
+  if (pdCpListenersAttached[field]) return;
+  pdCpListenersAttached[field] = true;
+
+  canvas.addEventListener('mousedown', e => {
+    const onMove = ev => {
+      const rect = canvas.getBoundingClientRect();
+      const x   = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+      const y   = Math.max(0, Math.min(1, (ev.clientY - rect.top)  / rect.height));
+      const hex = sampleCanvasColor(canvas, x, y);
+      const hexInp = pdGet(`${field}HexInput`);
+      if (hexInp) hexInp.value = hex;
+      const cursor = pdGet(`${field}CpCursor`);
+      if (cursor) { cursor.style.left = (x*100)+'%'; cursor.style.top = (y*100)+'%'; }
+      pdCpState[field].hex = hex;
+    };
+    onMove(e);
+    const up = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', up);
+  });
+
+  const hueTrack = pdGet(`${field}HueTrack`);
+  if (hueTrack) {
+    hueTrack.addEventListener('mousedown', e => {
+      const onMove = ev => {
+        const rect = hueTrack.getBoundingClientRect();
+        const pct  = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+        const hue  = Math.round(pct * 360);
+        pdCpState[field].hue = hue;
+        const thumb = pdGet(`${field}HueThumb`);
+        if (thumb) { thumb.style.left = (pct*100)+'%'; thumb.style.background = `hsl(${hue},100%,50%)`; }
+        drawColorCanvas(canvas, hue);
+      };
+      onMove(e);
+      const up = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', up);
+    });
+  }
+}
+
+// ── APPLY color panel — unified ───────────────────────
+function applyPdColorPanel(field) {
+  const variantOpen = isVariantDrawerOpen();
+
+  if (variantOpen) {
+    const hex = document.getElementById(`vd-${field}HexInput`)?.value?.trim().toUpperCase();
+    if (hex) {
+      const inputMap  = { strap: 'vd-vStrapColor', dial: 'vd-vDialColor', case: 'vd-vCaseColor' };
+      const swatchMap = { strap: 'vd-strapColorSwatch', dial: 'vd-dialColorSwatch', case: 'vd-caseColorSwatch' };
+      const inp = document.getElementById(inputMap[field]);
+      if (inp) inp.value = hex;
+      const sw = document.getElementById(swatchMap[field]);
+      if (sw) sw.style.background = hex;
+      cpState[field].hex = hex;
+    }
+    const panel = document.getElementById(`vd-${field}ColorPanel`);
+    if (panel) panel.style.display = 'none';
+    autoGenerateVariantSku();
+  } else {
+    const hex = pdGet(`${field}HexInput`)?.value?.trim().toUpperCase();
+    if (hex) {
+      const inputMap  = { strap: 'vStrapColor', dial: 'vDialColor', case: 'vCaseColor' };
+      const swatchMap = { strap: 'strapColorSwatch', dial: 'dialColorSwatch', case: 'caseColorSwatch' };
+      const inp = pdGet(inputMap[field]);
+      if (inp) inp.value = hex;
+      const sw = pdGet(swatchMap[field]);
+      if (sw) sw.style.background = hex;
+      pdCpState[field].hex = hex;
+    }
+    const panel = pdGet(`${field}ColorPanel`);
+    if (panel) panel.style.display = 'none';
+    autoGenerateVariantSku();
+  }
+}
+
+// Keep applyColorPanel as alias
+function applyColorPanel(field) {
+  applyPdColorPanel(field);
+}
+
+// ── SYNC swatch from text input — unified ─────────────
+function syncPdSwatchFromInput(field) {
+  const variantOpen = isVariantDrawerOpen();
+  if (variantOpen) {
+    const inputMap  = { strap: 'vd-vStrapColor', dial: 'vd-vDialColor', case: 'vd-vCaseColor' };
+    const swatchMap = { strap: 'vd-strapColorSwatch', dial: 'vd-dialColorSwatch', case: 'vd-caseColorSwatch' };
+    const val = document.getElementById(inputMap[field])?.value?.trim();
+    const sw  = document.getElementById(swatchMap[field]);
+    if (sw && val) sw.style.background = val;
+    autoGenerateVariantSku();
+  } else {
+    const inputMap  = { strap: 'vStrapColor', dial: 'vDialColor', case: 'vCaseColor' };
+    const swatchMap = { strap: 'strapColorSwatch', dial: 'dialColorSwatch', case: 'caseColorSwatch' };
+    const val = pdGet(inputMap[field])?.value?.trim();
+    const sw  = pdGet(swatchMap[field]);
+    if (sw && val) sw.style.background = val;
+    autoGenerateVariantSku();
+  }
+}
+
+// ── HEX INPUT handlers ────────────────────────────────
+function onPdHexInput(field) {
+  const variantOpen = isVariantDrawerOpen();
+  if (variantOpen) {
+    const hex = document.getElementById(`vd-${field}HexInput`)?.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) cpState[field].hex = hex.toUpperCase();
+  } else {
+    const hex = pdGet(`${field}HexInput`)?.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) pdCpState[field].hex = hex.toUpperCase();
+  }
+}
+
+function onHexInput(field) { onPdHexInput(field); }
+
+// ── SAVED COLORS ──────────────────────────────────────
+async function savePdCurrentColor(field) {
+  const variantOpen = isVariantDrawerOpen();
+  const hexId = variantOpen ? `vd-${field}HexInput` : `${field}HexInput`;
+  const hex = document.getElementById(hexId)?.value?.trim();
+  if (!hex) { showToast('Pick a color first','blue'); return; }
+  fetch('/admin/saved-colors', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({hex}) })
+    .then(r=>r.json()).then(data => {
+      if(data.success){
+        showToast('Color saved!','green');
+        if (variantOpen) loadSavedColorSwatches(field);
+        else loadPdSavedColorSwatches(field);
+      }
+    });
+}
+
+function saveCurrentColor(field) { savePdCurrentColor(field); }
+
+async function loadSavedColors() {
+  try {
+    const r = await fetch('/admin/saved-colors');
+    const data = await r.json();
+    if (data.success) ['strap','dial','case'].forEach(f => loadSavedColorSwatches(f, data.colors));
+  } catch(e) {}
+}
+
+async function loadSavedColorSwatches(field, colors) {
+  if (!colors) {
+    try { const r = await fetch('/admin/saved-colors'); const data = await r.json(); colors = data.colors || []; } catch(e) { return; }
+  }
+  const html = colors.length
+    ? colors.map(c => `<div onclick="selectSavedColor('${field}','${c.hex}')" title="${c.name||c.hex}" style="width:22px;height:22px;border-radius:5px;background:${c.hex};border:1.5px solid rgba(255,255,255,.2);cursor:pointer;flex-shrink:0;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`).join('')
+    : '<span style="color:#555;font-size:11px;">No saved colors yet</span>';
+  const container = document.getElementById(`vd-${field}SavedSwatches`);
+  if (container) container.innerHTML = html;
+}
+
+function selectSavedColor(field, hex) {
+  const hexInp = document.getElementById(`vd-${field}HexInput`);
+  if (hexInp) hexInp.value = hex;
+  const inp = document.getElementById(`vd-v${field.charAt(0).toUpperCase()+field.slice(1)}Color`);
+  if (inp) inp.value = hex;
+  const sw = document.getElementById(`vd-${field}ColorSwatch`);
+  if (sw) sw.style.background = hex;
+  cpState[field].hex = hex;
+}
+
+async function startEyedropper(field) {
+  if (!window.EyeDropper) { showToast('Eyedropper not supported (use Chrome)','blue'); return; }
+  try {
+    const result = await new EyeDropper().open();
+    const hex = result.sRGBHex.toUpperCase();
+    document.getElementById(`vd-${field}HexInput`).value = hex;
+    selectSavedColor(field, hex);
+    showToast(`Color picked: ${hex}`,'green');
+  } catch(e) {}
+}
+
+async function loadPdSavedColors() {
+  try {
+    const r = await fetch('/admin/saved-colors');
+    const data = await r.json();
+    if (data.success) ['strap','dial','case'].forEach(f => loadPdSavedColorSwatches(f, data.colors));
+  } catch(e) {}
+}
+
+async function loadPdSavedColorSwatches(field, colors) {
+  const container = pdGet(`${field}SavedSwatches`);
+  if (!container) return;
+  if (!colors) {
+    try { const r = await fetch('/admin/saved-colors'); const data = await r.json(); colors = data.colors || []; } catch(e) { return; }
+  }
+  if (!colors.length) { container.innerHTML = '<span style="color:#555;font-size:11px;">No saved colors yet</span>'; return; }
+  container.innerHTML = colors.map(c =>
+    `<div onclick="selectPdSavedColor('${field}','${c.hex}')" title="${c.name||c.hex}" style="width:22px;height:22px;border-radius:5px;background:${c.hex};border:1.5px solid rgba(255,255,255,.2);cursor:pointer;flex-shrink:0;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`
+  ).join('');
+}
+
+function selectPdSavedColor(field, hex) {
+  const inputMap  = { strap: 'vStrapColor', dial: 'vDialColor', case: 'vCaseColor' };
+  const swatchMap = { strap: 'strapColorSwatch', dial: 'dialColorSwatch', case: 'caseColorSwatch' };
+  const hexInp = pdGet(`${field}HexInput`);
+  if (hexInp) hexInp.value = hex;
+  const inp = pdGet(inputMap[field]);
+  if (inp) inp.value = hex;
+  const sw = pdGet(swatchMap[field]);
+  if (sw) sw.style.background = hex;
+  pdCpState[field].hex = hex;
+}
+
+async function startPdEyedropper(field) {
+  const variantOpen = isVariantDrawerOpen();
+  if (!window.EyeDropper) { showToast('Eyedropper not supported (use Chrome)','blue'); return; }
+  try {
+    const result = await new EyeDropper().open();
+    const hex = result.sRGBHex.toUpperCase();
+    if (variantOpen) {
+      document.getElementById(`vd-${field}HexInput`).value = hex;
+      selectSavedColor(field, hex);
+    } else {
+      selectPdSavedColor(field, hex);
+    }
+    showToast(`Color picked: ${hex}`,'green');
+  } catch(e) {}
+}
+
+// ── AUTO SKU / NAME ───────────────────────────────────
+let skuDebounceTimer = null;
+
+async function autoGenerateVariantSku(force = false) {
+  clearTimeout(skuDebounceTimer);
+  skuDebounceTimer = setTimeout(async () => {
+    const variantOpen = isVariantDrawerOpen();
+    const prefix = variantOpen ? 'vd-' : '';
+    const skuField = document.getElementById(`${prefix}vSku`);
+
+    if (!skuField) return;
+    if (!force && skuField.value.trim() && variantDrawerMode === 'edit') return;
+
+    const onDetailPage = !!document.getElementById('page-detail');
+    let productName, brandName, categoryName;
+
+    if (onDetailPage) {
+      productName  = document.querySelector('.pd-title')?.textContent?.trim() || '';
+      brandName    = document.querySelectorAll('.pd-info-value')[1]?.textContent?.trim() || '';
+      categoryName = document.querySelectorAll('.pd-info-value')[0]?.textContent?.trim() || '';
+    } else {
+      productName  = document.getElementById('fName')?.value?.trim() || '';
+      const brandSel = document.getElementById('fBrand');
+      brandName    = brandSel?.options[brandSel.selectedIndex]?.text || '';
+      const catSel   = document.getElementById('fCategory');
+      categoryName = catSel?.options[catSel.selectedIndex]?.text || '';
+    }
+
+    const getVal = id => document.getElementById(`${prefix}${id}`)?.value || '';
+
+    const params = new URLSearchParams({
+      brand:         brandName,
+      productName,
+      category:      categoryName,
+      strapMaterial: getVal('vStrapMaterial'),
+      strapColor:    getVal('vStrapColor'),
+      caseColor:     getVal('vCaseColor'),
+      dialColor:     getVal('vDialColor'),
+      size:          getVal('vSize'),
+    });
+
+    try {
+      const r    = await fetch(`/admin/sku/variant?${params}`);
+      const data = await r.json();
+      if (data.success && skuField) skuField.value = data.sku;
+    } catch(e) {}
+  }, 400);
+}
+
+function autoGenerateVariantName() {
+  const variantOpen = isVariantDrawerOpen();
+  const prefix = variantOpen ? 'vd-' : '';
+
+  const strapColor = document.getElementById(`${prefix}vStrapColor`)?.value?.trim();
+  const size       = document.getElementById(`${prefix}vSize`)?.value?.trim();
+  const mat        = document.getElementById(`${prefix}vStrapMaterial`)?.value?.trim();
+  const nameField  = document.getElementById(`${prefix}vName`);
+
+  if (!nameField) return;
+  if (nameField.value.trim()) return;
+  const parts = [strapColor, mat, size].filter(Boolean);
+  if (parts.length) nameField.value = parts.join(' ');
+}
+
+// ── VARIANT IMAGE + CROPPER ───────────────────────────
+function clearVariantImagePreviews() {
+  vCroppedBlobs = []; vExistingImageUrls = []; vRawFilesQueue = [];
+  const grid = document.getElementById('vd-vImagePreviewGrid');
+  if (grid) grid.innerHTML = '';
+  updateVImageCount();
+}
+
+function handleVariantRawImages(event) {
+  vRawFilesQueue = Array.from(event.target.files);
+  event.target.value = '';
+  processNextVInQueue();
+}
+
+function processNextVInQueue() {
+  if (!vRawFilesQueue.length) return;
+  const file = vRawFilesQueue.shift();
+  const reader = new FileReader();
+  reader.onload = e => openVCropperModal(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+function openVCropperModal(src) {
+  if (cropperInstance) { try { cropperInstance.destroy(); } catch(e){} cropperInstance = null; }
+  const modal = document.getElementById('cropperModal');
+  const wrap  = document.querySelector('.crop-img-wrap');
+  wrap.innerHTML = '<img id="cropperImg" alt="crop">';
+  const img = document.getElementById('cropperImg');
+  modal.classList.add('open');
+  img.onload = () => {
+    try {
+      cropperInstance = new Cropper(img, {
+        aspectRatio:1, viewMode:1, autoCropArea:0.9,
+        dragMode:'move', movable:true, zoomable:true,
+        scalable:false, rotatable:false,
+        cropBoxMovable:false, cropBoxResizable:false,
+        guides:true, center:true, highlight:true, background:false
+      });
+    } catch(e) { console.error(e); }
+  };
+  img.src = src;
+  document.querySelector('#cropperModal .btn-confirm.green').onclick = applyVCrop;
+  document.querySelector('#cropperModal .btn-cancel').onclick        = skipVCrop;
+}
+
+function applyVCrop() {
+  if (!cropperInstance) return;
+  cropperInstance.getCroppedCanvas({ width:800, height:800 }).toBlob(blob => {
+    vCroppedBlobs.push(blob);
+    addVCroppedPreview(blob, vCroppedBlobs.length - 1);
+    document.getElementById('cropperModal').classList.remove('open');
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    processNextVInQueue();
+    updateVImageCount();
+  }, 'image/jpeg', 0.9);
+}
+
+function skipVCrop() {
+  const img = document.getElementById('cropperImg');
+  fetch(img.src).then(r => r.blob()).then(blob => {
+    vCroppedBlobs.push(blob);
+    addVCroppedPreview(blob, vCroppedBlobs.length - 1);
+    document.getElementById('cropperModal').classList.remove('open');
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    processNextVInQueue();
+    updateVImageCount();
+  });
+}
+
+function addVCroppedPreview(blob, index) {
+  const url  = URL.createObjectURL(blob);
+  const grid = document.getElementById('vd-vImagePreviewGrid');
+  if (!grid) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+  div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;">
+    <button type="button" onclick="removeVCroppedImage(${index},this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button>
+    <span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">New</span>`;
+  grid.appendChild(div);
+}
+
+function addVExistingImagePreview(url) {
+  vExistingImageUrls.push(url);
+  const grid = document.getElementById('vd-vImagePreviewGrid');
+  if (!grid) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+  div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;">
+    <button type="button" onclick="removeVExistingImage('${url}',this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button>
+    <span style="position:absolute;bottom:4px;left:4px;background:rgba(0,128,0,.7);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">Saved</span>`;
+  grid.appendChild(div);
+  updateVImageCount();
+}
+
+function removeVCroppedImage(index, el) { vCroppedBlobs.splice(index, 1); el.remove(); updateVImageCount(); }
+function removeVExistingImage(url, el)  { vExistingImageUrls = vExistingImageUrls.filter(u => u !== url); el.remove(); updateVImageCount(); }
+
+function updateVImageCount() {
+  const total = vCroppedBlobs.length + vExistingImageUrls.length;
+  const msg   = `${total} image${total !== 1 ? 's' : ''} selected${total < 3 ? ' — at least 3 required' : ' ✓'}`;
+  const color = total < 3 ? '#dc2626' : '#16a34a';
+  const el = document.getElementById('vd-vImageCountNote');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+// ── SOFT DELETE / TRASH / RESTORE ─────────────────────
 let variantToDelete = null;
-function openVariantSoftDeleteModal(id)  { variantToDelete=id; document.getElementById('variantSoftDeleteModal').style.display='flex'; }
-function closeVariantSoftDeleteModal()   { document.getElementById('variantSoftDeleteModal').style.display='none'; variantToDelete=null; }
+function openVariantSoftDeleteModal(id)  { variantToDelete = id; document.getElementById('variantSoftDeleteModal').style.display = 'flex'; }
+function closeVariantSoftDeleteModal()   { document.getElementById('variantSoftDeleteModal').style.display = 'none'; variantToDelete = null; }
 async function confirmVariantSoftDelete() {
   if (!variantToDelete) return;
+  if (allVariants.length <= 1) {
+    showToast('Cannot delete the last variant. Delete the product instead.', 'blue');
+    closeVariantSoftDeleteModal();
+    return;
+  }
   try {
-    const r=await fetch(`/admin/products/variants/${variantToDelete}/delete`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
-    const data=await r.json();
+    const r    = await fetch(`/admin/products/variants/${variantToDelete}/delete`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'} });
+    const data = await r.json();
     if (!data.success) { showToast('Failed to delete','red'); return; }
     closeVariantSoftDeleteModal();
     showToast('Variant moved to trash','red');
     await loadVariants(currentProductId, variantCurrentPage);
+    if (allVariants.length === 1) {
+      await setAsDefault(allVariants[0]._id);
+    }
   } catch(e) { showToast('Network error','red'); }
 }
 
 async function openVariantTrashModal() {
-  document.getElementById('variantTrashModal').style.display='flex';
+  document.getElementById('variantTrashModal').style.display = 'flex';
   await refreshVariantTrash();
 }
-function closeVariantTrashModal() { document.getElementById('variantTrashModal').style.display='none'; }
+function closeVariantTrashModal() { document.getElementById('variantTrashModal').style.display = 'none'; }
+
 async function refreshVariantTrash() {
-  const list=document.getElementById('variantTrashList');
-  list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;">Loading...</div>';
+  const list = document.getElementById('variantTrashList');
+  list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;">Loading...</div>';
   try {
-    const r=await fetch(`/admin/products/${currentProductId}/variants/trash`);
-    const data=await r.json();
-    if (!data.success||!data.variants.length) { list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;">Variant trash is empty.</div>'; return; }
-    list.innerHTML=data.variants.map(v=>`
+    const r    = await fetch(`/admin/products/${currentProductId}/variants/trash`);
+    const data = await r.json();
+    if (!data.success || !data.variants.length) {
+      list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;">Variant trash is empty.</div>'; return;
+    }
+    list.innerHTML = data.variants.map(v => `
       <div id="vtrash-${v._id}" style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #f0f0f0;border-radius:10px;margin-bottom:10px;">
         <div class="product-thumb">${v.images?.[0]?`<img src="${v.images[0]}" alt="">`:`<span>${(v.name||'V').charAt(0).toUpperCase()}</span>`}</div>
         <div style="flex:1;"><div class="pname">${v.name}</div><div class="psku">${v.sku||''}</div><div style="font-size:11px;color:#aaa;margin-top:2px;">Deleted: ${v.deleted_at?new Date(v.deleted_at).toDateString():'-'}</div></div>
         <button class="act-btn" onclick="restoreVariant('${v._id}')">↩ Restore</button>
         <button class="act-btn danger" onclick="openVariantPermDeleteModal('${v._id}')">🗑 Delete</button>
       </div>`).join('');
-  } catch(e) { list.innerHTML='<div style="text-align:center;color:#e53;padding:30px;">Failed to load trash.</div>'; }
+  } catch(e) { list.innerHTML = '<div style="text-align:center;color:#e53;padding:30px;">Failed to load trash.</div>'; }
 }
+
 async function restoreVariant(variantId) {
   try {
-    const r=await fetch(`/admin/products/variants/${variantId}/restore`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
-    const data=await r.json();
+    const r    = await fetch(`/admin/products/variants/${variantId}/restore`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'} });
+    const data = await r.json();
     if (!data.success) { showToast('Failed to restore','red'); return; }
     document.getElementById(`vtrash-${variantId}`)?.remove();
     showToast('Variant restored!','green');
     await loadVariants(currentProductId, variantCurrentPage);
+    const remaining = document.querySelectorAll('#variantTrashList [id^="vtrash-"]');
+    if (!remaining.length) {
+      document.getElementById('variantTrashList').innerHTML =
+        '<div style="text-align:center;color:#aaa;padding:30px;">Variant trash is empty.</div>';
+    }
   } catch(e) { showToast('Network error','red'); }
 }
-let variantPermDeleteId=null;
-function openVariantPermDeleteModal(id)  { variantPermDeleteId=id; document.getElementById('variantPermDeleteModal').style.display='flex'; }
-function closeVariantPermDeleteModal()   { document.getElementById('variantPermDeleteModal').style.display='none'; variantPermDeleteId=null; }
+
+let variantPermDeleteId = null;
+function openVariantPermDeleteModal(id)  { variantPermDeleteId = id; document.getElementById('variantPermDeleteModal').style.display = 'flex'; }
+function closeVariantPermDeleteModal()   { document.getElementById('variantPermDeleteModal').style.display = 'none'; variantPermDeleteId = null; }
 async function confirmVariantPermDelete() {
   if (!variantPermDeleteId) return;
   try {
-    const r=await fetch(`/admin/products/variants/${variantPermDeleteId}/permanent-delete`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
-    const data=await r.json();
+    const r    = await fetch(`/admin/products/variants/${variantPermDeleteId}/permanent-delete`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'} });
+    const data = await r.json();
     if (!data.success) { showToast('Failed','red'); return; }
     document.getElementById(`vtrash-${variantPermDeleteId}`)?.remove();
     closeVariantPermDeleteModal();
@@ -1764,283 +2489,154 @@ async function confirmVariantPermDelete() {
   } catch(e) { showToast('Network error','red'); }
 }
 
-// ── VARIANT IMAGE + CROPPER ───────────────────────────
-function clearVariantImagePreviews() {
-  vCroppedBlobs=[]; vExistingImageUrls=[]; vRawFilesQueue=[];
-  const grid=document.getElementById('vImagePreviewGrid');
-  if (grid) grid.innerHTML='';
-  updateVImageCount();
+// ── SET DEFAULT ───────────────────────────────────────
+async function setAsDefault(variantId) {
+  if (!currentProductId) return;
+  try {
+    const r    = await fetch(`/admin/products/${currentProductId}/variants/${variantId}/set-default`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'} });
+    const data = await r.json();
+    if (!data.success) { showToast(data.message||'Failed','red'); return; }
+    currentDefaultVariantId = variantId;
+    renderVariantTable(allVariants.map(v => ({...v, isDefault: v._id === variantId})));
+    showToast('Default variant updated!','green');
+  } catch(e) { showToast('Network error','red'); }
 }
-function handleVariantRawImages(event) {
-  vRawFilesQueue=Array.from(event.target.files);
-  event.target.value='';
-  processNextVInQueue();
-}
-function processNextVInQueue() {
-  if (!vRawFilesQueue.length) return;
-  const file=vRawFilesQueue.shift();
-  const reader=new FileReader();
-  reader.onload=e=>openVCropperModal(e.target.result);
-  reader.readAsDataURL(file);
-}
-function openVCropperModal(src) {
-  if (cropperInstance) { try{cropperInstance.destroy();}catch(e){} cropperInstance=null; }
-  const modal=document.getElementById('cropperModal');
-  const wrap=document.querySelector('.crop-img-wrap');
-  wrap.innerHTML='<img id="cropperImg" alt="crop">';
-  const img=document.getElementById('cropperImg');
-  modal.classList.add('open');
-  img.onload=()=>{ try{ cropperInstance=new Cropper(img,{aspectRatio:1,viewMode:1,autoCropArea:0.9,dragMode:'move',movable:true,zoomable:true,scalable:false,rotatable:false,cropBoxMovable:false,cropBoxResizable:false,guides:true,center:true,highlight:true,background:false}); }catch(e){console.error(e);} };
-  img.src=src;
-  document.querySelector('#cropperModal .btn-confirm.green').onclick=applyVCrop;
-  document.querySelector('#cropperModal .btn-cancel').onclick=skipVCrop;
-}
-function applyVCrop() {
-  if (!cropperInstance) return;
-  cropperInstance.getCroppedCanvas({width:800,height:800}).toBlob(blob=>{
-    vCroppedBlobs.push(blob);
-    addVCroppedPreview(blob,vCroppedBlobs.length-1);
-    document.getElementById('cropperModal').classList.remove('open');
-    if (cropperInstance){cropperInstance.destroy();cropperInstance=null;}
-    processNextVInQueue(); updateVImageCount();
-  },'image/jpeg',0.9);
-}
-function skipVCrop() {
-  const img=document.getElementById('cropperImg');
-  fetch(img.src).then(r=>r.blob()).then(blob=>{
-    vCroppedBlobs.push(blob);
-    addVCroppedPreview(blob,vCroppedBlobs.length-1);
-    document.getElementById('cropperModal').classList.remove('open');
-    if (cropperInstance){cropperInstance.destroy();cropperInstance=null;}
-    processNextVInQueue(); updateVImageCount();
-  });
-}
-function addVCroppedPreview(blob,index) {
-  const url=URL.createObjectURL(blob);
-  const grid=document.getElementById('vImagePreviewGrid');
-  const div=document.createElement('div');
-  div.style.cssText='position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
-  div.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="removeVCroppedImage(${index},this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button><span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">New</span>`;
-  grid.appendChild(div);
-}
-function addVExistingImagePreview(url) {
-  vExistingImageUrls.push(url);
-  const grid=document.getElementById('vImagePreviewGrid');
-  const div=document.createElement('div');
-  div.style.cssText='position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
-  div.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="removeVExistingImage('${url}',this.parentElement)" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(220,38,38,.9);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;">✕</button><span style="position:absolute;bottom:4px;left:4px;background:rgba(0,128,0,.7);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;">Saved</span>`;
-  grid.appendChild(div);
-  updateVImageCount();
-}
-function removeVCroppedImage(index,el) { vCroppedBlobs.splice(index,1); el.remove(); updateVImageCount(); }
-function removeVExistingImage(url,el)  { vExistingImageUrls=vExistingImageUrls.filter(u=>u!==url); el.remove(); updateVImageCount(); }
-function updateVImageCount() {
-  const total=vCroppedBlobs.length+vExistingImageUrls.length;
-  const note=document.getElementById('vImageCountNote');
-  if (!note) return;
-  note.textContent=`${total} image${total!==1?'s':''} selected${total<3?' — at least 3 required':' ✓'}`;
-  note.style.color=total<3?'#dc2626':'#16a34a';
+
+// ── VARIANT DETAIL VIEW ───────────────────────────────
+async function selectVariant(variantId) {
+  try {
+    const r    = await fetch(`/admin/products/variants/${variantId}/json`);
+    const data = await r.json();
+    if (!data.success) { showToast('Failed to load variant','red'); return; }
+    const v = data.variant;
+
+    document.querySelectorAll('#variantTableBody tr').forEach(r => r.style.background = '');
+    const row = document.getElementById(`variant-row-${variantId}`);
+    if (row) row.style.background = '#f0f7ff';
+
+    if (v.images?.length) {
+      const mainImg = document.getElementById('galleryMain');
+      if (mainImg) mainImg.src = v.images[0];
+      const thumbsEl = document.querySelector('.pd-gallery-thumbs');
+      if (thumbsEl) {
+        thumbsEl.innerHTML = v.images.map((src, i) =>
+          `<div class="pd-thumb${i===0?' active':''}" onclick="switchImage('${src}',this)"><img src="${src}" alt="thumb ${i}"></div>`
+        ).join('');
+      }
+    }
+
+    const priceTag = document.querySelector('.pd-price-tag');
+    if (priceTag) priceTag.textContent = `PRICE ₹${v.price}`;
+
+    const stockVal = document.querySelector('.pd-stat-value');
+    if (stockVal) stockVal.innerHTML = `${v.stock} <span class="pd-stat-unit">units</span>`;
+
+    const sku   = document.getElementById('detailSku');    if (sku)   sku.textContent   = v.sku   || '-';
+    const stock = document.getElementById('detailStock');  if (stock) stock.textContent = `${v.stock} units`;
+    const price = document.getElementById('detailPrice');  if (price) price.textContent = `₹${v.price}`;
+    const size  = document.getElementById('detailSize');   if (size)  size.textContent  = v.size  || '-';
+
+    const colorsEl = document.getElementById('detailColors');
+    if (colorsEl) {
+      const dots = [
+        v.strapColor ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${v.strapColor};border:1px solid #ddd;margin-right:3px;"></span>${v.strapColor}` : '',
+        v.dialColor  ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${v.dialColor};border:1px solid #ddd;margin-right:3px;"></span>${v.dialColor}`  : '',
+        v.caseColor  ? `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${v.caseColor};border:1px solid #ddd;margin-right:3px;"></span>${v.caseColor}`  : '',
+      ].filter(Boolean).join(' / ');
+      colorsEl.innerHTML = dots || '-';
+    }
+
+    const matEl = document.getElementById('detailMaterials');
+    if (matEl) matEl.textContent = `${v.strapMaterial||'-'} / ${v.caseMaterial||'-'}`;
+
+    const offerRow   = document.getElementById('detailOfferProductRow');
+    const offerBadge = document.getElementById('detailOfferProduct');
+    if (offerRow && offerBadge) {
+      offerRow.style.display = 'flex';
+      offerBadge.className   = `badge ${v.offerProduct ? 's-active' : 's-inactive'}`;
+      offerBadge.textContent = v.offerProduct ? 'Yes' : 'No';
+    }
+
+    const varStatusRow   = document.getElementById('detailVariantStatusRow');
+    const varStatusBadge = document.getElementById('detailVariantStatus');
+    if (varStatusRow && varStatusBadge) {
+      varStatusRow.style.display = 'flex';
+      varStatusBadge.className   = `badge ${v.status==='active' ? 's-active' : 's-inactive'}`;
+      varStatusBadge.textContent = v.status==='active' ? 'Active' : 'Inactive';
+    }
+  } catch(e) { showToast('Failed to load variant details','red'); }
 }
 
 // ── MATERIALS ─────────────────────────────────────────
-async function loadMaterials() {
-  try {
-    const r=await fetch('/admin/materials');
-    const data=await r.json();
-    if (!data.success) return;
-    populateMaterialSelect('vStrapMaterial',data.materials);
-    populateMaterialSelect('vCaseMaterial',data.materials);
-  } catch(e) { console.error(e); }
+function showAddMaterial(type) {
+  const variantOpen = isVariantDrawerOpen();
+  if (variantOpen) {
+    const el = document.getElementById(`vd-${type}MaterialNewRow`);
+    if (el) el.style.display = 'block';
+  } else {
+    const el = document.getElementById(`${type}MaterialNewRow`);
+    if (el) el.style.display = 'block';
+  }
 }
-function populateMaterialSelect(selectId,materials) {
-  const sel=document.getElementById(selectId);
-  if (!sel) return;
-  const cur=sel.value;
-  sel.innerHTML='<option value="">Select...</option>';
-  materials.forEach(m=>{ const o=document.createElement('option'); o.value=m.name; o.textContent=m.name; sel.appendChild(o); });
-  if (cur) sel.value=cur;
+
+function hideAddMaterial(type) {
+  const variantOpen = isVariantDrawerOpen();
+  if (variantOpen) {
+    const el  = document.getElementById(`vd-${type}MaterialNewRow`);
+    const inp = document.getElementById(`vd-${type}MaterialInput`);
+    if (el)  el.style.display = 'none';
+    if (inp) inp.value = '';
+  } else {
+    const el  = document.getElementById(`${type}MaterialNewRow`);
+    const inp = document.getElementById(`${type}MaterialInput`);
+    if (el)  el.style.display = 'none';
+    if (inp) inp.value = '';
+  }
 }
-function showAddMaterial(type) { document.getElementById(`${type}MaterialNewRow`).style.display='block'; }
-function hideAddMaterial(type) { document.getElementById(`${type}MaterialNewRow`).style.display='none'; document.getElementById(`${type}MaterialInput`).value=''; }
+
 async function saveMaterial(type) {
-  const name=document.getElementById(`${type}MaterialInput`).value.trim();
+  const variantOpen = isVariantDrawerOpen();
+  const inp = variantOpen
+    ? document.getElementById(`vd-${type}MaterialInput`)
+    : document.getElementById(`${type}MaterialInput`);
+  const name = inp?.value?.trim();
   if (!name) { showToast('Enter material name','blue'); return; }
   try {
-    const r=await fetch('/admin/materials/add',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({name,type:type==='strap'?'strap':'case'})});
-    const data=await r.json();
+    const r = await fetch('/admin/materials/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+      body: JSON.stringify({ name, type: type === 'strap' ? 'strap' : 'case' })
+    });
+    const data = await r.json();
     if (!data.success) { showToast(data.message||'Error','red'); return; }
     hideAddMaterial(type);
     showToast(`Material "${name}" saved!`,'green');
     await loadMaterials();
-    document.getElementById(type==='strap'?'vStrapMaterial':'vCaseMaterial').value=name;
+    const selId = variantOpen
+      ? `vd-v${type==='strap'?'Strap':'Case'}Material`
+      : `v${type==='strap'?'Strap':'Case'}Material`;
+    const sel = document.getElementById(selId);
+    if (sel) sel.value = name;
   } catch(e) { showToast('Network error','red'); }
 }
 
-// ── COLOR PANEL ───────────────────────────────────────
-function initColorCanvas(field) {
-  const canvas=document.getElementById(`${field}CpCanvas`);
-  if (!canvas) return;
-  drawColorCanvas(canvas,cpState[field].hue||0);
-  canvas.addEventListener('mousedown',e=>{
-    const onMove=ev=>{
-      const rect=canvas.getBoundingClientRect();
-      const x=Math.max(0,Math.min(1,(ev.clientX-rect.left)/rect.width));
-      const y=Math.max(0,Math.min(1,(ev.clientY-rect.top)/rect.height));
-      const hex=sampleCanvasColor(canvas,x,y);
-      document.getElementById(`${field}HexInput`).value=hex;
-      document.getElementById(`${field}CpCursor`).style.left=(x*100)+'%';
-      document.getElementById(`${field}CpCursor`).style.top=(y*100)+'%';
-      cpState[field].hex=hex;
-    };
-    onMove(e);
-    const up=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',up);};
-    document.addEventListener('mousemove',onMove);
-    document.addEventListener('mouseup',up);
-  });
-  const hueTrack=document.getElementById(`${field}HueTrack`);
-  if (hueTrack) {
-    hueTrack.addEventListener('mousedown',e=>{
-      const onMove=ev=>{
-        const rect=hueTrack.getBoundingClientRect();
-        const pct=Math.max(0,Math.min(1,(ev.clientX-rect.left)/rect.width));
-        const hue=Math.round(pct*360);
-        cpState[field].hue=hue;
-        document.getElementById(`${field}HueThumb`).style.left=(pct*100)+'%';
-        document.getElementById(`${field}HueThumb`).style.background=`hsl(${hue},100%,50%)`;
-        drawColorCanvas(canvas,hue);
-      };
-      onMove(e);
-      const up=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',up);};
-      document.addEventListener('mousemove',onMove);
-      document.addEventListener('mouseup',up);
+async function loadMaterials() {
+  try {
+    const r    = await fetch('/admin/materials');
+    const data = await r.json();
+    if (!data.success) return;
+    ['vd-vStrapMaterial','vd-vCaseMaterial','vStrapMaterial','vCaseMaterial'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Select...</option>';
+      data.materials.forEach(m => {
+        const o = document.createElement('option');
+        o.value = m.name; o.textContent = m.name;
+        sel.appendChild(o);
+      });
+      if (cur) sel.value = cur;
     });
-  }
+  } catch(e) { console.error(e); }
 }
-function drawColorCanvas(canvas,hue) {
-  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
-  ctx.fillStyle=`hsl(${hue},100%,50%)`; ctx.fillRect(0,0,w,h);
-  const wg=ctx.createLinearGradient(0,0,w,0); wg.addColorStop(0,'rgba(255,255,255,1)'); wg.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=wg; ctx.fillRect(0,0,w,h);
-  const bg=ctx.createLinearGradient(0,0,0,h); bg.addColorStop(0,'rgba(0,0,0,0)'); bg.addColorStop(1,'rgba(0,0,0,1)');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
-}
-function sampleCanvasColor(canvas,x,y) {
-  const ctx=canvas.getContext('2d');
-  const d=ctx.getImageData(Math.round(x*(canvas.width-1)),Math.round(y*(canvas.height-1)),1,1).data;
-  return '#'+[d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
-}
-function openColorPanel(field) {
-  ['strap','dial','case'].forEach(f=>{if(f!==field)document.getElementById(`${f}ColorPanel`).style.display='none';});
-  const panel=document.getElementById(`${field}ColorPanel`);
-  panel.style.display=panel.style.display==='block'?'none':'block';
-  if (panel.style.display==='block') { initColorCanvas(field); loadSavedColorSwatches(field); }
-}
-function onHexInput(field) {
-  const hex=document.getElementById(`${field}HexInput`).value;
-  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) cpState[field].hex=hex.toUpperCase();
-}
-function applyColorPanel(field) {
-  const hex=document.getElementById(`${field}HexInput`).value.trim().toUpperCase();
-  const inputMap={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
-  if (hex) { document.getElementById(inputMap[field]).value=hex; syncSwatchFromInput(field); }
-  document.getElementById(`${field}ColorPanel`).style.display='none';
-  autoGenerateVariantName(); autoGenerateVariantSku();
-}
-function syncSwatchFromInput(field) {
-  const inputMap ={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
-  const swatchMap={strap:'strapColorSwatch',dial:'dialColorSwatch',case:'caseColorSwatch'};
-  const val=document.getElementById(inputMap[field]).value.trim();
-  const sw=document.getElementById(swatchMap[field]);
-  if (sw&&val) sw.style.background=val;
-  autoGenerateVariantName();
-}
-function saveCurrentColor(field) {
-  const hex=document.getElementById(`${field}HexInput`).value.trim();
-  if (!hex) { showToast('Pick a color first','blue'); return; }
-  fetch('/admin/saved-colors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hex})})
-    .then(r=>r.json()).then(data=>{ if(data.success){showToast('Color saved!','green');loadSavedColorSwatches(field);} });
-}
-async function loadSavedColors() {
-  try {
-    const r=await fetch('/admin/saved-colors');
-    const data=await r.json();
-    if (data.success) ['strap','dial','case'].forEach(f=>loadSavedColorSwatches(f,data.colors));
-  } catch(e) {}
-}
-async function loadSavedColorSwatches(field,colors) {
-  const container=document.getElementById(`${field}SavedSwatches`);
-  if (!container) return;
-  if (!colors) {
-    try { const r=await fetch('/admin/saved-colors'); const data=await r.json(); colors=data.colors||[]; } catch(e){return;}
-  }
-  if (!colors.length) { container.innerHTML='<span style="color:#555;font-size:11px;">No saved colors yet</span>'; return; }
-  container.innerHTML=colors.map(c=>`<div onclick="selectSavedColor('${field}','${c.hex}')" title="${c.name||c.hex}" style="width:22px;height:22px;border-radius:5px;background:${c.hex};border:1.5px solid rgba(255,255,255,.2);cursor:pointer;flex-shrink:0;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`).join('');
-}
-function selectSavedColor(field,hex) {
-  document.getElementById(`${field}HexInput`).value=hex;
-  const inputMap ={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
-  const swatchMap={strap:'strapColorSwatch',dial:'dialColorSwatch',case:'caseColorSwatch'};
-  document.getElementById(inputMap[field]).value=hex;
-  document.getElementById(swatchMap[field]).style.background=hex;
-  cpState[field].hex=hex;
-}
-async function startEyedropper(field) {
-  if (!window.EyeDropper) { showToast('Eyedropper not supported (use Chrome)','blue'); return; }
-  try {
-    const result=await new EyeDropper().open();
-    const hex=result.sRGBHex.toUpperCase();
-    document.getElementById(`${field}HexInput`).value=hex;
-    selectSavedColor(field,hex);
-    showToast(`Color picked: ${hex}`,'green');
-  } catch(e) {}
-}
-function resetColorPanels() {
-  ['strap','dial','case'].forEach(f=>{
-    const panel=document.getElementById(`${f}ColorPanel`);
-    if (panel) panel.style.display='none';
-    const inputMap ={strap:'vStrapColor',dial:'vDialColor',case:'vCaseColor'};
-    const swatchMap={strap:'strapColorSwatch',dial:'dialColorSwatch',case:'caseColorSwatch'};
-    document.getElementById(inputMap[f]).value='';
-    document.getElementById(swatchMap[f]).style.background='#e5e7eb';
-  });
-}
-
-// ── AUTO SKU ──────────────────────────────────────────
-let skuDebounceTimer=null;
-async function autoGenerateVariantSku(force=false) {
-  clearTimeout(skuDebounceTimer);
-  skuDebounceTimer=setTimeout(async()=>{
-    const skuField=document.getElementById('vSku');
-    if (!force&&skuField.value.trim()) return;
-    const productName=document.querySelector('.pd-title')?.textContent?.trim()||'';
-    const brandName  =document.querySelector('.pd-info-value')?.textContent?.trim()||'';
-    const categoryEl =document.querySelectorAll('.pd-info-value')[0]?.textContent?.trim()||'';
-    const params=new URLSearchParams({brand:brandName,productName,category:categoryEl,strapMaterial:document.getElementById('vStrapMaterial').value||'',strapColor:document.getElementById('vStrapColor').value||'',caseColor:document.getElementById('vCaseColor').value||'',dialColor:document.getElementById('vDialColor').value||'',size:document.getElementById('vSize').value||''});
-    try { const r=await fetch(`/admin/sku/variant?${params}`); const data=await r.json(); if(data.success)skuField.value=data.sku; } catch(e){}
-  },600);
-}
-document.getElementById('fBrand')?.addEventListener('change',autoGenerateProductSku);
-document.getElementById('fName')?.addEventListener('input',autoGenerateProductSku);
-let productSkuDebounce=null;
-async function autoGenerateProductSku() {
-  clearTimeout(productSkuDebounce);
-  productSkuDebounce=setTimeout(async()=>{
-    const skuField=document.getElementById('fSku');
-    if (skuField.value.trim()) return;
-    const brandSel=document.getElementById('fBrand');
-    const brandText=(brandSel.options[brandSel.selectedIndex]?.text||'').replace('Select brand','').replace('+ Other Brand','').trim();
-    const model=document.getElementById('fName').value.trim();
-    if (!model) return;
-    try { const r=await fetch(`/admin/sku/product?${new URLSearchParams({brand:brandText||'GEN',model})}`); const data=await r.json(); if(data.success)skuField.value=data.sku; } catch(e){}
-  },700);
-}
-function autoGenerateVariantName() {
-  const strapColor=document.getElementById('vStrapColor').value.trim();
-  const size      =document.getElementById('vSize').value.trim();
-  const mat       =document.getElementById('vStrapMaterial').value;
-  const parts     =[strapColor,mat,size].filter(Boolean);
-  if (parts.length&&!document.getElementById('vName').value) document.getElementById('vName').value=parts.join(' ');
-}
-['vStrapMaterial','vCaseMaterial'].forEach(id=>{document.getElementById(id)?.addEventListener('change',()=>autoGenerateVariantSku());});
-document.getElementById('vSize')?.addEventListener('input',()=>autoGenerateVariantSku());
 </script>

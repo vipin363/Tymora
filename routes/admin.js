@@ -8,7 +8,7 @@ import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,
        getProductJson, softDeleteProduct, loadProductTrash,restoreProduct, permanentDeleteProduct, 
        getProductDetail, getVariants, addVariant, editVariant, getVariantJson,softDeleteVariant, 
        getVariantTrash, restoreVariant, permanentDeleteVariant,getMaterials, addMaterial, 
-       getSavedColors, saveColor,generateProductSku, generateVariantSku,} from '../controller/adminController.js';
+       getSavedColors, saveColor,generateProductSku, generateVariantSku,setDefaultVariant } from '../controller/adminController.js';
 import { loadAdminOtpPage, verifyAdminForgotOtp,resendAdminOtp } from '../controller/otpController.js';
 import upload from '../middleware/uploard.js';
 import Category from '../model/categoryModel.js';
@@ -91,6 +91,7 @@ router.post('/saved-colors', saveColor);
 
 router.get('/sku/product', generateProductSku);
 router.get('/sku/variant', generateVariantSku);
+router.post('/products/:productId/variants/:variantId/set-default', isAdminAuth, setDefaultVariant);
 
 router.get("/logout", logout);
 

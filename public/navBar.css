@@ -7,6 +7,12 @@
   --muted:#888;
 }
 
+a.nav-icon-btn[href="/user/profile"] svg {
+  stroke: var(--white, #f5f0e8);
+}
+a.nav-icon-btn[href="/user/profile"]:hover svg {
+  stroke: #C9A84C;
+}
 /* NAVBAR */
 nav{
   position: fixed;

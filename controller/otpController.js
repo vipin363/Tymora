@@ -11,7 +11,7 @@ export const loadOtpPage = async (req, res) => {
    const email = req.session.userData.email;
   const record = await Otp.findOne({ email, purpose: "register", is_used: false }).sort({ created_at: -1 });
   const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
-  res.render("user/otp", { email, remaining, formAction: "/user/verifyOtp",changeEmailLink: req.session.changeEmailLink  });
+  res.render("user/otp", {layout: 'auth', email, remaining, formAction: "/user/verifyOtp",changeEmailLink: req.session.changeEmailLink  });
 };
 
 export const verifyOtp = async (req, res) => {
@@ -26,13 +26,13 @@ export const verifyOtp = async (req, res) => {
       if (!otp || otp.trim() === "") {
       const record = await Otp.findOne({ email, purpose: "register", is_used: false }).sort({ created_at: -1 });
       const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
-      return res.render("user/otp", { email, remaining, formAction: "/user/verifyOtp", message: "Please enter OTP" });
+      return res.render("user/otp", { layout: 'auth',email, remaining, formAction: "/user/verifyOtp", message: "Please enter OTP" });
     }
 
     const result = await verifyOtpFromDb({ email, otp_code: otp, purpose: "register" });
 
     if (result.reason === "expired") {
-  return res.render("user/otp", {
+  return res.render("user/otp", {layout: 'auth',
     email, remaining: 0,
     formAction: "/user/verifyOtp",
     message: "OTP expired. Please resend."
@@ -40,7 +40,7 @@ export const verifyOtp = async (req, res) => {
 }
 
 if (!result.success) {
-  return res.render("user/otp", {
+  return res.render("user/otp", {layout: 'auth',
     email, remaining: result.remaining, 
     formAction: "/user/verifyOtp",
     message: "Invalid OTP"
@@ -64,6 +64,7 @@ if (!result.success) {
   } catch (err) {
     console.log(err);
     return res.render("user/otp", {
+      layout: 'auth',
       email: req.session.userData?.email,
       remaining: 0,
       formAction: "/user/verifyOtp",
@@ -105,7 +106,7 @@ export const loadForgotOtpPage =  async (req, res) => {
    const email = req.session.resetEmail;
   const record = await Otp.findOne({ email, purpose: "forgot_password", is_used: false }).sort({ created_at: -1 });
   const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
-  res.render("user/otp", { email, remaining, formAction: "/user/verifyForgotOtp",changeEmailLink: req.session.changeEmailLink  });
+  res.render("user/otp", {layout: 'auth', email, remaining, formAction: "/user/verifyForgotOtp",changeEmailLink: req.session.changeEmailLink  });
 };
 
 export const verifyForgotOtp = async (req, res) => {
@@ -118,13 +119,14 @@ export const verifyForgotOtp = async (req, res) => {
     if (!otp || otp.trim() === "") {
   const record = await Otp.findOne({ email, purpose: "forgot_password", is_used: false }).sort({ created_at: -1 });
   const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
-  return res.render("user/otp", { email, remaining, formAction: "/user/verifyForgotOtp", message: "Please enter OTP" });
+  return res.render("user/otp", {layout: 'auth', email, remaining, formAction: "/user/verifyForgotOtp", message: "Please enter OTP" });
 }
 
     const result = await verifyOtpFromDb({ email, otp_code: otp, purpose: "forgot_password" });
 
     if (result.reason === "expired") {
       return res.render("user/otp", {
+        layout: 'auth',
         email, remaining: 0,
         formAction: "/user/verifyForgotOtp",
         message: "OTP expired. Please resend."
@@ -132,7 +134,7 @@ export const verifyForgotOtp = async (req, res) => {
     }
 
    if (!result.success) {
-  return res.render("user/otp", { email, remaining: result.remaining, formAction: "/user/verifyForgotOtp", message: "Invalid OTP" });
+  return res.render("user/otp", { layout: 'auth',email, remaining: result.remaining, formAction: "/user/verifyForgotOtp", message: "Invalid OTP" });
 }
 
     req.session.resetVerified = true;
@@ -141,6 +143,7 @@ export const verifyForgotOtp = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.render("user/otp", {
+      layout: 'auth',
       email: req.session.resetEmail, remaining: 0,
       formAction: "/user/verifyForgotOtp",
       message: "Something went wrong"

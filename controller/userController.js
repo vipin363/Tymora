@@ -4,10 +4,11 @@ import cloudinary from "../config/cloudinary.js";
 import addressModel from "../model/addressModel.js";
 import { generateAndSaveOtp , verifyOtpFromDb} from "../services/otpService.js";
 import Category from '../model/categoryModel.js';
+import Product from '../model/productModel.js';
 
 export const loadRegister = async (req,res)=>{
     let message = req.query.message || "";
-   res.render('user/register', { message });
+   res.render('user/register', { layout: 'auth', message });
 }
 
 export const registerUser = async (req,res)=>{
@@ -18,14 +19,14 @@ export const registerUser = async (req,res)=>{
 
        
         if(user){
-            return res.render('user/login',{message:"user already exists"})
+            return res.render('user/login',{layout: 'auth',message:"user already exists"})
         }
       
 
         const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
 
         if(!passwordPattern.test(password)){
-            return res.render('user/register',{message:"Password must be strong (uppercase, lowercase, number, symbol)"})
+            return res.render('user/register',{layout: 'auth',message:"Password must be strong (uppercase, lowercase, number, symbol)"})
         }
 
 
@@ -35,7 +36,7 @@ export const registerUser = async (req,res)=>{
 req.session.changeEmailLink = "/user/register";  
             res.redirect("/user/otp");
     }catch(err){
-        res.render('user/register',{message:'Something went wrong'})
+        res.render('user/register',{layout: 'auth',message:'Something went wrong'})
     }
 }
 
@@ -58,7 +59,7 @@ export const loadLogin = async (req,res)=>{
         message = "Your account has been deleted by admin"
     }
 
-    res.render('user/login',{message,success})
+    res.render('user/login',{layout: 'auth',message,success})
 }
 
 export const login = async (req,res)=>{
@@ -66,15 +67,15 @@ export const login = async (req,res)=>{
       const {email,password} = req.body
       const user = await userSchema.findOne({email})
         if(!user){
-           return res.render('user/login',{message:"User not exists"})
+           return res.render('user/login',{layout: 'auth',message:"User not exists"})
          }
 
         if(user.isBlocked){
-          return  res.render('user/login',{message:"Your account is blocked by the Admin"})
+          return  res.render('user/login',{layout: 'auth',message:"Your account is blocked by the Admin"})
         }
 
          if(!user.password){
-            return res.render('user/login',{
+            return res.render('user/login',{layout: 'auth',
             message:"You registered using Google. Please login with Google and set your password in profile or please continue with forgot password."
             })}
 
@@ -82,7 +83,7 @@ export const login = async (req,res)=>{
          const isMatch = await bcrypt.compare(password,user.password)
 
             if(!isMatch){
-             return res.render('user/login',{message:"Incorrect password"})
+             return res.render('user/login',{layout: 'auth',message:"Incorrect password"})
             }
            
 
@@ -94,7 +95,7 @@ export const login = async (req,res)=>{
         res.redirect('/user/')
 
     }catch(err){
-       res.render('user/login',{message:"Something went wrong"})
+       res.render('user/login',{layout: 'auth',message:"Something went wrong"})
     }
 }
 
@@ -108,11 +109,11 @@ export const homePage = async (req, res) => {
       deleted_at: null,
     }).sort({ createdAt: -1 }).lean();
 
-    const navCategories = rawCategories.map(c => ({
-      _id:   c._id,
-      name:  c.name,
-      image: c.image_url || '',
-    }));
+   const navCategories = rawCategories.map(c => ({
+    _id: c._id.toString(),  
+    name: c.name,
+    image: c.image_url || '',
+}));
 
     if (req.session.user) {
       const user = await userSchema.findById(req.session.user.id);
@@ -120,6 +121,7 @@ export const homePage = async (req, res) => {
       if (!user) {
         req.session.user = null;
         return res.render('user/home', {
+          layout: 'main',
           user: null,
           message: "Your account has been deleted by admin",
           navCategories,
@@ -130,6 +132,7 @@ export const homePage = async (req, res) => {
       if (user.isBlocked) {
         req.session.user = null;
         return res.render('user/home', {
+          layout: 'main',
           user: null,
           message: "Your account has been blocked by admin",
           navCategories,
@@ -139,6 +142,7 @@ export const homePage = async (req, res) => {
     }
 
     res.render('user/home', {
+      layout: 'main',
       user:          req.session.user || null,
       message,
       navCategories,       
@@ -148,6 +152,7 @@ export const homePage = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.render('user/home', {
+      layout: 'main',
       user: null,
       message: "Something went wrong",
       navCategories: [],
@@ -162,7 +167,7 @@ export const logout = (req, res) => {
 };
 
 export const loadForgotPassword = (req,res)=>{
-    res.render('user/forgotPassword')
+    res.render('user/forgotPassword',{ layout: 'auth' })
 }
 
 export const forgotPassword = async(req,res)=>{
@@ -170,13 +175,13 @@ export const forgotPassword = async(req,res)=>{
       const { email } = req.body;
 
       if(!email){
-         return res.render('user/forgotPassword',{message:"Email required"});
+         return res.render('user/forgotPassword',{layout: 'auth',message:"Email required"});
       }
 
       const user = await userSchema.findOne({ email });
 
       if(!user){
-         return res.render('user/forgotPassword',{message:"Email not registered"});
+         return res.render('user/forgotPassword',{layout: 'auth',message:"Email not registered"});
       }
       req.session.userData = null;
 
@@ -191,7 +196,7 @@ await generateAndSaveOtp({ email, purpose: "forgot_password" });
 
    }catch(err){
       console.log(err);
-      return res.render('user/forgotPassword',{message:"Something went wrong"});
+      return res.render('user/forgotPassword',{layout: 'auth',message:"Something went wrong"});
    }
 }
 
@@ -199,7 +204,7 @@ export const loadResetPassword = (req,res)=>{
      if(!req.session.resetVerified){
       return res.redirect('/user/forgotPassword');
    }
-   res.render('user/resetPassword');
+   res.render('user/resetPassword',{ layout: 'auth' });
 }
 
 export const resetPassword = async(req,res)=>{
@@ -208,13 +213,13 @@ export const resetPassword = async(req,res)=>{
       const { password, confirmPassword } = req.body;
 
       if(!password || !confirmPassword){
-         return res.render('user/resetPassword',{
+         return res.render('user/resetPassword',{layout: 'auth',
             message:"All fields required"
          });
       }
 
       if(password !== confirmPassword){
-         return res.render('user/resetPassword',{
+         return res.render('user/resetPassword',{layout: 'auth',
             message:"Passwords do not match"
          });
       }
@@ -223,7 +228,7 @@ export const resetPassword = async(req,res)=>{
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
       if(!passwordPattern.test(password)){
-         return res.render('user/resetPassword',{
+         return res.render('user/resetPassword',{layout: 'auth',
             message:"Strong password required"
          });
       }
@@ -244,7 +249,7 @@ export const resetPassword = async(req,res)=>{
    }catch(err){
       console.log(err);
 
-      return res.render('user/resetPassword',{
+      return res.render('user/resetPassword',{layout: 'auth',
          message:"Something went wrong"
       });
    }
@@ -259,7 +264,7 @@ export const loadProfile = async (req,res)=>{
          user.dob = new Date(user.dob).toLocaleDateString('en-GB');
       }
 
-      res.render('user/userProfile',{ user,hasPassword: !!user.password });
+      res.render('user/userProfile',{ layout: 'main',user,hasPassword: !!user.password });
 
    }catch(err){
       console.log(err);
@@ -278,7 +283,7 @@ export const loadEditProfile = async (req,res)=>{
          .split('T')[0];
       }
 
-      res.render('user/editProfile',{ user });
+      res.render('user/editProfile',{layout: 'main', user });
 
    }catch(err){
       console.log(err);
@@ -299,6 +304,7 @@ export const updateProfile = async (req,res)=>{
       
       if(!nameRegex.test(name.trim())){
          return res.render('user/editProfile',{
+          layout: 'main',
             user,
             message:"Name must contain only letters and spaces"
          });
@@ -308,7 +314,9 @@ export const updateProfile = async (req,res)=>{
    const phoneRegex = /^[0-9]{10}$/;
    
    if(!phoneRegex.test(phone)){
+    
       return res.render('user/editProfile',{
+        layout: 'main',
          user,
          message:"Phone number must be 10 digits"
       });
@@ -316,6 +324,7 @@ export const updateProfile = async (req,res)=>{
    
       if(!dob){
          return res.render('user/editProfile',{
+          layout: 'main',
             user,
          message:"Date of Birth is required"
       });
@@ -326,6 +335,7 @@ export const updateProfile = async (req,res)=>{
    
    if(isNaN(birthDate.getTime())){
       return res.render('user/editProfile',{
+        layout: 'main',
          user,
          message:"Invalid Date of Birth"
       });
@@ -333,6 +343,7 @@ export const updateProfile = async (req,res)=>{
    
    if(birthDate >= today){
       return res.render('user/editProfile',{
+        layout: 'main',
          user,
          message:"Date of Birth must be in the past"
       });
@@ -340,6 +351,7 @@ export const updateProfile = async (req,res)=>{
    
    if(birthDate.getFullYear() === today.getFullYear()){
       return res.render('user/editProfile',{
+        layout: 'main',
          user,
          message:"Birth year cannot be current year"
       });
@@ -349,6 +361,7 @@ export const updateProfile = async (req,res)=>{
 
    if(age < 13){
       return res.render('user/editProfile',{
+        layout: 'main',
          user,
          message:"Age must be at least 13 years"
       });
@@ -575,7 +588,7 @@ export const loadAddressPage = async (req,res)=>{
 
     const userId = req.session.user.id;
     const addresses = await addressModel.find({ userId });
-    res.render('user/myAddress',{ addresses });
+    res.render('user/myAddress',{layout: 'main', addresses });
 
   }catch(err){
     console.log(err);
@@ -705,6 +718,110 @@ export const deleteAddress = async (req,res)=>{
   }catch(err){
     console.log(err);
     res.redirect("/user/address");
+  }
+};
+
+export const loadshop = async (req, res) => {
+  try {
+    const dbProducts = await Product.find({ 
+      status: 'active', 
+      deleted_at: null 
+    })
+    .populate('category')
+    .populate('brand')
+    .lean();
+
+    // Map your actual field names to what shop.js expects
+    const products = dbProducts.map(p => {
+      const discountedPrice = p.discount > 0
+        ? Math.round(p.price - (p.price * p.discount / 100))
+        : p.price;
+
+      return {
+        id:       p._id.toString(),
+        name:     p.name,
+        brand:    p.brand?.name   || 'Unknown',
+        price:    discountedPrice,
+        oldPrice: p.discount > 0  ? p.price : null,
+        rating:   4.5,            // you have no rating field yet
+        reviews:  0,              // you have no reviews field yet
+        badge:    p.featured      ? 'new'
+                : p.discount > 0  ? 'sale'
+                : p.dealOfTheDay  ? 'hot'
+                : null,
+        cat:      (p.category?.name || 'other').toLowerCase(),
+        style:    p.gender,       // using gender as style for now
+        avail:    p.stock > 0     ? 'instock' : 'outofstock',
+        img:      p.images?.[0]   || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80',
+      };
+    });
+
+    const unique = (arr) => [...new Set(arr.filter(Boolean))];
+
+    const categories = unique(products.map(p => p.cat))
+      .map(v => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }));
+
+    const brands = unique(products.map(p => p.brand.toLowerCase()))
+      .map(v => ({
+        value: v,
+        label: products.find(p => p.brand.toLowerCase() === v)?.brand || v,
+      }));
+
+    const styles = unique(products.map(p => p.style))
+      .map(v => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }));
+
+    const featured = [...products]
+      .filter(p => p.badge !== null)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 4);
+
+    res.render('user/allProducts', {
+      layout: 'main',
+      user:          req.session.user || null,
+      totalProducts: products.length,
+      searchPlaceholder: 'Search watches…',
+
+      sortOptions: [
+        { value: 'price-asc',  label: 'Price: Low to High' },
+        { value: 'price-desc', label: 'Price: High to Low' },
+        { value: 'az',         label: 'Name: A – Z' },
+        { value: 'za',         label: 'Name: Z – A' },
+        { value: 'rating',     label: 'Top Rated' },
+        { value: 'newest',     label: 'Newest' },
+      ],
+
+      filterOptions: {
+        categories,
+        brands,
+        styles,
+        availability: [
+          { value: 'instock',    label: 'In Stock' },
+          { value: 'outofstock', label: 'Out of Stock' },
+          { value: 'sale',       label: 'On Sale' },
+          { value: 'new',        label: 'Featured' },
+        ],
+      },
+
+      featuredSection: {
+        title:     "Editor's",
+        highlight: 'Picks',
+      },
+
+      shopData: { products, featured },
+    });
+
+  } catch (err) {
+    console.error('loadshop error:', err);
+    res.render('user/allProducts', {
+      layout: 'main',
+      user:          req.session.user || null,
+      totalProducts: 0,
+      searchPlaceholder: 'Search watches…',
+      sortOptions:   [],
+      filterOptions: { categories: [], brands: [], styles: [], availability: [] },
+      featuredSection: { title: "Editor's", highlight: 'Picks' },
+      shopData:      { products: [], featured: [] },
+    });
   }
 };
 

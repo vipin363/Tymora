@@ -734,14 +734,7 @@ table td {
   color: #aaa;
 }
 
-/* MAIN BODY GRID */
-.pd-body-grid {
-  display: grid;
-  grid-template-columns: 480px 1fr;
-  gap: 20px;
-  margin-bottom: 28px;
-  align-items: start;
-}
+
 
 /* GALLERY */
 .pd-gallery-col { display: flex; flex-direction: column; gap: 12px; }
@@ -899,13 +892,15 @@ table td {
 }
 
 /* Variant table — reuses your existing table-card styles */
+/* Variant table — reuses your existing table-card styles */
 .pd-variant-section .table-card {
   border: none;
   box-shadow: none;
   padding: 0;
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid #e8eaf0;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* RESPONSIVE */
@@ -918,4 +913,187 @@ table td {
   .pd-stats-row { grid-template-columns: 1fr; }
   .pd-topbar { flex-direction: column; }
   .pd-gallery-thumbs .pd-thumb { width: 56px; height: 56px; }
+}
+.pd-body-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 45%) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+  align-items: start;
+}
+
+#variantViewBanner {
+  grid-column: 1 / -1;
+}
+.pd-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.content {
+  min-width: 0;
+  overflow-x: hidden;
+}/* ══ MOBILE RESPONSIVE FIXES ══ */
+@media (max-width: 768px) {
+
+  /* Stats row — 2 columns on mobile */
+  .pd-stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .pd-stat-card {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .pd-stat-value { font-size: 16px; }
+  .pd-stat-label { font-size: 10px; }
+
+  /* Body grid — single column on mobile */
+  .pd-body-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  /* Gallery takes full width */
+  .pd-gallery-main {
+    aspect-ratio: 4 / 3;
+  }
+
+  /* Top action buttons stack vertically */
+  .pd-topbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pd-topbar-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pd-topbar-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Variant section header stacks */
+  .pd-variant-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .pd-variant-header-right {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .pd-variant-search-wrap {
+    width: 100%;
+  }
+
+  .pd-variant-search-wrap input {
+    width: 100%;
+  }
+
+  /* Variant table — horizontal scroll */
+  .pd-variant-section .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #variantTable {
+    min-width: 600px;
+  }
+
+  /* Breadcrumb wraps */
+  .pd-breadcrumb {
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+
+  /* Title smaller */
+  .pd-title { font-size: 18px; }
+
+  /* Badges wrap */
+  .pd-badges { flex-wrap: wrap; gap: 6px; }
+}
+
+@media (max-width: 480px) {
+
+  /* Stats 2x2 still but smaller */
+  .pd-stat-card {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .pd-stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .pd-stat-value { font-size: 15px; }
+
+  /* Info card rows wrap on very small screens */
+  .pd-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 0;
+  }
+
+  .pd-info-value {
+    font-size: 13px;
+  }
+
+  /* Thumb sizes */
+  .pd-thumb {
+    width: 56px;
+    height: 56px;
+  }
+}
+/* ── FIX DESKTOP OVERFLOW ── */
+.shell {
+  display: flex;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.content {
+  min-width: 0;
+  overflow-x: hidden;
+  padding: 24px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.pd-body-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 45%) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pd-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+#variantTable {
+  min-width: 900px;
+  width: 100%;
 }

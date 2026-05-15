@@ -1,0 +1,625 @@
+<link href="/userAllProducts.css" rel="stylesheet">
+<link href="/userHome.css" rel="stylesheet">
+<link href="/footer.css" rel="stylesheet">
+<link href="/navBar.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+
+<!-- HERO -->
+<div class="shop-hero">
+  <div>
+    <h1 class="shop-title">Discover <em>Fine </em><br>Timepieces</h1>
+    <p class="shop-subtitle">Curated collection — beauty in every shadow</p>
+  </div>
+  <div class="results-count">
+    Showing <span id="countDisplay">{{totalProducts}}</span> of <span id="totalDisplay">{{totalProducts}}</span> products
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- CONTROLS BAR -->
+<div class="controls-bar">
+  <div class="search-wrap">
+    <div class="search-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </div>
+    <input type="text" id="searchInput" placeholder="{{searchPlaceholder}}">
+    <button class="clear-btn" id="clearBtn" title="Clear">✕</button>
+    <button class="search-btn" id="searchBtn">Search</button>
+  </div>
+
+  <select class="sort-select" id="sortSelect">
+    <option value="">Sort by</option>
+    {{#each sortOptions}}
+      <option value="{{this.value}}">{{this.label}}</option>
+    {{/each}}
+  </select>
+
+  <button class="filter-toggle" id="filterToggle">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+    Filters
+  </button>
+</div>
+
+<!-- FILTER PANEL -->
+<div class="filter-panel" id="filterPanel">
+  <div class="filter-grid">
+
+    <div class="filter-group">
+      <label>Category</label>
+      <select id="catFilter">
+        <option value="">All Categories</option>
+        {{#each filterOptions.categories}}
+          <option value="{{this.value}}">{{this.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Brand</label>
+      <select id="brandFilter">
+        <option value="">All Brands</option>
+        {{#each filterOptions.brands}}
+          <option value="{{this.value}}">{{this.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Price Range (₹)</label>
+      <div class="price-range-wrap">
+        <input type="number" id="priceMin" placeholder="Min">
+        <span>–</span>
+        <input type="number" id="priceMax" placeholder="Max">
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Style</label>
+      <select id="styleFilter">
+        <option value="">All Styles</option>
+        {{#each filterOptions.styles}}
+          <option value="{{this.value}}">{{this.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Availability</label>
+      <select id="availFilter">
+        <option value="">All</option>
+        {{#each filterOptions.availability}}
+          <option value="{{this.value}}">{{this.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+  </div>
+  <div class="filter-actions">
+    <button class="btn-apply" id="btnApply">Apply Filters</button>
+    <button class="btn-reset" id="btnReset">Reset All</button>
+  </div>
+</div>
+
+<!-- ACTIVE FILTER TAGS -->
+<div class="active-filters" id="activeTags"></div>
+
+<!-- PRODUCTS SECTION -->
+<div class="products-section">
+  <div class="products-grid" id="productsGrid"></div>
+  <div class="no-results" id="noResults">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <p>No timepieces found</p>
+    <small>Try adjusting your search or filters</small>
+  </div>
+</div>
+
+<!-- PAGINATION -->
+<div class="pagination-wrap" id="paginationWrap"></div>
+
+<!-- FEATURED SECTION -->
+<div class="featured-section">
+  <div class="section-header">
+    <h2 class="section-title">Featured<em>Picks</em></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="featured-track-outer">
+    <button class="carousel-arrow left" id="carouselPrev">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="featured-track-wrap">
+      <div class="featured-track" id="featuredTrack"></div>
+    </div>
+    <button class="carousel-arrow right" id="carouselNext">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div class="carousel-dots" id="carouselDots"></div>
+</div>
+
+
+
+<!-- SEED DATA injected for shop.js -->
+<script>
+  window.SHOP_DATA = {{{json shopData}}};
+</script>
+
+
+
+
+<script>
+/* ============================================================
+   TYMORA — shop.js
+   All interactivity: search, sort, filter, pagination, carousel
+   Reads seed data from window.SHOP_DATA (injected by HBS)
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  /* ── DATA (falls back to inline if server didn't inject) ── */
+  const DATA = window.SHOP_DATA || {
+    products: [
+      { id:1,  name:"Perpetual Calendar",  brand:"Rolex",   price:30000, oldPrice:null,  rating:4.8, reviews:32, badge:"new",  cat:"automatic", style:"classic", avail:"instock", img:"https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80" },
+      { id:2,  name:"Rotary Classic",      brand:"Rotary",  price:18000, oldPrice:22000, rating:4.5, reviews:27, badge:"sale", cat:"analog",    style:"classic", avail:"sale",    img:"https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=400&q=80" },
+      { id:3,  name:"Automatic Skeleton",  brand:"Seiko",   price:26000, oldPrice:null,  rating:4.7, reviews:41, badge:null,   cat:"automatic", style:"dressy",  avail:"instock", img:"https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400&q=80" },
+      { id:4,  name:"Generic Fashion",     brand:"Fossil",  price:14000, oldPrice:null,  rating:4.2, reviews:18, badge:"hot",  cat:"analog",    style:"casual",  avail:"instock", img:"https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=400&q=80" },
+      { id:5,  name:"Classic Analog",      brand:"Tymora",  price:12000, oldPrice:null,  rating:4.3, reviews:22, badge:null,   cat:"analog",    style:"classic", avail:"instock", img:"https://images.unsplash.com/photo-1508057198894-247b23fe5ade?w=400&q=80" },
+      { id:6,  name:"Heritage Slim",       brand:"Rotary",  price:21000, oldPrice:25000, rating:4.9, reviews:53, badge:"sale", cat:"analog",    style:"dressy",  avail:"sale",    img:"https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=400&q=80" },
+      { id:7,  name:"Grant Classic",       brand:"Seiko",   price:28000, oldPrice:null,  rating:4.6, reviews:36, badge:null,   cat:"chronograph",style:"sport",  avail:"instock", img:"https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&q=80" },
+      { id:8,  name:"Basic Analog",        brand:"Fossil",  price:10000, oldPrice:12000, rating:4.0, reviews:14, badge:"sale", cat:"analog",    style:"casual",  avail:"sale",    img:"https://images.unsplash.com/photo-1618220179428-22790b461013?w=400&q=80" },
+    ],
+    featured: [
+      { id:9,  name:"Elysian Gold",      brand:"Tymora", price:52000, badge:"new",  rating:5.0, img:"https://images.unsplash.com/photo-1549482199-bc1ca6f58502?w=400&q=80" },
+      { id:10, name:"Glorious GMT",      brand:"Rolex",  price:85000, badge:"hot",  rating:4.9, img:"https://images.unsplash.com/photo-1580736979781-c2b5daba9b9f?w=400&q=80" },
+      { id:11, name:"Vanguard Skeleton", brand:"Seiko",  price:42000, badge:null,   rating:4.8, img:"https://images.unsplash.com/photo-1619134778706-7015533a6150?w=400&q=80" },
+      { id:12, name:"Oceanic Deep",      brand:"Tymora", price:63000, badge:"new",  rating:4.7, img:"https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=400&q=80" },
+    ],
+  };
+
+  /* ── STATE ── */
+  const state = {
+    query:    '',
+    sort:     '',
+    cat:      '',
+    brand:    '',
+    style:    '',
+    avail:    '',
+    priceMin: null,
+    priceMax: null,
+    page:     1,
+    perPage:  8,
+    filtered: [...DATA.products],
+    carouselIdx: 0,
+  };
+
+  /* ── DOM REFS ── */
+  const $  = (id) => document.getElementById(id);
+  const els = {
+    searchInput:  $('searchInput'),
+    clearBtn:     $('clearBtn'),
+    searchBtn:    $('searchBtn'),
+    sortSelect:   $('sortSelect'),
+    filterToggle: $('filterToggle'),
+    filterPanel:  $('filterPanel'),
+    catFilter:    $('catFilter'),
+    brandFilter:  $('brandFilter'),
+    priceMin:     $('priceMin'),
+    priceMax:     $('priceMax'),
+    styleFilter:  $('styleFilter'),
+    availFilter:  $('availFilter'),
+    btnApply:     $('btnApply'),
+    btnReset:     $('btnReset'),
+    activeTags:   $('activeTags'),
+    productsGrid: $('productsGrid'),
+    noResults:    $('noResults'),
+    countDisplay: $('countDisplay'),
+    totalDisplay: $('totalDisplay'),
+    paginationWrap: $('paginationWrap'),
+    featuredTrack:  $('featuredTrack'),
+    carouselPrev:   $('carouselPrev'),
+    carouselNext:   $('carouselNext'),
+    carouselDots:   $('carouselDots'),
+  };
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+
+  /** Render star strings */
+  function stars(rating) {
+    const full  = Math.round(rating);
+    const empty = 5 - full;
+    return '★'.repeat(full) + '☆'.repeat(empty);
+  }
+
+  /** Format price in Indian locale */
+  function fmt(n) {
+    return '₹' + n.toLocaleString('en-IN');
+  }
+
+  /** Build a single product / featured card HTML */
+  function cardHTML(p, isFeatured = false) {
+    const cls = isFeatured ? 'featured-card' : 'product-card';
+    return `
+      <div class="${cls}">
+        ${p.badge ? `<div class="card-badge badge-${p.badge}">${p.badge}</div>` : ''}
+        <div class="card-wish" data-wished="false">
+          <svg viewBox="0 0 24 24" stroke-width="1.8">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+                     a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+                     1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <div class="card-img-wrap">
+          <img src="${p.img}" alt="${p.name}" loading="lazy">
+          <div class="card-img-overlay"></div>
+          <button class="quick-add">+ Add to Bag</button>
+        </div>
+        <div class="card-body">
+          <div class="card-brand">${p.brand}</div>
+          <div class="card-name">${p.name}</div>
+          <div class="card-rating">
+            <span class="stars">${stars(p.rating)}</span>
+            ${p.reviews !== undefined ? `<span class="rating-count">(${p.reviews})</span>` : ''}
+          </div>
+          <div class="card-price-row">
+            <div>
+              <span class="card-price">${fmt(p.price)}</span>
+              ${p.oldPrice ? `<span class="card-price-old">${fmt(p.oldPrice)}</span>` : ''}
+            </div>
+            <button class="card-details-btn">Details</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  /* ============================================================
+     SEARCH
+     ============================================================ */
+
+  els.searchInput.addEventListener('input', function () {
+    els.clearBtn.classList.toggle('visible', this.value.length > 0);
+  });
+
+  els.searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  els.searchBtn.addEventListener('click', doSearch);
+
+  els.clearBtn.addEventListener('click', clearSearch);
+
+  function doSearch() {
+    state.query = els.searchInput.value.trim().toLowerCase();
+    state.page  = 1;
+    applyFilters();
+  }
+
+  function clearSearch() {
+    els.searchInput.value = '';
+    els.clearBtn.classList.remove('visible');
+    state.query = '';
+    state.page  = 1;
+    applyFilters();
+  }
+
+  /* ============================================================
+     FILTER PANEL TOGGLE
+     ============================================================ */
+
+  els.filterToggle.addEventListener('click', () => {
+    els.filterPanel.classList.toggle('open');
+    els.filterToggle.classList.toggle('active');
+  });
+
+  /* ============================================================
+     APPLY / RESET FILTERS
+     ============================================================ */
+
+  els.sortSelect.addEventListener('change',  applyFilters);
+  els.catFilter.addEventListener('change',   applyFilters);
+  els.brandFilter.addEventListener('change', applyFilters);
+  els.styleFilter.addEventListener('change', applyFilters);
+  els.availFilter.addEventListener('change', applyFilters);
+  els.priceMin.addEventListener('input',     applyFilters);
+  els.priceMax.addEventListener('input',     applyFilters);
+  els.btnApply.addEventListener('click',     applyFilters);
+  els.btnReset.addEventListener('click',     resetFilters);
+
+  function applyFilters() {
+    /* read current UI values */
+    state.query    = els.searchInput.value.trim().toLowerCase();
+    state.sort     = els.sortSelect.value;
+    state.cat      = els.catFilter.value;
+    state.brand    = els.brandFilter.value;
+    state.style    = els.styleFilter.value;
+    state.avail    = els.availFilter.value;
+    state.priceMin = parseFloat(els.priceMin.value) || null;
+    state.priceMax = parseFloat(els.priceMax.value) || null;
+
+    /* filter */
+    let result = DATA.products.filter((p) => {
+      if (state.query && !p.name.toLowerCase().includes(state.query) &&
+                         !p.brand.toLowerCase().includes(state.query)) return false;
+      if (state.cat   && p.cat   !== state.cat)                return false;
+      if (state.brand && p.brand.toLowerCase() !== state.brand) return false;
+      if (state.style && p.style !== state.style)              return false;
+      if (state.avail === 'instock' && p.avail !== 'instock')  return false;
+      if (state.avail === 'sale'    && p.avail !== 'sale')     return false;
+      if (state.avail === 'new'     && p.badge !== 'new')      return false;
+      if (state.priceMin !== null   && p.price < state.priceMin) return false;
+      if (state.priceMax !== null   && p.price > state.priceMax) return false;
+      return true;
+    });
+
+    /* sort */
+    const sortMap = {
+      'price-asc':  (a, b) => a.price  - b.price,
+      'price-desc': (a, b) => b.price  - a.price,
+      'az':         (a, b) => a.name.localeCompare(b.name),
+      'za':         (a, b) => b.name.localeCompare(a.name),
+      'rating':     (a, b) => b.rating - a.rating,
+      'newest':     (a, b) => b.id     - a.id,
+    };
+    if (sortMap[state.sort]) result.sort(sortMap[state.sort]);
+
+    state.filtered = result;
+    state.page = 1;
+
+    renderActiveTags();
+    renderPage();
+  }
+
+  function resetFilters() {
+    els.catFilter.value    = '';
+    els.brandFilter.value  = '';
+    els.styleFilter.value  = '';
+    els.availFilter.value  = '';
+    els.sortSelect.value   = '';
+    els.priceMin.value     = '';
+    els.priceMax.value     = '';
+    clearSearch();
+  }
+
+  /* ============================================================
+     ACTIVE FILTER TAGS
+     ============================================================ */
+
+  function renderActiveTags() {
+    els.activeTags.innerHTML = '';
+
+    const tags = [];
+
+    if (state.query)    tags.push({ label: `"${state.query}"`,   clear: clearSearch });
+    if (state.cat)      tags.push({ label: state.cat,    clear: () => { els.catFilter.value   = ''; applyFilters(); } });
+    if (state.brand)    tags.push({ label: state.brand,  clear: () => { els.brandFilter.value = ''; applyFilters(); } });
+    if (state.style)    tags.push({ label: state.style,  clear: () => { els.styleFilter.value = ''; applyFilters(); } });
+    if (state.avail)    tags.push({ label: state.avail,  clear: () => { els.availFilter.value = ''; applyFilters(); } });
+    if (state.priceMin || state.priceMax) {
+      tags.push({
+        label: `₹${state.priceMin || 0} – ₹${state.priceMax || '∞'}`,
+        clear: () => { els.priceMin.value = ''; els.priceMax.value = ''; applyFilters(); },
+      });
+    }
+
+    if (!tags.length) return;
+
+    const lbl = document.createElement('span');
+    lbl.className   = 'active-filters-label';
+    lbl.textContent = 'Active:';
+    els.activeTags.appendChild(lbl);
+
+    tags.forEach((t) => {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      tag.innerHTML = `${t.label} <span>✕</span>`;
+      tag.addEventListener('click', t.clear);
+      els.activeTags.appendChild(tag);
+    });
+  }
+
+  /* ============================================================
+     RENDER PRODUCTS PAGE
+     ============================================================ */
+
+  function renderPage() {
+    const { filtered, page, perPage } = state;
+    const start     = (page - 1) * perPage;
+    const end       = start + perPage;
+    const pageItems = filtered.slice(start, end);
+
+    const shown = Math.min(end, filtered.length) - start;
+    els.countDisplay.textContent = Math.max(0, shown);
+    els.totalDisplay.textContent = filtered.length;
+
+    if (!filtered.length) {
+      els.productsGrid.innerHTML = '';
+      els.noResults.classList.add('visible');
+    } else {
+      els.noResults.classList.remove('visible');
+      els.productsGrid.innerHTML = pageItems
+        .map((p, i) => {
+          const html = cardHTML(p);
+          /* inject stagger delay via style attribute after insertion */
+          return html.replace('class="product-card"',
+            `class="product-card" style="animation-delay:${i * 0.06}s"`);
+        })
+        .join('');
+
+      /* attach wishlist listeners */
+      els.productsGrid.querySelectorAll('.card-wish').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          btn.classList.toggle('wished');
+        });
+      });
+    }
+
+    renderPagination();
+  }
+
+  /* ============================================================
+     PAGINATION
+     ============================================================ */
+
+  function renderPagination() {
+    const total = Math.ceil(state.filtered.length / state.perPage);
+    const cur   = state.page;
+
+    if (total <= 1) { els.paginationWrap.innerHTML = ''; return; }
+
+    const range  = getPageRange(cur, total);
+    let   html   = '';
+
+    /* prev arrow */
+    html += `<button class="page-btn" ${cur === 1 ? 'disabled' : ''}
+               data-page="${cur - 1}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" width="16" height="16">
+                 <polyline points="15 18 9 12 15 6"/>
+               </svg>
+             </button>`;
+
+    range.forEach((p) => {
+      if (p === '...') {
+        html += `<span class="page-dots">···</span>`;
+      } else {
+        html += `<button class="page-btn ${p === cur ? 'active' : ''}"
+                   data-page="${p}">${p}</button>`;
+      }
+    });
+
+    /* next arrow */
+    html += `<button class="page-btn" ${cur === total ? 'disabled' : ''}
+               data-page="${cur + 1}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" width="16" height="16">
+                 <polyline points="9 18 15 12 9 6"/>
+               </svg>
+             </button>`;
+
+    els.paginationWrap.innerHTML = html;
+
+    /* bind clicks */
+    els.paginationWrap.querySelectorAll('.page-btn:not([disabled])').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.page = parseInt(btn.dataset.page, 10);
+        renderPage();
+        document.querySelector('.products-section')
+          .scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function getPageRange(cur, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (cur <= 4)        return [1, 2, 3, 4, 5, '...', total];
+    if (cur >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    return [1, '...', cur - 1, cur, cur + 1, '...', total];
+  }
+
+  /* ============================================================
+     FEATURED CAROUSEL
+     ============================================================ */
+
+  function renderFeatured() {
+    els.featuredTrack.innerHTML = DATA.featured
+      .map((p) => cardHTML(p, true))
+      .join('');
+
+    /* wishlist in featured */
+    els.featuredTrack.querySelectorAll('.card-wish').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.classList.toggle('wished');
+      });
+    });
+
+    els.carouselPrev.addEventListener('click', () => moveCarousel(-1));
+    els.carouselNext.addEventListener('click', () => moveCarousel(1));
+
+    renderCarouselDots();
+    updateCarousel();
+  }
+
+  function getVisibleCards() {
+    const w = document.querySelector('.featured-track-outer')?.offsetWidth || 800;
+    if (w < 560) return 1;
+    if (w < 900) return 2;
+    return 4;
+  }
+
+  function moveCarousel(dir) {
+    const visible = getVisibleCards();
+    const max     = DATA.featured.length - visible;
+    state.carouselIdx = Math.max(0, Math.min(max, state.carouselIdx + dir));
+    updateCarousel();
+    renderCarouselDots();
+  }
+
+  function updateCarousel() {
+    const cards = els.featuredTrack.querySelectorAll('.featured-card');
+    if (!cards.length) return;
+
+    const cardW = cards[0].offsetWidth + 24; /* width + gap */
+    els.featuredTrack.style.transform = `translateX(-${state.carouselIdx * cardW}px)`;
+
+    const visible = getVisibleCards();
+    const max     = DATA.featured.length - visible;
+
+    els.carouselPrev.disabled        = state.carouselIdx === 0;
+    els.carouselNext.disabled        = state.carouselIdx >= max;
+    els.carouselPrev.style.opacity   = state.carouselIdx === 0    ? '0.35' : '1';
+    els.carouselNext.style.opacity   = state.carouselIdx >= max   ? '0.35' : '1';
+  }
+
+  function renderCarouselDots() {
+    const visible   = getVisibleCards();
+    const totalDots = DATA.featured.length - visible + 1;
+
+    els.carouselDots.innerHTML = Array.from({ length: totalDots }, (_, i) => {
+      const active = i === state.carouselIdx ? 'active' : '';
+      return `<div class="cdot ${active}" data-idx="${i}"></div>`;
+    }).join('');
+
+    els.carouselDots.querySelectorAll('.cdot').forEach((dot) => {
+      dot.addEventListener('click', () => {
+        state.carouselIdx = parseInt(dot.dataset.idx, 10);
+        updateCarousel();
+        renderCarouselDots();
+      });
+    });
+  }
+
+  /* ── touch / swipe ── */
+  let touchStartX = 0;
+  const trackWrap = document.querySelector('.featured-track-wrap');
+  if (trackWrap) {
+    trackWrap.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    });
+    trackWrap.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) moveCarousel(dx < 0 ? 1 : -1);
+    });
+  }
+
+  window.addEventListener('resize', () => {
+    updateCarousel();
+    renderCarouselDots();
+  });
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  applyFilters();
+  renderFeatured();
+
+})();
+
+
+</script>

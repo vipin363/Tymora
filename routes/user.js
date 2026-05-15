@@ -1,7 +1,7 @@
 import express  from 'express';
 const router=express.Router()
 import { isLogin,isAuth,hasOtpSession,hasForgotSession,hasResetVerified } from '../middleware/userAuth.js';
-import { loadLogin,login,loadRegister,registerUser,homePage,logout,loadForgotPassword,forgotPassword,loadResetPassword,resetPassword,loadProfile,loadEditProfile,updateProfile,changeEmail,verifyChangeEmail,resendChangeEmailOtp,deleteAccount,changePassword,loadAddressPage,addAddress,updateAddress,getAddress,setDefaultAddress,deleteAddress } from '../controller/userController.js';
+import { loadLogin,login,loadRegister,registerUser,homePage,logout,loadForgotPassword,forgotPassword,loadResetPassword,resetPassword,loadProfile,loadEditProfile,updateProfile,changeEmail,verifyChangeEmail,resendChangeEmailOtp,deleteAccount,changePassword,loadAddressPage,addAddress,updateAddress,getAddress,setDefaultAddress,deleteAddress,loadshop } from '../controller/userController.js';
 import { loadOtpPage,verifyOtp,resendOtp,loadForgotOtpPage,verifyForgotOtp } from '../controller/otpController.js';
 import  passport from 'passport';
 import upload from '../middleware/uploard.js';
@@ -85,6 +85,7 @@ router.post("/updateAddress/:id",isAuth, updateAddress);
 router.get("/setDefault/:id",isAuth, setDefaultAddress);
 router.post("/deleteAddress/:id", isAuth, deleteAddress);
 
+router.get('/shop',loadshop);
 
 
 router.use((req,res)=>{

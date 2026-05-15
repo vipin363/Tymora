@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
   brand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true },
   description: { type: String, default: '' },
   gender: { type: String, enum: ['men', 'women', 'unisex'], default: 'unisex' },
-  price: { type: Number, required: true },
+price: { type: Number, default: 0 },
   stock: { type: Number, default: 0 },
   sku: { type: String, unique: true, sparse: true },
   discount: { type: Number, default: 0 },
@@ -14,7 +14,7 @@ const productSchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   featured: { type: Boolean, default: false },
   dealOfTheDay: { type: Boolean, default: false },
-  offerProduct: { type: Boolean, default: false },
+  defaultVariant: { type: mongoose.Schema.Types.ObjectId, ref: 'Variant', default: null },
   deleted_at: { type: Date, default: null },
 }, { timestamps: true });
 
