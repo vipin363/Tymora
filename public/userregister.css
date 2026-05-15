@@ -1,24 +1,5 @@
 /* ── TYMORA · REGISTER PAGE ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --gold: #c9a84c;
-  --gold-light: #f0d060;
-  --gold-dark: #8a6520;
-  --bg: #080704;
-  --panel-bg: #0d0b05;
-  --text: #e8d8a0;
-  --text-muted: rgba(201,168,76,0.45);
-  --red: #e53935;
-}
-
-html, body {
-  height: 100%; width: 100%;
-  background: var(--bg);
-  font-family: 'Montserrat', sans-serif;
-  overflow: hidden;
-  color: var(--text);
-}
+/* Base reset, :root vars, html/body — provided by theme.css */
 
 .page {
   display: flex;

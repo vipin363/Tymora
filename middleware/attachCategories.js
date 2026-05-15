@@ -12,8 +12,11 @@ export const attachCategories = async (req, res, next) => {
       name: c.name,
       image: c.image_url || "",
     }));
+
+    res.locals.user = req.session.user || null;
   } catch (err) {
     res.locals.navCategories = [];
+    res.locals.user = null;
   }
   next();
 };

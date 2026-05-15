@@ -1,9 +1,4 @@
 <link href="/editProfile.css" rel="stylesheet">
-<link href="/footer.css" rel="stylesheet">
-<link href="/navBar.css" rel="stylesheet">
-<link rel="stylesheet" href="/userHome.css">
-
-
 <!-- BREADCRUMB -->
 <div class="breadcrumb">
   <a href="/user/home">Home</a>
@@ -129,41 +124,5 @@
 
 </div>
 
-<script>
-document.getElementById('avatar-input').addEventListener('change', function () {
-  const file = this.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function(e){
-    document.getElementById('avatar-preview').src = e.target.result;
-  }
-
-  reader.readAsDataURL(file);
-});
-
-function confirmRemoveDp() {
-  document.getElementById('removeDpModal').style.display = 'flex';
-}
-
-function closeRemoveDpModal() {
-  document.getElementById('removeDpModal').style.display = 'none';
-}
-
-function removeDpConfirmed() {
-  // preview change
-  document.getElementById('avatar-preview').src = "/image/useravathar.png";
-
-  // backend flag
-  document.getElementById('removeAvatar').value = "true";
-
-  // close modal
-  closeRemoveDpModal();
-}
-
-
-
-
-</script>
+<script src="/js/editProfile.js"></script>
 

@@ -1,0 +1,249 @@
+/* ============================================================
+   TYMORA — productCard.css
+   Unified Product Card Design System
+   Standardized sizing, spacing, and luxury aesthetics.
+   ============================================================ */
+
+:root {
+  --card-bg: var(--dark-3);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --card-radius: 12px;
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ── BASE CARD ── */
+.prod-card, .featured-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure uniform height in grid */
+}
+
+.prod-card:hover, .featured-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(201, 168, 76, 0.3);
+  box-shadow: var(--card-shadow);
+}
+
+/* ── BADGE ── */
+.prod-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.badge-new { background: var(--gold); color: #000; }
+.badge-sale, .prod-badge:not(.badge-new) { background: #e05252; color: #fff; }
+
+/* ── WISHLIST HEART ── */
+.card-wish {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 25; /* Ensure it stays above everything including overlays */
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.card-wish svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--white);
+  fill: none;
+  transition: 0.3s;
+}
+.card-wish:hover { 
+  background: var(--gold); 
+  border-color: var(--gold);
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(201, 168, 76, 0.4);
+}
+.card-wish:hover svg { stroke: #000; }
+.card-wish.wished { background: #e05252; border-color: #e05252; box-shadow: 0 4px 15px rgba(224, 82, 82, 0.4); }
+.card-wish.wished svg { stroke: #fff; fill: #fff; }
+
+/* ── IMAGE WRAP ── */
+.prod-img-wrap {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #111;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.prod-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.prod-card:hover .prod-img-wrap img, 
+.featured-card:hover .prod-img-wrap img {
+  transform: scale(1.1);
+}
+
+.prod-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  opacity: 0;
+  transition: 0.4s;
+}
+.prod-card:hover .prod-img-overlay,
+.featured-card:hover .prod-img-overlay {
+  opacity: 1;
+}
+
+/* ── QUICK ADD ── */
+.quick-add {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 20px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.3s;
+  white-space: nowrap;
+}
+.prod-card:hover .quick-add,
+.featured-card:hover .quick-add {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── CONTENT ── */
+.prod-info {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.prod-atelier {
+  font-size: 8px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.prod-rating {
+  font-size: 0.7rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.rating-count {
+  color: var(--muted);
+  font-size: 0.65rem;
+  margin-left: 6px;
+}
+.prod-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--white);
+  margin-bottom: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.prod-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  margin-top: auto; /* Push price to bottom */
+}
+.prod-price-old {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: line-through;
+  margin-left: 8px;
+}
+
+.prod-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 16px;
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  transition: 0.3s;
+  letter-spacing: 2px;
+}
+.prod-btn:hover {
+  background: var(--gold);
+  color: #000;
+  border-color: var(--gold);
+}
+
+/* ── GRID SIZING ── */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+/* Featured Carousel Card Sizing */
+.featured-card {
+  flex: 0 0 240px; /* Uniform width for carousel cards */
+  max-width: 240px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .prod-info { padding: 16px; }
+  .prod-name { font-size: 1rem; }
+  .featured-card { flex: 0 0 200px; max-width: 200px; }
+}
+
+@media (max-width: 480px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .prod-info { padding: 12px; }
+  .prod-name { font-size: 0.85rem; margin-bottom: 6px; }
+  .prod-atelier { font-size: 7px; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .prod-price { font-size: 13px; }
+  .prod-btn { padding: 10px; font-size: 8px; margin-top: 10px; }
+  .card-wish { width: 30px; height: 30px; top: 10px; right: 10px; }
+  .card-wish svg { width: 14px; height: 14px; }
+  .prod-badge { top: 10px; left: 10px; padding: 3px 8px; font-size: 8px; }
+}

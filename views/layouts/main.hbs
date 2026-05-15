@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>TYMORA</title>
 <link rel="shortcut icon" href="/image/favicon.jpeg" type="image/jpeg">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,500;1,600&family=Montserrat:wght@200;300;400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+<link href="/navBar.css" rel="stylesheet">
+<link href="/footer.css" rel="stylesheet">
+<link href="/productCard.css" rel="stylesheet">
 </head>
 <body>
 
@@ -77,12 +81,6 @@
             <span class="cart-badge">2</span>
         </button>
 
-        {{!-- <button class="nav-icon-btn" title="Account">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-            </svg>
-        </button> --}}
         {{#if user}}
         <a href="/user/profile" class="nav-icon-btn" title="Account">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -102,16 +100,7 @@
     <input type="text" id="mobileSearchInput" placeholder="Search watches…" />
 </div>
 
-<div class="mobile-menu" id="mobileMenu">
-    <button class="mobile-menu-close" id="menuClose">✕</button>
-    <ul>
-        <li><a href="#" class="active">Home</a></li>
-        <li><a href="#">Collections</a></li>
-        <li><a href="#">Shop</a></li>
-        <li><a href="#">Deals</a></li>
-        <li><a href="#">About Us</a></li>
-    </ul>
-</div>
+
 
 {{{body}}}
 
@@ -191,82 +180,6 @@
 
 </footer>
 
-
+<script src="/js/main.js"></script>
 </body>
-
-    <script src="/js/main.js"></script>
-
-<script>
-  const hamburger = document.getElementById('hamburgerBtn');
-  const mobileMenu = document.getElementById('mobileMenu');
-  const menuOverlay = document.getElementById('menuOverlay');
-  const menuClose = document.getElementById('menuClose');
-
-  function openMenu() {
-    hamburger.classList.add('open');
-    mobileMenu.classList.add('open');
-    menuOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeMenu() {
-    hamburger.classList.remove('open');
-    mobileMenu.classList.remove('open');
-    menuOverlay.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  hamburger.addEventListener('click', openMenu);
-  menuClose.addEventListener('click', closeMenu);
-  menuOverlay.addEventListener('click', closeMenu);
-
-  // close on link click
-  mobileMenu.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', closeMenu);
-  });
-
-   /* ── MOBILE SEARCH ── */
-    const searchToggle      = document.getElementById('searchToggle');
-    const mobileSearchBar   = document.getElementById('mobileSearchBar');
-    const mobileSearchInput = document.getElementById('mobileSearchInput');
-
-    searchToggle.addEventListener('click', function (e) {
-        e.stopPropagation();
-        const isOpen = mobileSearchBar.classList.toggle('open');
-        if (isOpen) mobileSearchInput.focus();
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!searchToggle.contains(e.target) && !mobileSearchBar.contains(e.target)) {
-            mobileSearchBar.classList.remove('open');
-        }
-    });
-    // In main.hbs — add inside the existing <script> block
-(function() {
-  const path = window.location.pathname;
-
-  // Active nav link
-  document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
-  if (path.includes('/home') || path === '/user/' || path === '/user') {
-    document.querySelector('.nav-links a[href="/user/home"]')?.classList.add('active');
-  } else if (path.includes('/shop')) {
-    document.querySelector('.nav-links a[href="/user/shop"]')?.classList.add('active');
-  }
-
-  // Account icon gold on profile pages
-  const accountIcon = document.querySelector('a.nav-icon-btn[href="/user/profile"]');
-  if (accountIcon) {
-    const svg = accountIcon.querySelector('svg');
-    if (svg) {
-      if (path.includes('/profile') || path.includes('/editProfile') || path.includes('/address')) {
-        svg.style.stroke = '#C9A84C';
-      } else {
-        svg.style.stroke = '#888';
-      }
-    }
-  }
-})();
-</script>
 </html>
-
-

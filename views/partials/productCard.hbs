@@ -1,0 +1,30 @@
+<div class="{{#if isFeatured}}featured-card{{else}}prod-card{{/if}}">
+  <div class="prod-img-wrap">
+    {{#if badge}}
+      <span class="prod-badge {{#ifEquals badge 'New'}}badge-new{{else}}badge-sale{{/ifEquals}}">{{badge}}</span>
+    {{/if}}
+    
+    <div class="card-wish" data-wished="false" title="Add to Wishlist">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+                 a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+                 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    </div>
+
+    <img src="{{img}}" alt="{{name}}" loading="lazy">
+    <div class="prod-img-overlay"></div>
+    <button class="quick-add">+ Add to Bag</button>
+  </div>
+
+  <div class="prod-info">
+    <div class="prod-atelier">{{brand}}</div>
+    <div class="prod-rating">★ {{rating}} {{#if reviews}}<span class="rating-count">({{reviews}})</span>{{/if}}</div>
+    <div class="prod-name">{{name}}</div>
+    <div class="prod-price">
+      {{price}}
+      {{#if oldPrice}}<span class="prod-price-old">{{oldPrice}}</span>{{/if}}
+    </div>
+    <button class="prod-btn">View Details</button>
+  </div>
+</div>
