@@ -26,20 +26,22 @@ const variantSchema = new mongoose.Schema(
     isDefault: { type: Boolean, default: false },
     deleted_at: { type: Date, default: null },
     variantStatusBeforeInactive: {
-  type: String,
-  enum: ['active', 'inactive', null],
-  default: null
-}
+      type: String,
+      enum: ["active", "inactive", null],
+      default: null,
+    },
   },
   { timestamps: true },
 );
 
-
 variantSchema.pre("save", async function () {
   if (this.originalPrice > 0) {
-    this.discountPercentage = Math.max(0, Math.round(
-      ((this.originalPrice - this.salePrice) / this.originalPrice) * 100
-    ));
+    this.discountPercentage = Math.max(
+      0,
+      Math.round(
+        ((this.originalPrice - this.salePrice) / this.originalPrice) * 100,
+      ),
+    );
   } else {
     this.discountPercentage = 0;
   }
@@ -50,11 +52,12 @@ variantSchema.pre("findOneAndUpdate", async function () {
   const update = this.getUpdate();
   const op = update.$set || update;
   const originalPrice = parseFloat(op.originalPrice);
-  const salePrice     = parseFloat(op.salePrice);
+  const salePrice = parseFloat(op.salePrice);
   if (!isNaN(originalPrice) && !isNaN(salePrice) && originalPrice > 0) {
-    const pct = Math.max(0, Math.round(
-      ((originalPrice - salePrice) / originalPrice) * 100
-    ));
+    const pct = Math.max(
+      0,
+      Math.round(((originalPrice - salePrice) / originalPrice) * 100),
+    );
     if (update.$set) {
       update.$set.discountPercentage = pct;
       update.$set.price = salePrice;
@@ -64,6 +67,5 @@ variantSchema.pre("findOneAndUpdate", async function () {
     }
   }
 });
-
 
 export default mongoose.model("Variant", variantSchema);
