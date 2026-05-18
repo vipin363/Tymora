@@ -37,6 +37,9 @@ app.engine('hbs', engine({
         json: (context) => JSON.stringify(context),
         ifEquals: function (a, b, options) {
             return a === b ? options.fn(this) : options.inverse(this);
+        }, formatCurrency: (value) => {
+            if (value == null) return '0';
+            return Number(value).toLocaleString('en-IN');
         }
     }
 }));

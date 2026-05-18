@@ -47,6 +47,28 @@
 .badge-new { background: var(--gold); color: #000; }
 .badge-sale, .prod-badge:not(.badge-new) { background: #e05252; color: #fff; }
 
+/* ── STOCK BADGE ── */
+.stock-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+.badge-instock { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
+.badge-outofstock { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3); }
+
+/* Adjust if both badges exist */
+.prod-badge + .stock-badge {
+  top: 42px;
+}
+
 /* ── WISHLIST HEART ── */
 .card-wish {
   position: absolute;
@@ -139,6 +161,17 @@
 .prod-card:hover .quick-add,
 .featured-card:hover .quick-add {
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.quick-add.disabled {
+  background: #333;
+  color: #777;
+  cursor: not-allowed;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.quick-add.disabled:hover {
+  background: #333;
   transform: translateX(-50%) translateY(0);
 }
 
@@ -246,4 +279,139 @@
   .card-wish { width: 30px; height: 30px; top: 10px; right: 10px; }
   .card-wish svg { width: 14px; height: 14px; }
   .prod-badge { top: 10px; left: 10px; padding: 3px 8px; font-size: 8px; }
+  .stock-badge { top: 10px; left: 10px; font-size: 7px; padding: 3px 6px; }
+  .prod-badge + .stock-badge { top: 32px; }
+}
+
+/* ── CARD REMOVAL ANIMATION ── */
+.removing-card {
+  animation: cardFadeOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes cardFadeOut {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0; filter: blur(10px); }
+}
+/* ══ SMART BADGE SYSTEM ══ */
+
+.prod-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-family: 'Montserrat', sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Deal of the Day — highest priority, premium gradient */
+.prod-badge.badge-deal {
+  background: linear-gradient(135deg, #b8860b, #d4af37, #b8860b);
+  color: #000;
+  box-shadow: 0 2px 12px rgba(212,175,55,0.5);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+/* Featured */
+.prod-badge.badge-featured {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #d4af37;
+  border: 1px solid rgba(212,175,55,0.4);
+}
+
+/* Offer / Discount */
+.prod-badge.badge-offer {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(231,76,60,0.4);
+}
+
+/* New Arrival */
+.prod-badge.badge-new {
+  background: linear-gradient(135deg, #0a3d62, #1e90ff);
+  color: #fff;
+}
+
+/* Limited Stock */
+.prod-badge.badge-limited {
+  background: linear-gradient(135deg, #6c3483, #9b59b6);
+  color: #fff;
+}
+
+/* Sale (legacy fallback) */
+.prod-badge.badge-sale {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  color: #fff;
+}
+
+/* Hot (legacy fallback) */
+.prod-badge.badge-hot {
+  background: linear-gradient(135deg, #e67e22, #f39c12);
+  color: #fff;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 2px 12px rgba(212,175,55,0.5); }
+  50%       { box-shadow: 0 4px 20px rgba(212,175,55,0.9); }
+}
+
+/* ══ PRICE DISPLAY ══ */
+
+.prod-price-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.prod-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white, #fff);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.prod-price-old {
+  font-size: 12px;
+  color: var(--muted, #888);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.prod-discount-pill {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* ══ WISHED HEART ══ */
+
+.card-wish.wished svg path {
+  fill: #e05252;
+  stroke: #e05252;
+}
+.card-wish.wished {
+  background: rgba(224, 82, 82, 0.15);
+  border-color: rgba(224, 82, 82, 0.4);
+}
+
+/* ══ DISABLED QUICK-ADD ══ */
+.quick-add.disabled {
+  background: rgba(255,255,255,0.05);
+  color: var(--muted, #888);
+  cursor: not-allowed;
+  opacity: 0.6;
 }

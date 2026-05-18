@@ -129,6 +129,7 @@
 
         <div class="panel-title">Account Settings</div>
 
+        {{#unless isGoogleUser}}
         <div class="setting-row">
           <a class="setting-link" onclick="showModal('change-password-modal')">
             {{#if hasPassword}}
@@ -140,10 +141,11 @@
         </div>
 
         <div class="setting-row">
-          <a class="setting-link"  onclick="showModal('change-email-modal')">
+          <a class="setting-link" onclick="showModal('change-email-modal')">
             Update Email Address <span>›</span>
           </a>
         </div>
+        {{/unless}}
 
        <div class="toggle-wrap">
       <span id="themeLabel">Light Mode</span>

@@ -14,6 +14,11 @@ export const attachCategories = async (req, res, next) => {
     }));
 
     res.locals.user = req.session.user || null;
+
+      
+    req.session.cartCount = req.session.cartCount !== undefined ? req.session.cartCount : 2;
+    res.locals.cartCount = req.session.cartCount;
+
   } catch (err) {
     res.locals.navCategories = [];
     res.locals.user = null;

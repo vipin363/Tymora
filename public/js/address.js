@@ -1,18 +1,12 @@
-/* ============================================================
-   TYMORA — address.js
-   All address interactions: add, edit, delete, set default
-   ============================================================ */
+
 
 (function () {
   'use strict';
 
-  /* ── GLOBALS ── */
   let editAddressId = null;
   const $ = (id) => document.getElementById(id);
 
-  /* ============================================================
-     MODAL HELPERS
-     ============================================================ */
+ 
 
   window.showModal = function (id) {
     const modal = $(id);
@@ -47,10 +41,7 @@
     modal.style.display = "none";
   };
 
-  /* ============================================================
-     DELETE ADDRESS
-     ============================================================ */
-
+  
   window.openDeleteAddressModal = function (id) {
     const form = $("deleteAddressForm");
     if (form) {
@@ -59,9 +50,7 @@
     }
   };
 
-  /* ============================================================
-     EDIT ADDRESS
-     ============================================================ */
+ 
 
   window.openEditModal = async function (id) {
     try {
@@ -94,9 +83,7 @@
     }
   };
 
-  /* ============================================================
-     FORM SUBMIT
-     ============================================================ */
+  
 
   document.addEventListener("DOMContentLoaded", function () {
     const form = $("addressForm");

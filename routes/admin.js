@@ -64,24 +64,29 @@ router.post('/categoryManagement/permanent-delete/:id', isAdminAuth, permanentDe
 router.get('/categoryManagement/stats', isAdminAuth, getCategoryStats);
 
 router.get('/products', isAdminAuth, loadProductManagement);
+
 router.get('/products/trash', isAdminAuth, loadProductTrash);
-router.get('/products/:id/json', isAdminAuth, getProductJson);
-router.get('/products/:id', isAdminAuth, getProductDetail);
 router.post('/products/add', isAdminAuth, uploadProduct.array('images', 10), addProduct);
+
+router.get('/products/variants/:variantId/json', isAdminAuth, getVariantJson);
+router.post('/products/variants/:variantId/edit', isAdminAuth, uploadProduct.array('images', 10), editVariant);
+router.post('/products/variants/:variantId/delete', isAdminAuth, softDeleteVariant);
+router.post('/products/variants/:variantId/restore', isAdminAuth, restoreVariant);
+router.post('/products/variants/:variantId/permanent-delete', isAdminAuth, permanentDeleteVariant);
+
+router.get('/products/:id/json', isAdminAuth, getProductJson);
+router.get('/products/:productId/variants', isAdminAuth, getVariants);
+router.get('/products/:productId/variants/trash', isAdminAuth, getVariantTrash);
+router.post('/products/:productId/variants/add', isAdminAuth, uploadProduct.array('images', 10), addVariant);
+router.post('/products/:productId/variants/:variantId/set-default', isAdminAuth, setDefaultVariant);
 router.post('/products/edit/:id', isAdminAuth, uploadProduct.array('images', 10), editProduct);
 router.post('/products/delete/:id', isAdminAuth, softDeleteProduct);
 router.post('/products/restore/:id', isAdminAuth, restoreProduct);
 router.post('/products/permanent-delete/:id', isAdminAuth, permanentDeleteProduct);
 
+router.get('/products/:id', isAdminAuth, getProductDetail);
 
-router.get('/products/:productId/variants', getVariants);
-router.get('/products/variants/:variantId/json', getVariantJson);
-router.post('/products/:productId/variants/add', upload.array('images', 10), addVariant);
-router.post('/products/variants/:variantId/edit', upload.array('images', 10), editVariant);
-router.post('/products/variants/:variantId/delete', softDeleteVariant);
-router.get('/products/:productId/variants/trash', getVariantTrash);
-router.post('/products/variants/:variantId/restore', restoreVariant);
-router.post('/products/variants/:variantId/permanent-delete', permanentDeleteVariant);
+
 
 router.get('/materials', getMaterials);
 router.post('/materials/add', addMaterial);
@@ -91,7 +96,6 @@ router.post('/saved-colors', saveColor);
 
 router.get('/sku/product', generateProductSku);
 router.get('/sku/variant', generateVariantSku);
-router.post('/products/:productId/variants/:variantId/set-default', isAdminAuth, setDefaultVariant);
 
 router.get("/logout", logout);
 

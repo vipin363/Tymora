@@ -1,10 +1,15 @@
-<div class="{{#if isFeatured}}featured-card{{else}}prod-card{{/if}}">
+<div class="{{#if isFeatured}}featured-card{{else}}prod-card{{/if}}" data-id="{{id}}">
   <div class="prod-img-wrap">
-    {{#if badge}}
-      <span class="prod-badge {{#ifEquals badge 'New'}}badge-new{{else}}badge-sale{{/ifEquals}}">{{badge}}</span>
+
+    {{#if badgeLabel}}
+      <span class="prod-badge badge-{{badge}}">{{badgeLabel}}</span>
+    {{else if badge}}
+      <span class="prod-badge badge-{{badge}}">{{badge}}</span>
     {{/if}}
-    
-    <div class="card-wish" data-wished="false" title="Add to Wishlist">
+
+    <div class="card-wish {{#if wished}}wished{{/if}}"
+         data-id="{{id}}"
+         title="{{#if isWishlist}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
                  a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
@@ -12,19 +17,34 @@
       </svg>
     </div>
 
-    <img src="{{img}}" alt="{{name}}" loading="lazy">
+    <img src="{{img}}" alt="{{name}}" loading="lazy"
+         style="cursor:pointer"
+         onclick="window.location.href='/user/product/{{id}}'">
     <div class="prod-img-overlay"></div>
-    <button class="quick-add">+ Add to Bag</button>
+
+    {{#ifEquals avail 'outofstock'}}
+      <button class="quick-add disabled" disabled title="Out of Stock">Out of Stock</button>
+    {{else}}
+      <button class="quick-add" data-id="{{id}}" data-variant-id="{{variantId}}">+ Add to Bag</button>
+    {{/ifEquals}}
+
   </div>
 
   <div class="prod-info">
     <div class="prod-atelier">{{brand}}</div>
-    <div class="prod-rating">★ {{rating}} {{#if reviews}}<span class="rating-count">({{reviews}})</span>{{/if}}</div>
-    <div class="prod-name">{{name}}</div>
-    <div class="prod-price">
-      {{price}}
-      {{#if oldPrice}}<span class="prod-price-old">{{oldPrice}}</span>{{/if}}
+    <div class="prod-rating">★ {{rating}}
+      {{#if reviews}}<span class="rating-count">({{reviews}})</span>{{/if}}
     </div>
-    <button class="prod-btn">View Details</button>
+    <div class="prod-name">{{name}}</div>
+    <div class="prod-price-wrap">
+      <span class="prod-price">{{#if price}}₹{{formatCurrency price}}{{else}}₹0{{/if}}</span>
+      {{#if oldPrice}}
+        <span class="prod-price-old">₹{{formatCurrency oldPrice}}</span>
+        {{#if discountPct}}
+          <span class="prod-discount-pill">{{discountPct}}% OFF</span>
+        {{/if}}
+      {{/if}}
+    </div>
+    <button class="prod-btn" onclick="window.location.href='/user/product/{{id}}'">View Details</button>
   </div>
 </div>

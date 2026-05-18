@@ -11,6 +11,14 @@ import Variant from '../model/variantModel.js';
 import Material from '../model/materialModel.js';
 import SavedColor from '../model/savedColorModel.js';
 
+
+function calcDiscount(originalPrice, salePrice) {
+  const op = parseFloat(originalPrice) || 0;
+  const sp = parseFloat(salePrice)     || 0;
+  if (op <= 0) return 0;
+  return Math.max(0, Math.round(((op - sp) / op) * 100));
+}
+
 export const loadLogin = (req, res) => {
   res.render("admin/login");
 };
@@ -595,8 +603,11 @@ export const loadProductManagement = async (req, res) => {
         name: p.name,
         category: p.category?.name || '-',
         brand: p.brand?.name || '-',
-        price: p.price,
-        stock: p.stock,
+        originalPrice:      p.originalPrice      ?? p.price ?? 0,
+        salePrice:          p.salePrice          ?? p.price ?? 0,
+        discountPercentage: p.discountPercentage ?? p.discount ?? 0,
+        price:              p.price,
+        stock:              p.stock,
         stockStatus,
         status: p.status,
         images: p.images,
@@ -638,7 +649,7 @@ export const addProduct = async (req, res) => {
       status, featured, dealOfTheDay,
       // default variant fields
       variantName, sku, strapColor, dialColor, caseColor,
-      size, strapMaterial, caseMaterial, price, stock, offerProduct,
+      size, strapMaterial, caseMaterial, originalPrice, salePrice, stock, offerProduct,
       existingImages,
     } = req.body;
 
@@ -647,9 +658,13 @@ export const addProduct = async (req, res) => {
     }
 
     // Validate default variant required fields
-    if (!strapColor || !dialColor || !caseColor || !size || !strapMaterial || !caseMaterial || !price) {
+    if (!strapColor || !dialColor || !caseColor || !size || !strapMaterial || !caseMaterial || !originalPrice || !salePrice) {
       return res.json({ success: false, message: 'All default variant fields are required.' });
     }
+    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
+      return res.json({ success: false, message: 'Sale price cannot exceed original price.' });
+    }
+    const discountPct = calcDiscount(originalPrice, salePrice);
 
     let brandId = brand;
     if (brand === 'other' && newBrand?.trim()) {
@@ -674,7 +689,7 @@ export const addProduct = async (req, res) => {
       if (skuExists) return res.json({ success: false, message: 'SKU already exists.' });
     }
 
-    // Create product (images mirrored from default variant for list display)
+    // Create product 
     const product = new Product({
       name: name.trim(),
       category,
@@ -685,7 +700,11 @@ export const addProduct = async (req, res) => {
       status: status || 'active',
       featured: featured === 'true' || featured === true,
       dealOfTheDay: dealOfTheDay === 'true' || dealOfTheDay === true,
-      price: parseFloat(price) || 0,
+      originalPrice:      parseFloat(originalPrice) || 0,
+      salePrice:          parseFloat(salePrice)     || 0,
+      discountPercentage: discountPct,
+      price:              parseFloat(salePrice)     || 0,   
+      discount:           discountPct,                      
       stock: parseInt(stock) || 0,
     });
     await product.save();
@@ -697,7 +716,10 @@ export const addProduct = async (req, res) => {
       sku: sku || undefined,
       strapColor, dialColor, caseColor,
       size, strapMaterial, caseMaterial,
-      price: parseFloat(price),
+      originalPrice:      parseFloat(originalPrice),
+      salePrice:          parseFloat(salePrice),
+      discountPercentage: discountPct,
+      price:              parseFloat(salePrice),   
       stock: parseInt(stock) || 0,
       images: allImages,
       status: status || 'active',
@@ -705,8 +727,13 @@ export const addProduct = async (req, res) => {
       isDefault: true,
     });
 
-    // Link default variant back to product
-    product.defaultVariant = variant._id;
+   product.defaultVariant = variant._id;
+    
+    product.originalPrice      = variant.originalPrice;
+    product.salePrice          = variant.salePrice;
+    product.discountPercentage = variant.discountPercentage;
+    product.price              = variant.salePrice;
+    product.discount           = variant.discountPercentage;
     await product.save();
 
     res.json({ success: true, message: 'Product and default variant created successfully.', productId: product._id });
@@ -730,6 +757,36 @@ export const editProduct = async (req, res) => {
       brandId = existing._id;
     }
 
+    const currentProduct = await Product.findById(req.params.id);
+    if (!currentProduct) return res.json({ success: false, message: 'Product not found.' });
+
+    const wasActive   = currentProduct.status === 'active';
+    const goingActive = status === 'active';
+    const goingInactive = status === 'inactive';
+
+    
+    if (wasActive && goingInactive) {
+      const variants = await Variant.find({ product: req.params.id, deleted_at: null });
+      for (const v of variants) {
+        await Variant.findByIdAndUpdate(v._id, {
+          variantStatusBeforeInactive: v.status,  
+          status: 'inactive',
+        });
+      }
+    }
+
+   
+    if (!wasActive && goingActive) {
+      const variants = await Variant.find({ product: req.params.id, deleted_at: null });
+      for (const v of variants) {
+        const restoreStatus = v.variantStatusBeforeInactive || 'active';
+        await Variant.findByIdAndUpdate(v._id, {
+          status: restoreStatus,
+          variantStatusBeforeInactive: null,  
+        });
+      }
+    }
+
     const updateData = {
       name: name.trim(),
       category,
@@ -742,10 +799,6 @@ export const editProduct = async (req, res) => {
     };
 
     await Product.findByIdAndUpdate(req.params.id, updateData);
-
-    if (status === 'inactive') {
-      await Variant.updateMany({ product: req.params.id }, { status: 'inactive' });
-    }
 
     res.json({ success: true, message: 'Product updated.' });
   } catch (err) {
@@ -770,21 +823,24 @@ export const getProductJson = async (req, res) => {
     }
 
     res.json({
-      _id:          product._id,
-      name:         product.name,
-      categoryId:   product.category?._id,
-      brandId:      product.brand?._id,
-      description:  product.description,
-      gender:       product.gender,
-      images:       defaultVariant?.images?.length ? defaultVariant.images : product.images,
-      status:       product.status,
-      featured:     product.featured,
-      dealOfTheDay: product.dealOfTheDay,
-      discount:     product.discount || 0,
-      price:        defaultVariant?.price ?? product.price,
-      stock:        defaultVariant?.stock ?? product.stock,
-      sku:          defaultVariant?.sku || product.sku || '',
-      offerProduct: defaultVariant?.offerProduct || false,
+      _id:                product._id,
+      name:               product.name,
+      categoryId:         product.category?._id,
+      brandId:            product.brand?._id,
+      description:        product.description,
+      gender:             product.gender,
+      images:             defaultVariant?.images?.length ? defaultVariant.images : product.images,
+      status:             product.status,
+      featured:           product.featured,
+      dealOfTheDay:       product.dealOfTheDay,
+      originalPrice:      defaultVariant?.originalPrice      ?? product.originalPrice ?? 0,
+      salePrice:          defaultVariant?.salePrice          ?? product.salePrice     ?? 0,
+      discountPercentage: defaultVariant?.discountPercentage ?? product.discountPercentage ?? 0,
+      discount:           defaultVariant?.discountPercentage ?? product.discount      ?? 0, 
+      price:              defaultVariant?.salePrice          ?? product.salePrice     ?? 0, 
+      stock:              defaultVariant?.stock ?? product.stock,
+      sku:                defaultVariant?.sku || product.sku || '',
+      offerProduct:       defaultVariant?.offerProduct || false,
     });
   } catch (err) {
     console.log(err);
@@ -826,7 +882,7 @@ export const restoreProduct = async (req, res) => {
   try {
     const result = await Product.findByIdAndUpdate(
       req.params.id, 
-      { $set: { deleted_at: null, status: 'active' } },  // use $set explicitly
+      { $set: { deleted_at: null, status: 'active' } },  
       { new: true }
     );
     if (!result) return res.json({ success: false, message: 'Product not found' });
@@ -841,10 +897,10 @@ export const permanentDeleteProduct = async (req, res) => {
   try {
     const productId = req.params.id;
 
-    // Delete all variants (including trashed ones) belonging to this product
+    
     await Variant.deleteMany({ product: productId });
 
-    // Delete the product itself
+    
     await Product.findByIdAndDelete(productId);
 
     res.json({ success: true });
@@ -861,7 +917,7 @@ export const getProductDetail = async (req, res) => {
       .populate('brand', 'name');
     if (!product) return res.redirect('/admin/products');
 
-    // Find default variant (fallback to first active variant)
+    
     let defaultVariant = null;
     if (product.defaultVariant) {
       defaultVariant = await Variant.findOne({ _id: product.defaultVariant, deleted_at: null });
@@ -893,7 +949,7 @@ export const getProductDetail = async (req, res) => {
       };
     });
 
-    // Merge: product info + default variant data
+   
     const dvStock = defaultVariant?.stock ?? product.stock ?? 0;
     let stockStatus = 'IN_STOCK';
     if (dvStock === 0) stockStatus = 'OUT_OF_STOCK';
@@ -910,8 +966,11 @@ export const getProductDetail = async (req, res) => {
       featured: product.featured,
       dealOfTheDay: product.dealOfTheDay,
       discount: product.discount,
-      // from default variant
-      price: defaultVariant?.price ?? product.price,
+     
+     originalPrice:      defaultVariant?.originalPrice      ?? product.originalPrice      ?? 0,
+      salePrice:          defaultVariant?.salePrice          ?? product.salePrice          ?? 0,
+      discountPercentage: defaultVariant?.discountPercentage ?? product.discountPercentage ?? 0,
+      price:              defaultVariant?.salePrice          ?? product.salePrice          ?? 0,  // legacy
       stock: dvStock,
       stockStatus,
       sku: defaultVariant?.sku || product.sku || '',
@@ -959,10 +1018,10 @@ export const setDefaultVariant = async (req, res) => {
   try {
     const { productId, variantId } = req.params;
 
-    // Unset all current defaults for this product
+    
     await Variant.updateMany({ product: productId }, { isDefault: false });
 
-    // Set new default
+    
     const variant = await Variant.findByIdAndUpdate(
       variantId,
       { isDefault: true },
@@ -971,12 +1030,16 @@ export const setDefaultVariant = async (req, res) => {
 
     if (!variant) return res.json({ success: false, message: 'Variant not found.' });
 
-    // Mirror default variant data onto product for list display
+    
     await Product.findByIdAndUpdate(productId, {
-      images: variant.images,
-      price: variant.price,
-      stock: variant.stock,
-      defaultVariant: variant._id,
+      images:             variant.images,
+      originalPrice:      variant.originalPrice,
+      salePrice:          variant.salePrice,
+      discountPercentage: variant.discountPercentage,
+      price:              variant.salePrice,
+      discount:           variant.discountPercentage,
+      stock:              variant.stock,
+      defaultVariant:     variant._id,
     });
 
     res.json({ success: true, message: 'Default variant updated.' });
@@ -1013,12 +1076,12 @@ export const addVariant = async (req, res) => {
   try {
     const { productId } = req.params;
     const {
-  name, sku, strapColor, dialColor, caseColor,
-  size, strapMaterial, caseMaterial, price, stock,
-  status, offerProduct, existingImages
-} = req.body;
+      name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial, originalPrice, salePrice, stock,
+      status, offerProduct, existingImages
+    } = req.body;
 
-     if (sku) {
+    if (sku) {
       const existing = await Variant.findOne({ sku });
       if (existing) return res.json({ success: false, message: 'SKU already exists.' });
     }
@@ -1032,14 +1095,50 @@ export const addVariant = async (req, res) => {
       return res.json({ success: false, message: 'At least 3 images are required.' });
     }
 
+    
+    const existingDefault = await Variant.findOne({
+      product:    productId,
+      isDefault:  true,
+      deleted_at: null,
+    });
+
+    const shouldBeDefault = !existingDefault;
+
+   // Validate pricing
+    if (!originalPrice || !salePrice) {
+      return res.json({ success: false, message: 'Original price and sale price are required.' });
+    }
+    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
+      return res.json({ success: false, message: 'Sale price cannot exceed original price.' });
+    }
+    const discountPct = calcDiscount(originalPrice, salePrice);
+
     const variant = await Variant.create({
-  product: productId, name, sku, strapColor, dialColor, caseColor,
-  size, strapMaterial, caseMaterial,
-  price: parseFloat(price), stock: parseInt(stock) || 0,
-  images: allImages,
-  status: status || 'active',
-  offerProduct: offerProduct === 'true' || offerProduct === true,
-});
+      product: productId, name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial,
+      originalPrice:      parseFloat(originalPrice),
+      salePrice:          parseFloat(salePrice),
+      discountPercentage: discountPct,
+      price:              parseFloat(salePrice),   
+      stock:              parseInt(stock) || 0,
+      images:       allImages,
+      status:       status || 'active',
+      offerProduct: offerProduct === 'true' || offerProduct === true,
+      isDefault:    shouldBeDefault,
+    });
+
+   if (shouldBeDefault) {
+      await Product.findByIdAndUpdate(productId, {
+        images:             allImages,
+        originalPrice:      variant.originalPrice,
+        salePrice:          variant.salePrice,
+        discountPercentage: variant.discountPercentage,
+        price:              variant.salePrice,
+        discount:           variant.discountPercentage,
+        stock:              variant.stock,
+        defaultVariant:     variant._id,
+      });
+    }
 
     res.json({ success: true, variant, message: 'Variant added.' });
   } catch (err) {
@@ -1050,13 +1149,13 @@ export const addVariant = async (req, res) => {
 export const editVariant = async (req, res) => {
   try {
     const { variantId } = req.params;
-   const {
-  name, sku, strapColor, dialColor, caseColor,
-  size, strapMaterial, caseMaterial, price, stock,
-  status, offerProduct, existingImages
-} = req.body;
+    const {
+      name, sku, strapColor, dialColor, caseColor,
+      size, strapMaterial, caseMaterial, originalPrice, salePrice, stock,
+      status, offerProduct, existingImages
+    } = req.body;
 
-      if (sku) {
+    if (sku) {
       const existing = await Variant.findOne({ sku, _id: { $ne: variantId } });
       if (existing) return res.json({ success: false, message: 'SKU already exists.' });
     }
@@ -1070,14 +1169,40 @@ export const editVariant = async (req, res) => {
       return res.json({ success: false, message: 'At least 3 images are required.' });
     }
 
+    if (!originalPrice || !salePrice) {
+      return res.json({ success: false, message: 'Original price and sale price are required.' });
+    }
+    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
+      return res.json({ success: false, message: 'Sale price cannot exceed original price.' });
+    }
+    const discountPct = calcDiscount(originalPrice, salePrice);
+
     const updated = await Variant.findByIdAndUpdate(variantId, {
-  name, sku, strapColor, dialColor, caseColor,
-  size, strapMaterial, caseMaterial,
-  price: parseFloat(price), stock: parseInt(stock) || 0,
-  images: allImages,
-  status: status || 'active',
-  offerProduct: offerProduct === 'true' || offerProduct === true,
-}, { new: true });
+  $set: {
+    name, sku, strapColor, dialColor, caseColor,
+    size, strapMaterial, caseMaterial,
+    originalPrice:      parseFloat(originalPrice),
+    salePrice:          parseFloat(salePrice),
+    discountPercentage: discountPct,
+    price:              parseFloat(salePrice),
+    stock:              parseInt(stock) || 0,
+    images:             allImages,
+    status:             status || 'active',
+    offerProduct:       offerProduct === 'true' || offerProduct === true,
+  }
+}, { new: true, runValidators: false });
+
+   if (updated.isDefault) {
+      await Product.findByIdAndUpdate(updated.product, {
+        images:             allImages,
+        originalPrice:      updated.originalPrice,
+        salePrice:          updated.salePrice,
+        discountPercentage: updated.discountPercentage,
+        price:              updated.salePrice,
+        discount:           updated.discountPercentage,
+        stock:              updated.stock,
+      });
+    }
 
     res.json({ success: true, variant: updated, message: 'Variant updated.' });
   } catch (err) {
@@ -1102,13 +1227,13 @@ export const softDeleteVariant = async (req, res) => {
 
     const wasDefault = variant.isDefault;
     
-    // Soft delete it
+    
     await Variant.findByIdAndUpdate(req.params.variantId, { 
       deleted_at: new Date(),
       isDefault: false 
     });
 
-    // If it was default, promote next available variant
+    
     if (wasDefault) {
       const nextVariant = await Variant.findOne({ 
         product: variant.product, 
@@ -1118,13 +1243,15 @@ export const softDeleteVariant = async (req, res) => {
 
       if (nextVariant) {
         await Variant.findByIdAndUpdate(nextVariant._id, { isDefault: true });
-
-        // Mirror new default onto product
         await Product.findByIdAndUpdate(variant.product, {
-          images: nextVariant.images,
-          price: nextVariant.price,
-          stock: nextVariant.stock,
-          defaultVariant: nextVariant._id,
+          images:             nextVariant.images,
+          originalPrice:      nextVariant.originalPrice,
+          salePrice:          nextVariant.salePrice,
+          discountPercentage: nextVariant.discountPercentage,
+          price:              nextVariant.salePrice,
+          discount:           nextVariant.discountPercentage,
+          stock:              nextVariant.stock,
+          defaultVariant:     nextVariant._id,
         });
       }
     }
@@ -1152,13 +1279,13 @@ export const restoreVariant = async (req, res) => {
     const variant = await Variant.findById(req.params.variantId);
     if (!variant) return res.json({ success: false, message: 'Not found' });
 
-    // Restore it (but NOT as default automatically)
+    
     await Variant.findByIdAndUpdate(req.params.variantId, { 
       deleted_at: null,
-      isDefault: false  // always restore as non-default
+      isDefault: false  
     });
 
-    // Check if this product has any default variant at all
+    
     const existingDefault = await Variant.findOne({ 
       product: variant.product, 
       deleted_at: null, 
@@ -1166,14 +1293,18 @@ export const restoreVariant = async (req, res) => {
       _id: { $ne: req.params.variantId }
     });
 
-    // If no default exists anywhere, make the restored one default
+    
     if (!existingDefault) {
       await Variant.findByIdAndUpdate(req.params.variantId, { isDefault: true });
       await Product.findByIdAndUpdate(variant.product, {
-        images: variant.images,
-        price: variant.price,
-        stock: variant.stock,
-        defaultVariant: variant._id,
+        images:             variant.images,
+        originalPrice:      variant.originalPrice,
+        salePrice:          variant.salePrice,
+        discountPercentage: variant.discountPercentage,
+        price:              variant.salePrice,
+        discount:           variant.discountPercentage,
+        stock:              variant.stock,
+        defaultVariant:     variant._id,
       });
     }
 

@@ -12,6 +12,10 @@ export const isAuth = async (req, res, next) => {
   try {
 
     if (!req.session.user) {
+       if (req.xhr ||req.headers['content-type']?.includes('application/json') ||
+    req.path.startsWith('/api/')) {
+    return res.json({ success: false, redirect: '/user/login' });
+  }
       return res.redirect('/user/login');
     }
 
@@ -26,6 +30,7 @@ export const isAuth = async (req, res, next) => {
       req.session.user = null;
       return res.redirect('/user/?message=Your account has been blocked by admin');
     }
+   
 
     next();
 

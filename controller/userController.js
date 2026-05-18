@@ -5,6 +5,9 @@ import addressModel from "../model/addressModel.js";
 import { generateAndSaveOtp , verifyOtpFromDb} from "../services/otpService.js";
 import Category from '../model/categoryModel.js';
 import Product from '../model/productModel.js';
+import Variant from '../model/variantModel.js';
+import Wishlist from '../model/wishlistModel.js';
+import Cart     from '../model/cartModel.js';
 
 export const loadRegister = async (req,res)=>{
     let message = req.query.message || "";
@@ -104,15 +107,40 @@ export const homePage = async (req, res) => {
     let message = req.query.message || null;
 
     
-    const rawCategories = await Category.find({
-      is_visible: true,
-      deleted_at: null,
-    }).sort({ createdAt: -1 }).lean();
+    // Find category IDs that have at least one active product with active variants
+const activeCategoryIds = await Product.distinct('category', {
+  status: 'active',
+  deleted_at: null,
+});
 
-   const navCategories = rawCategories.map(c => ({
-    _id: c._id.toString(),  
-    name: c.name,
-    image: c.image_url || '',
+// only categories whose products have at least one active variant
+const productsWithActiveVariants = await Variant.distinct('product', {
+  status: 'active',
+  deleted_at: null,
+});
+
+const productIdsWithVariants = await Product.distinct('_id', {
+  _id: { $in: productsWithActiveVariants },
+  status: 'active',
+  deleted_at: null,
+});
+
+const validCategoryIds = await Product.distinct('category', {
+  _id: { $in: productIdsWithVariants },
+  status: 'active',
+  deleted_at: null,
+});
+
+const rawCategories = await Category.find({
+  _id: { $in: validCategoryIds },
+  is_visible: true,
+  deleted_at: null,
+}).sort({ createdAt: -1 }).lean();
+
+const navCategories = rawCategories.map(c => ({
+  _id: c._id.toString(),
+  name: c.name,
+  image: c.image_url || '',
 }));
 
     if (req.session.user) {
@@ -182,6 +210,10 @@ export const forgotPassword = async(req,res)=>{
 
       if(!user){
          return res.render('user/forgotPassword',{layout: 'auth',message:"Email not registered"});
+      }
+
+      if(!user.password){
+         return res.render('user/forgotPassword',{layout: 'auth',message:"You registered using Google. Please login with Google."});
       }
       req.session.userData = null;
 
@@ -264,7 +296,7 @@ export const loadProfile = async (req,res)=>{
          user.dob = new Date(user.dob).toLocaleDateString('en-GB');
       }
 
-      res.render('user/userProfile',{ layout: 'main',user,hasPassword: !!user.password });
+     res.render('user/userProfile',{ layout: 'main', user, hasPassword: !!user.password, isGoogleUser: !user.password });
 
    }catch(err){
       console.log(err);
@@ -723,107 +755,926 @@ export const deleteAddress = async (req,res)=>{
 
 export const loadshop = async (req, res) => {
   try {
-    const dbProducts = await Product.find({ 
-      status: 'active', 
-      deleted_at: null 
-    })
-    .populate('category')
-    .populate('brand')
-    .lean();
+    const {
+      q        = '',
+      cat      = '',
+      brand    = '',
+      style    = '',
+      avail    = '',
+      sort     = '',
+      priceMin = '',
+      priceMax = '',
+      page     = '1',
+    } = req.query;
 
-    // Map your actual field names to what shop.js expects
-    const products = dbProducts.map(p => {
+    const currentPage = Math.max(1, parseInt(page, 10) || 1);
+    const PER_PAGE    = 8;
+
+    // Always hide inactive products
+    const mongoFilter = {
+      status:     'active',
+      deleted_at: null,
+    };
+
+    if (avail === 'instock')    mongoFilter.stock    = { $gt: 0 };
+    if (avail === 'outofstock') mongoFilter.stock    = { $lte: 0 };
+    if (avail === 'sale')       mongoFilter.discount = { $gt: 0 };
+    if (avail === 'new')        mongoFilter.featured = true;
+
+    if (priceMin !== '' || priceMax !== '') {
+      mongoFilter.price = {};
+      if (priceMin !== '') mongoFilter.price.$gte = parseFloat(priceMin);
+      if (priceMax !== '') mongoFilter.price.$lte = parseFloat(priceMax);
+    }
+
+    const sortMap = {
+      'price-asc':  { price:  1 },
+      'price-desc': { price: -1 },
+      'az':         { name:   1 },
+      'za':         { name:  -1 },
+      'newest':     { createdAt: -1 },
+    };
+    const mongoSort = sortMap[sort] || { createdAt: -1 };
+
+    let dbProducts = await Product.find(mongoFilter)
+      .populate('category', 'name is_visible deleted_at')
+      .populate('brand', 'name')
+      .sort(mongoSort)
+      .lean();
+
+    // Hide products whose category is blocked/deleted
+    dbProducts = dbProducts.filter(p =>
+      p.category &&
+      p.category.is_visible !== false &&
+      p.category.deleted_at == null
+    );
+
+    
+    if (brand.trim()) {
+      dbProducts = dbProducts.filter(
+        p => (p.brand?.name || '').toLowerCase() === brand.trim().toLowerCase()
+      );
+    }
+
+    if (cat.trim()) {
+      dbProducts = dbProducts.filter(
+        p => (p.category?.name || '').toLowerCase() === cat.trim().toLowerCase()
+      );
+    }
+
+    if (style.trim()) {
+      dbProducts = dbProducts.filter(
+        p => (p.gender || '').toLowerCase() === style.trim().toLowerCase()
+      );
+    }
+
+    // Text search across name and brand name
+    if (q.trim()) {
+      const qLower = q.trim().toLowerCase();
+      dbProducts = dbProducts.filter(p =>
+        p.name.toLowerCase().includes(qLower) ||
+        (p.brand?.name || '').toLowerCase().includes(qLower)
+      );
+    }
+
+    if (sort === 'rating') {
+      dbProducts.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+
+    // ── Variant-aware filtering ──────────────────────────────────
+    // Fetch all active, non-deleted variants for remaining products
+    const productIds = dbProducts.map(p => p._id);
+
+    const activeVariants = await Variant.find({
+      product:    { $in: productIds },
+      status:     'active',
+      deleted_at: null,
+    }).lean();
+
+    // Group variants by product id
+    const variantsByProduct = {};
+    activeVariants.forEach(v => {
+      const pid = v.product.toString();
+      if (!variantsByProduct[pid]) variantsByProduct[pid] = [];
+      variantsByProduct[pid].push(v);
+    });
+
+    // Only keep products that have at least one active variant
+    dbProducts = dbProducts.filter(p =>
+      (variantsByProduct[p._id.toString()] || []).length > 0
+    );
+
+    // Shape each product using its active display variant
+    const shaped = dbProducts.map(p => {
+      const variants = variantsByProduct[p._id.toString()] || [];
+
+      // Prefer the default variant, fallback to first active variant
+      const displayVariant = variants.find(v => v.isDefault) || variants[0];
+
+      const basePrice = displayVariant?.price ?? p.price;
       const discountedPrice = p.discount > 0
-        ? Math.round(p.price - (p.price * p.discount / 100))
-        : p.price;
+        ? Math.round(basePrice - (basePrice * p.discount / 100))
+        : basePrice;
 
       return {
-        id:       p._id.toString(),
-        name:     p.name,
-        brand:    p.brand?.name   || 'Unknown',
-        price:    discountedPrice,
-        oldPrice: p.discount > 0  ? p.price : null,
-        rating:   4.5,            // you have no rating field yet
-        reviews:  0,              // you have no reviews field yet
-        badge:    p.featured      ? 'new'
-                : p.discount > 0  ? 'sale'
-                : p.dealOfTheDay  ? 'hot'
-                : null,
-        cat:      (p.category?.name || 'other').toLowerCase(),
-        style:    p.gender,       // using gender as style for now
-        avail:    p.stock > 0     ? 'instock' : 'outofstock',
-        img:      p.images?.[0]   || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80',
+        id:          p._id.toString(),
+        name:        p.name,
+        brand:       p.brand?.name || 'Unknown',
+        price:       displayVariant?.salePrice ?? displayVariant?.price ?? p.salePrice ?? p.price ?? 0,
+        oldPrice:    (p.discountPercentage ?? p.discount) > 0
+                       ? (displayVariant?.originalPrice ?? p.originalPrice ?? null)
+                       : null,
+        discountPct: p.discountPercentage ?? p.discount ?? 0,
+        rating:      p.rating   ?? 4.5,
+        reviews:     p.reviews  ?? 0,
+        ...getPrimaryBadge(p, displayVariant),
+        cat:         (p.category?.name || 'other').toLowerCase(),
+        style:       (p.gender || '').toLowerCase(),
+        avail:       displayVariant?.stock > 0 ? 'instock' : 'outofstock',
+        stock:       displayVariant?.stock ?? 0,
+        variantId:   displayVariant?._id.toString() || '',
+        img:         displayVariant?.images?.[0] || p.images?.[0]
+                     || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80',
+        wished:      false,
       };
     });
 
+  // ── Mark wishlisted + carted products ───────────────────────
+    if (req.session.user) {
+      const [wl, cart] = await Promise.all([
+        Wishlist.findOne({ userId: req.session.user.id }).lean(),
+        Cart.findOne({ userId: req.session.user.id }).lean(),
+      ]);
+
+      if (wl && wl.products.length) {
+        const wishedSet = new Set(wl.products.map(p => p.productId.toString()));
+        shaped.forEach(p => { p.wished = wishedSet.has(p.id); });
+      }
+
+      if (cart && cart.items.length) {
+        const cartVariantSet = new Set(cart.items.map(i => i.variantId.toString()));
+        shaped.forEach(p => {
+          p.inCart = cartVariantSet.has(p.variantId);
+        });
+      }
+    }
+ 
+    const totalProducts = shaped.length;
+    const totalPages    = Math.ceil(totalProducts / PER_PAGE) || 1;
+    const safePage      = Math.min(currentPage, totalPages);
+    const startIdx      = (safePage - 1) * PER_PAGE;
+    const pageProducts  = shaped.slice(startIdx, startIdx + PER_PAGE);
+    const paginationPages = buildPageRange(safePage, totalPages);
+
+  
     const unique = (arr) => [...new Set(arr.filter(Boolean))];
 
-    const categories = unique(products.map(p => p.cat))
-      .map(v => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }));
-
-    const brands = unique(products.map(p => p.brand.toLowerCase()))
+    const allCategories = unique(shaped.map(p => p.cat))
+      .sort()
       .map(v => ({
-        value: v,
-        label: products.find(p => p.brand.toLowerCase() === v)?.brand || v,
+        value:    v,
+        label:    v.charAt(0).toUpperCase() + v.slice(1),
+        selected: v === cat.toLowerCase(),
       }));
 
-    const styles = unique(products.map(p => p.style))
-      .map(v => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }));
+    const allBrands = unique(shaped.map(p => p.brand))
+      .sort()
+      .map(v => ({
+        value:    v.toLowerCase(),
+        label:    v,
+        selected: v.toLowerCase() === brand.toLowerCase(),
+      }));
 
-    const featured = [...products]
+    const allStyles = unique(shaped.map(p => p.style))
+      .filter(v => v && v.trim())
+      .sort()
+      .map(v => ({
+        value:    v,
+        label:    v.charAt(0).toUpperCase() + v.slice(1),
+        selected: v === style.toLowerCase(),
+      }));
+    
+    const featured = [...shaped]
       .filter(p => p.badge !== null)
       .sort((a, b) => b.rating - a.rating)
-      .slice(0, 4);
+      .slice(0, 8);
 
+   
+    const activeTags = [];
+    if (q)                    activeTags.push({ label: `"${q}"`,                                 key: 'q'     });
+    if (cat)                  activeTags.push({ label: cat.charAt(0).toUpperCase()+cat.slice(1), key: 'cat'   });
+    if (brand)                activeTags.push({ label: brand,                                     key: 'brand' });
+    if (style)                activeTags.push({ label: style,                                     key: 'style' });
+    if (avail)                activeTags.push({ label: avail,                                     key: 'avail' });
+    if (priceMin || priceMax) activeTags.push({ label: `₹${priceMin||0} – ₹${priceMax||'∞'}`,   key: 'price' });
+
+  
     res.render('user/allProducts', {
       layout: 'main',
-      user:          req.session.user || null,
-      totalProducts: products.length,
-      searchPlaceholder: 'Search watches…',
+      user:   req.session.user || null,
+
+      totalProducts,
+      shownCount: pageProducts.length,
+      startCount: totalProducts ? startIdx + 1 : 0,
+
+      filters: { q, cat, brand, style, avail, priceMin, priceMax, sort },
 
       sortOptions: [
-        { value: 'price-asc',  label: 'Price: Low to High' },
-        { value: 'price-desc', label: 'Price: High to Low' },
-        { value: 'az',         label: 'Name: A – Z' },
-        { value: 'za',         label: 'Name: Z – A' },
-        { value: 'rating',     label: 'Top Rated' },
-        { value: 'newest',     label: 'Newest' },
+        { value: 'price-asc',  label: 'Price: Low to High',  selected: sort === 'price-asc'  },
+        { value: 'price-desc', label: 'Price: High to Low',  selected: sort === 'price-desc' },
+        { value: 'az',         label: 'Name: A – Z',         selected: sort === 'az'         },
+        { value: 'za',         label: 'Name: Z – A',         selected: sort === 'za'         },
+        { value: 'rating',     label: 'Top Rated',           selected: sort === 'rating'     },
+        { value: 'newest',     label: 'Newest',              selected: sort === 'newest'     },
       ],
 
       filterOptions: {
-        categories,
-        brands,
-        styles,
+        categories: allCategories,
+        brands:     allBrands,
+        styles:     allStyles,
         availability: [
-          { value: 'instock',    label: 'In Stock' },
-          { value: 'outofstock', label: 'Out of Stock' },
-          { value: 'sale',       label: 'On Sale' },
-          { value: 'new',        label: 'Featured' },
+          { value: 'instock',    label: 'In Stock',    selected: avail === 'instock'    },
+          { value: 'outofstock', label: 'Out of Stock',selected: avail === 'outofstock' },
+          { value: 'sale',       label: 'On Sale',     selected: avail === 'sale'       },
+          { value: 'new',        label: 'Featured',    selected: avail === 'new'        },
         ],
       },
 
-      featuredSection: {
-        title:     "Editor's",
-        highlight: 'Picks',
+      pagination: {
+        current:  safePage,
+        total:    totalPages,
+        pages:    paginationPages,
+        hasPrev:  safePage > 1,
+        hasNext:  safePage < totalPages,
+        prevPage: safePage - 1,
+        nextPage: safePage + 1,
       },
 
-      shopData: { products, featured },
+      activeTags,
+      products:  pageProducts,
+      featured,
+      searchPlaceholder: 'Search watches…',
+      shopData: { featured },
     });
 
   } catch (err) {
     console.error('loadshop error:', err);
     res.render('user/allProducts', {
       layout: 'main',
-      user:          req.session.user || null,
-      totalProducts: 0,
+      user:   req.session.user || null,
+      totalProducts: 0, shownCount: 0, startCount: 0,
+      filters: { q:'', cat:'', brand:'', style:'', avail:'', priceMin:'', priceMax:'', sort:'' },
+      sortOptions: [],
+      filterOptions: { categories:[], brands:[], styles:[], availability:[] },
+      pagination: { current:1, total:1, pages:[], hasPrev:false, hasNext:false, prevPage:1, nextPage:1 },
+      activeTags: [], products: [], featured: [],
       searchPlaceholder: 'Search watches…',
-      sortOptions:   [],
-      filterOptions: { categories: [], brands: [], styles: [], availability: [] },
-      featuredSection: { title: "Editor's", highlight: 'Picks' },
-      shopData:      { products: [], featured: [] },
+      shopData: { featured:[] },
     });
   }
 };
 
+const DEFAULT_BADGES = ['CURATED', 'PREMIUM', 'SIGNATURE', 'CLASSIC', 'LUXURY PICK'];
 
+function getDefaultBadgeLabel(product) {
+  const seed = parseInt((product._id || product.id || '0').toString().slice(-2), 16) || 0;
+  return DEFAULT_BADGES[seed % DEFAULT_BADGES.length];
+}
 
+function getPrimaryBadge(product, variant) {
+  const stock = variant?.stock ?? product.stock ?? 999;
+  const hoursSinceCreated = product.createdAt
+    ? (Date.now() - new Date(product.createdAt).getTime()) / 3600000
+    : 9999;
+
+  if (product.dealOfTheDay)          return { badge: 'deal',      badgeLabel: 'DEAL OF THE DAY' };
+  if (product.featured)              return { badge: 'featured',  badgeLabel: 'BEST PICK' };
+  if (stock > 0 && stock <= 5)       return { badge: 'low-stock', badgeLabel: `ONLY ${stock} LEFT` };
+  if (hoursSinceCreated <= 24)       return { badge: 'new',       badgeLabel: 'NEW' };
+  return { badge: 'default', badgeLabel: getDefaultBadgeLabel(product) };
+}
+
+function getProductBadge(product, variant) {
+  return getPrimaryBadge(product, variant).badge;
+}
+
+function getProductBadgeLabel(product, variant) {
+  return getPrimaryBadge(product, variant).badgeLabel;
+}
+
+function buildPageRange(cur, total) {
+  if (total <= 1) return [];
+  const range = [];
+  const push = (n) => range.push({ num: n,    active: n === cur, dots: false });
+  const dots = ()  => range.push({ num: null, active: false,     dots: true  });
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) push(i);
+    return range;
+  }
+
+  push(1);
+  if (cur <= 4) {
+    push(2); push(3); push(4); push(5); dots(); push(total);
+  } else if (cur >= total - 3) {
+    dots(); push(total-4); push(total-3); push(total-2); push(total-1); push(total);
+  } else {
+    dots(); push(cur-1); push(cur); push(cur+1); dots(); push(total);
+  }
+  return range;
+}
+
+export const loadProductDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findOne({ _id: id, status: 'active', deleted_at: null })
+      .populate('brand', 'name')
+      .populate('category', 'name is_visible deleted_at')
+      .lean();
+
+    if (
+      !product ||
+      !product.category ||
+      product.category.is_visible === false ||
+      product.category.deleted_at
+    ) {
+      return res.redirect('/user/shop');
+    }
+
+    const variants = await Variant.find({
+      product: id, status: 'active', deleted_at: null,
+    }).lean();
+
+    if (!variants.length) return res.redirect('/user/shop');
+
+    const displayVariant = variants.find(v => v.isDefault) || variants[0];
+    const finalPrice     = displayVariant.salePrice ?? displayVariant.price ?? 0;
+    const oldPrice       = displayVariant.originalPrice > displayVariant.salePrice
+      ? displayVariant.originalPrice : null;
+    const discountPct    = displayVariant.discountPercentage ?? 0;
+
+    let wished         = false;
+    let cartItems      = [];
+    let wishedSet      = new Set();
+    let cartVariantSet = new Set();
+
+    if (req.session.user) {
+      const [wl, cart] = await Promise.all([
+        Wishlist.findOne({ userId: req.session.user.id }).lean(),
+        Cart.findOne({ userId: req.session.user.id }).lean(),
+      ]);
+
+      if (wl?.products?.length) {
+        wishedSet = new Set(wl.products.map(p => p.productId.toString()));
+        wished    = wishedSet.has(id);
+      }
+
+      if (cart?.items?.length) {
+        cartItems      = cart.items.map(i => i.variantId.toString());
+        cartVariantSet = new Set(cartItems);
+      }
+    }
+
+   
+    const variantData = variants.map(v => ({
+      id:           v._id.toString(),
+      name:         v.name,
+      sku:          v.sku || '',
+      strapColor:   v.strapColor    || '',
+      dialColor:    v.dialColor     || '',
+      caseColor:    v.caseColor     || '',
+      strapMaterial:v.strapMaterial || '',
+      caseMaterial: v.caseMaterial  || '',
+      size:         v.size          || '',
+      originalPrice:v.originalPrice ?? 0,
+      salePrice:    v.salePrice     ?? 0,
+      discountPct:  v.discountPercentage ?? 0,
+      stock:        v.stock         ?? 0,
+      images:       v.images        || [],
+      isDefault:    !!v.isDefault,
+      inCart:       cartItems.includes(v._id.toString()),
+      avail:        v.stock > 0 ? 'instock' : 'outofstock',
+    }));
+
+   
+    const relatedRaw = await Product.find({
+      _id: { $ne: id },
+      category: product.category._id,
+      status: 'active',
+      deleted_at: null,
+    }).populate('brand', 'name').limit(8).lean();
+
+    const relatedVariants = await Variant.find({
+      product: { $in: relatedRaw.map(p => p._id) },
+      status: 'active',
+      deleted_at: null,
+    }).lean();
+
+    const relVarMap = {};
+    relatedVariants.forEach(v => {
+      const pid = v.product.toString();
+      if (!relVarMap[pid] || v.isDefault) relVarMap[pid] = v;
+    });
+
+    const relatedProducts = relatedRaw
+      .filter(p => relVarMap[p._id.toString()])
+      .slice(0, 4)
+      .map(p => {
+        const rv  = relVarMap[p._id.toString()];
+        const pid = p._id.toString();
+        const vid = rv._id.toString();
+        return {
+          id:          pid,
+          name:        p.name,
+          brand:       p.brand?.name || 'TYMORA',
+          price:       rv.salePrice  ?? rv.price ?? 0,
+          oldPrice:    rv.originalPrice > rv.salePrice ? rv.originalPrice : null,
+          discountPct: rv.discountPercentage ?? 0,
+          rating:      p.rating  ?? 4.5,
+          reviews:     p.reviews ?? 0,
+          badge:       getProductBadge(p, rv),
+          badgeLabel:  getProductBadgeLabel(p, rv),
+          avail:       rv.stock > 0 ? 'instock' : 'outofstock',
+          img:         rv.images?.[0] || p.images?.[0] || '',
+          variantId:   vid,                        
+          wished:      wishedSet.has(pid),        
+          inCart:      cartVariantSet.has(vid),    
+        };
+      });
+
+    res.render('user/productDetail', {
+      layout: 'main',
+      user:   req.session.user || null,
+      product: {
+        id:          product._id.toString(),
+        name:        product.name,
+        brand:       product.brand?.name || 'TYMORA',
+        description: product.description || '',
+        gender:      product.gender || '',
+        category:    product.category?.name || '',
+        tags:        product.tags || [],
+        featured:    product.featured || false,
+        dealOfTheDay:product.dealOfTheDay || false,
+        rating:      product.rating ?? 4.5,
+        reviewCount: product.reviews ?? 0,
+        price:       finalPrice,
+        oldPrice,
+        discountPct,
+        sku:         displayVariant.sku || displayVariant._id.toString().slice(-8).toUpperCase(),
+        avail:       displayVariant.stock > 0 ? 'instock' : 'outofstock',
+        stock:       displayVariant.stock ?? 0,
+        images:      displayVariant.images?.length ? displayVariant.images : (product.images || []),
+        wished,
+        variantId:   displayVariant._id.toString(),
+        inCart:      cartItems.includes(displayVariant._id.toString()),
+      },
+      variantData,
+      relatedProducts,
+    });
+
+  } catch (err) {
+    console.error('loadProductDetail error:', err);
+    res.redirect('/user/shop');
+  }
+};
+
+export const loadWishlist = async (req, res) => {
+  try {
+    const userId   = req.session.user?.id;
+    const wishlist = await Wishlist.findOne({ userId }).lean();
+
+    if (!wishlist || !wishlist.products.length) {
+      return res.render('user/wishlist', {
+        layout: 'main', user: req.session.user, products: [],
+      });
+    }
+
+    const productIds = wishlist.products.map(p => p.productId);
+
+    const dbProducts = await Product.find({
+      _id: { $in: productIds }, status: 'active', deleted_at: null,
+    })
+      .populate('brand', 'name')
+      .populate('category', 'name is_visible deleted_at')
+      .lean();
+
+    const activeIds      = dbProducts.map(p => p._id.toString());
+    const variantDocs    = await Variant.find({
+      product: { $in: activeIds }, status: 'active', deleted_at: null,
+    }).lean();
+
+    const variantMap = {};
+    variantDocs.forEach(v => {
+      const pid = v.product.toString();
+      if (!variantMap[pid] || v.isDefault) variantMap[pid] = v;
+    });
+
+    
+    let cartVariantSet = new Set();
+    if (req.session.user?.id) {
+      const cart = await Cart.findOne({ userId: req.session.user.id }).lean();
+      if (cart?.items?.length) {
+        cartVariantSet = new Set(cart.items.map(i => i.variantId.toString()));
+      }
+    }
+
+    const products = wishlist.products
+      .map(({ productId }) => {
+        const pid = productId.toString();
+        const p   = dbProducts.find(d => d._id.toString() === pid);
+        if (!p) return null;
+        if (!p.category || p.category.is_visible === false || p.category.deleted_at) return null;
+        const display = variantMap[pid];
+        if (!display) return null;
+        const bp = display.price ?? p.price;
+        const fp = p.discount > 0 ? Math.round(bp - (bp * p.discount / 100)) : bp;
+        return {
+          id:        pid,
+          name:      p.name,
+          brand:     p.brand?.name || 'TYMORA',
+          price:    display.salePrice ?? display.price ?? p.salePrice ?? p.price ?? 0,
+          oldPrice: (p.discountPercentage ?? p.discount) > 0
+              ? (display.originalPrice ?? p.originalPrice ?? null)
+              : null,
+          rating:    p.rating  ?? 4.5,
+          reviews:   p.reviews ?? 0,
+          ...getPrimaryBadge(p, display),
+          avail:     display.stock > 0 ? 'instock' : 'outofstock',
+          img:       display.images?.[0] || p.images?.[0] || '',
+          variantId: display._id.toString(),
+          inCart:    cartVariantSet.has(display._id.toString()),
+        };
+      })
+      .filter(Boolean);
+
+    res.render('user/wishlist', {
+      layout: 'main', user: req.session.user, products,
+    });
+  } catch (err) {
+    console.error('loadWishlist error:', err);
+    res.render('user/wishlist', {
+      layout: 'main', user: req.session.user, products: [],
+    });
+  }
+};
+
+export const toggleWishlist = async (req, res) => {
+  try {
+    const userId        = req.session.user?.id;
+    const { productId } = req.body;
+
+    if (!userId)    return res.json({ success: false, redirect: '/user/login' });
+    if (!productId) return res.json({ success: false, message: 'Missing productId' });
+
+    // Check if product is already in wishlist
+    const existing = await Wishlist.findOne({
+      userId,
+      'products.productId': productId,
+    });
+
+    if (existing) {
+      
+      await Wishlist.findOneAndUpdate(
+        { userId },
+        { $pull: { products: { productId } } },
+        { new: true }
+      );
+      return res.json({ success: true, status: 'removed' });
+    } else {
+      await Wishlist.findOneAndUpdate(
+        { userId, 'products.productId': { $ne: productId } },
+        { $push: { products: { productId } } },
+        { upsert: true, new: true }
+      );
+      return res.json({ success: true, status: 'added' });
+    }
+
+  } catch (err) {
+    console.error('toggleWishlist error:', err);
+    return res.json({ success: false, message: 'Something went wrong' });
+  }
+};
+
+export const getWishlistIds = async (req, res) => {
+  try {
+    const userId = req.session.user?.id;
+    if (!userId) return res.json({ ids: [] });
+    const wishlist = await Wishlist.findOne({ userId }).lean();
+    const ids      = wishlist ? wishlist.products.map(p => p.productId.toString()) : [];
+    return res.json({ ids });
+  } catch {
+    return res.json({ ids: [] });
+  }
+};
+
+export const addAllToCart = async (req, res) => {
+  try {
+    const userId = req.session.user?.id;
+    if (!userId) return res.json({ success: false, redirect: '/user/login' });
+
+    const wishlist = await Wishlist.findOne({ userId }).lean();
+    if (!wishlist || !wishlist.products.length) {
+      return res.json({ success: false, message: 'Wishlist is empty' });
+    }
+
+    const productIds  = wishlist.products.map(p => p.productId);
+    const variants    = await Variant.find({
+      product: { $in: productIds },
+      status: 'active', deleted_at: null, stock: { $gt: 0 },
+    }).lean();
+
+    const variantMap = {};
+    variants.forEach(v => {
+      const pid = v.product.toString();
+      if (!variantMap[pid] || v.isDefault) variantMap[pid] = v;
+    });
+
+    let cart = await Cart.findOne({ userId });
+    if (!cart) cart = new Cart({ userId, items: [] });
+
+    let added        = 0;
+    const addedVariants = [];
+
+    for (const { productId } of wishlist.products) {
+      const pid     = productId.toString();
+      const variant = variantMap[pid];
+      if (!variant) continue;
+
+      const alreadyInCart = cart.items.find(
+        i => i.productId.toString() === pid && i.variantId.toString() === variant._id.toString()
+      );
+
+      
+      if (alreadyInCart) continue;
+
+      cart.items.push({
+        productId,
+        variantId: variant._id,
+        quantity: 1,
+        price: variant.salePrice ?? variant.price,
+      });
+      added++;
+      addedVariants.push(variant._id.toString());
+    }
+
+    await cart.save();
+    const cartCount = cart.items.reduce((s, i) => s + i.quantity, 0);
+    return res.json({ success: true, added, addedVariants, cartCount });
+  } catch (err) {
+    console.error('addAllToCart error:', err);
+    return res.json({ success: false, message: 'Something went wrong' });
+  }
+};
+
+const CART_MAX_QTY = 7;
+
+async function buildCartView(cart) {
+  if (!cart || !cart.items.length) {
+    return { isEmpty: true, cartItems: [], subtotal: 0 };
+  }
+
+  await cart.populate([
+    {
+      path: 'items.productId',
+      select: 'name images status deleted_at',
+      populate: { path: 'brand', select: 'name' },
+    },
+    {
+      path: 'items.variantId',
+      select: 'salePrice price stock images status deleted_at',
+    },
+  ]);
+
+  const cartItems      = [];
+  let   subtotal       = 0;
+  let   cartWasChanged = false;
+
+  for (const item of cart.items) {
+    const product = item.productId;
+    const variant = item.variantId;
+
+    
+    if (!product || product.status !== 'active' || product.deleted_at) continue;
+    if (!variant  || variant.status  !== 'active' || variant.deleted_at)  continue;
+
+    
+   const isOutOfStock = (variant.stock ?? 0) <= 0;
+
+   
+    let qty = item.quantity;
+    if (!isOutOfStock) {
+      const maxAllowed = Math.min(variant.stock, CART_MAX_QTY);
+      if (qty > maxAllowed) {
+        item.quantity  = Math.max(maxAllowed, 1);
+        qty            = item.quantity;
+        cartWasChanged = true;
+      }
+    }
+
+    const price = variant.salePrice ?? variant.price ?? item.price;
+    const total = price * qty;
+
+    
+    if (!isOutOfStock) subtotal += total;
+
+    cartItems.push({
+      id:           item._id.toString(),
+      productId:    product._id.toString(),
+      variantId:    variant._id.toString(),
+      brand:        product.brand?.name || 'TYMORA',
+      name:         product.name,
+      img:          variant.images?.[0] || product.images?.[0] || '',
+      price,
+      qty,
+      total:        isOutOfStock ? 0 : total,
+      stock:        variant.stock ?? 0,
+      isOutOfStock,
+    });
+  }
+
+  
+  if (cartWasChanged) {
+    cart.items = cart.items.filter(i => i.quantity >= 1);
+    await cart.save();
+  }
+
+  const hasOutOfStock = cartItems.some(i => i.isOutOfStock);
+  return { isEmpty: cartItems.length === 0, cartItems, subtotal, hasOutOfStock };
+}
+
+export const loadCart = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.session.user.id });
+    const data = await buildCartView(cart);
+    res.render('user/cart', {
+      layout: 'main', user: req.session.user, ...data,
+    });
+  } catch (err) {
+    console.error('loadCart error:', err);
+    res.render('user/cart', {
+      layout: 'main', user: req.session.user, isEmpty: true, cartItems: [], subtotal: 0,
+    });
+  }
+};
+
+export const addToCart = async (req, res) => {
+  try {
+    const { productId, variantId, quantity = 1 } = req.body;
+    const userId = req.session.user?.id;
+
+    if (!userId)              return res.json({ success: false, redirect: '/user/login' });
+    if (!productId || !variantId) return res.json({ success: false, message: 'Missing product or variant' });
+
+    const variant = await Variant.findOne({
+      _id: variantId, product: productId, status: 'active', deleted_at: null,
+    });
+    if (!variant)            return res.json({ success: false, message: 'Variant not found' });
+    if (variant.stock <= 0)  return res.json({ success: false, message: 'Out of stock' });
+
+    const product = await Product.findOne({ _id: productId, status: 'active', deleted_at: null });
+    if (!product)            return res.json({ success: false, message: 'Product not available' });
+
+    let cart = await Cart.findOne({ userId });
+    if (!cart) cart = new Cart({ userId, items: [] });
+
+    const existing = cart.items.find(
+      i => i.productId.toString() === productId && i.variantId.toString() === variantId
+    );
+
+    const maxAllowed = Math.min(variant.stock, 7);
+    if (existing) {
+      const newQty = existing.quantity + Number(quantity);
+      if (newQty > maxAllowed) {
+        return res.json({ success: false, message: `Maximum ${maxAllowed} units allowed` });
+      }
+      existing.quantity = newQty;
+    } else {
+      if (Number(quantity) > maxAllowed) {
+        return res.json({ success: false, message: `Maximum ${maxAllowed} units allowed` });
+      }
+      cart.items.push({ productId, variantId, quantity: Number(quantity), price: variant.price });
+    }
+
+    await cart.save();
+    const cartCount = cart.items.reduce((s, i) => s + i.quantity, 0);
+    return res.json({ success: true, message: 'Added to cart', cartCount });
+  } catch (err) {
+    console.error('addToCart error:', err);
+    return res.json({ success: false, message: 'Something went wrong' });
+  }
+};
+
+export const updateCartItem = async (req, res) => {
+  try {
+    const { itemId, quantity } = req.body;
+    const userId = req.session.user?.id;
+    const qty    = Number(quantity);
+
+    if (qty < 1) return res.json({ success: false, message: 'Invalid quantity' });
+
+    const cart = await Cart.findOne({ userId });
+    if (!cart)  return res.json({ success: false, message: 'Cart not found' });
+
+    const item = cart.items.id(itemId);
+    if (!item)  return res.json({ success: false, message: 'Item not found' });
+
+    const variant = await Variant.findOne({
+      _id: item.variantId, status: 'active', deleted_at: null,
+    });
+    if (!variant) return res.json({ success: false, message: 'Variant no longer available' });
+  const maxAllowed = Math.min(variant.stock, 7);
+    if (qty > maxAllowed) {
+      return res.json({ success: false, message: `Maximum ${maxAllowed} units allowed` });
+    }
+
+    item.quantity = qty;
+    await cart.save();
+
+   const newTotal = (variant.salePrice ?? variant.price) * qty;
+
+    
+    const subtotal = cart.items.reduce((s, i) => {
+      if (i._id.toString() === item._id.toString()) {
+        return s + (variant.salePrice ?? variant.price) * qty;
+      }
+      return s + (i.price * i.quantity);
+    }, 0);
+    const cartCount = cart.items.reduce((s, i) => s + i.quantity, 0);
+
+    return res.json({ success: true, newTotal, subtotal, cartCount });
+  } catch (err) {
+    console.error('updateCartItem error:', err);
+    return res.json({ success: false, message: 'Something went wrong' });
+  }
+};
+
+export const removeCartItem = async (req, res) => {
+  try {
+    const { itemId } = req.body;
+    const userId     = req.session.user?.id;
+
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return res.json({ success: false, message: 'Cart not found' });
+
+    cart.items = cart.items.filter(i => i._id.toString() !== itemId);
+    await cart.save();
+
+    const subtotal  = cart.items.reduce((s, i) => s + (i.price * i.quantity), 0);
+    const cartCount = cart.items.reduce((s, i) => s + i.quantity, 0);
+
+    return res.json({ success: true, subtotal, cartCount, isEmpty: cart.items.length === 0 });
+  } catch (err) {
+    console.error('removeCartItem error:', err);
+    return res.json({ success: false, message: 'Something went wrong' });
+  }
+};
+
+export const getCartCount = async (req, res) => {
+  try {
+    const userId = req.session.user?.id;
+    if (!userId) return res.json({ count: 0 });
+    const cart   = await Cart.findOne({ userId });
+    const count  = cart ? cart.items.reduce((s, i) => s + i.quantity, 0) : 0;
+    return res.json({ count });
+  } catch {
+    return res.json({ count: 0 });
+  }
+};
+
+export const checkProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findOne({
+      _id: id,
+      status: 'active',
+      deleted_at: null,
+    }).populate('category', 'is_visible deleted_at').lean();
+
+    if (
+      !product ||
+      !product.category ||
+      product.category.is_visible === false ||
+      product.category.deleted_at
+    ) {
+      return res.json({ active: false });
+    }
+
+    // Also check if at least one active variant exists
+    const variantExists = await Variant.exists({
+      product: id,
+      status: 'active',
+      deleted_at: null,
+    });
+
+    if (!variantExists) {
+      return res.json({ active: false });
+    }
+
+    return res.json({ active: true });
+  } catch (err) {
+    console.error('checkProductStatus error:', err);
+    return res.json({ active: false });
+  }
+};

@@ -1,4 +1,7 @@
+
+
 <link href="/userAllProducts.css" rel="stylesheet">
+
 <!-- HERO -->
 <div class="shop-hero">
   <div>
@@ -6,133 +9,253 @@
     <p class="shop-subtitle">Curated collection — beauty in every shadow</p>
   </div>
   <div class="results-count">
-    Showing <span id="countDisplay">{{totalProducts}}</span> of <span id="totalDisplay">{{totalProducts}}</span> products
+    Showing <strong>{{shownCount}}</strong> of <strong>{{totalProducts}}</strong> products
   </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- CONTROLS BAR -->
-<div class="controls-bar">
-  <div class="search-wrap">
-    <div class="search-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    </div>
-    <input type="text" id="searchInput" placeholder="{{searchPlaceholder}}">
-    <button class="clear-btn" id="clearBtn" title="Clear">✕</button>
-    <button class="search-btn" id="searchBtn">Search</button>
-  </div>
+<!-- CONTROLS BAR — wraps everything in one GET form -->
+<form method="GET" action="/user/shop" id="shopForm">
 
-  <select class="sort-select" id="sortSelect">
-    <option value="">Sort by</option>
-    {{#each sortOptions}}
-      <option value="{{this.value}}">{{this.label}}</option>
-    {{/each}}
-  </select>
-
-  <button class="filter-toggle" id="filterToggle">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-    Filters
-  </button>
-</div>
-
-<!-- FILTER PANEL -->
-<div class="filter-panel" id="filterPanel">
-  <div class="filter-grid">
-
-    <div class="filter-group">
-      <label>Category</label>
-      <select id="catFilter">
-        <option value="">All Categories</option>
-        {{#each filterOptions.categories}}
-          <option value="{{this.value}}">{{this.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-
-    <div class="filter-group">
-      <label>Brand</label>
-      <select id="brandFilter">
-        <option value="">All Brands</option>
-        {{#each filterOptions.brands}}
-          <option value="{{this.value}}">{{this.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-
-    <div class="filter-group">
-      <label>Price Range (₹)</label>
-      <div class="price-range-wrap">
-        <input type="number" id="priceMin" placeholder="Min">
-        <span>–</span>
-        <input type="number" id="priceMax" placeholder="Max">
+  <div class="controls-bar">
+    <div class="search-wrap">
+      <div class="search-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </div>
+      <input type="text" name="q" id="searchInput"
+             placeholder="{{searchPlaceholder}}"
+             value="{{filters.q}}">
+      {{#if filters.q}}
+        <a href="?" class="clear-btn visible" title="Clear search">✕</a>
+      {{else}}
+        <span class="clear-btn" id="clearBtn" title="Clear">✕</span>
+      {{/if}}
+      <button type="submit" class="search-btn">Search</button>
     </div>
 
-    <div class="filter-group">
-      <label>Style</label>
-      <select id="styleFilter">
-        <option value="">All Styles</option>
-        {{#each filterOptions.styles}}
-          <option value="{{this.value}}">{{this.label}}</option>
-        {{/each}}
-      </select>
-    </div>
+    <select class="sort-select" name="sort" onchange="this.form.submit()">
+      <option value="">Sort by</option>
+      {{#each sortOptions}}
+        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
 
-    <div class="filter-group">
-      <label>Availability</label>
-      <select id="availFilter">
-        <option value="">All</option>
-        {{#each filterOptions.availability}}
-          <option value="{{this.value}}">{{this.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-
+    <button type="button" class="filter-toggle" id="filterToggle">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+        <line x1="11" y1="18" x2="13" y2="18"/>
+      </svg>
+      Filters
+    </button>
   </div>
-  <div class="filter-actions">
-    <button class="btn-apply" id="btnApply">Apply Filters</button>
-    <button class="btn-reset" id="btnReset">Reset All</button>
+
+  <!-- FILTER PANEL -->
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-grid">
+
+      <div class="filter-group">
+        <label>Category</label>
+        <select name="cat" id="catFilter">
+          <option value="">All Categories</option>
+          {{#each filterOptions.categories}}
+            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Brand</label>
+        <select name="brand" id="brandFilter">
+          <option value="">All Brands</option>
+          {{#each filterOptions.brands}}
+            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Price Range (₹)</label>
+        <div class="price-range-wrap">
+          <input type="number" name="priceMin" id="priceMin"
+                 placeholder="Min" value="{{filters.priceMin}}">
+          <span>–</span>
+          <input type="number" name="priceMax" id="priceMax"
+                 placeholder="Max" value="{{filters.priceMax}}">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Style</label>
+        <select name="style" id="styleFilter">
+          <option value="">All Styles</option>
+          {{#each filterOptions.styles}}
+            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+    
+
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn-apply" id="btnApply">Apply Filters</button>
+      <a href="/user/shop" class="btn-reset" id="btnReset">Reset All</a>
+    </div>
   </div>
-</div>
+
+</form><!-- end #shopForm -->
 
 <!-- ACTIVE FILTER TAGS -->
-<div class="active-filters" id="activeTags"></div>
+{{#if activeTags.length}}
+<div class="active-filters" id="activeTags">
+  <span class="active-filters-label">Active:</span>
+  {{#each activeTags}}
+    <div class="filter-tag">
+      {{this.label}}
+      <span class="tag-remove" data-key="{{this.key}}">✕</span>
+    </div>
+  {{/each}}
+</div>
+{{/if}}
 
-<!-- PRODUCTS SECTION -->
+<!-- PRODUCTS GRID — server-rendered -->
 <div class="products-section">
-  <div class="products-grid" id="productsGrid"></div>
-  <div class="no-results" id="noResults">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <p>No timepieces found</p>
-    <small>Try adjusting your search or filters</small>
-  </div>
+  {{#if products.length}}
+    <div class="products-grid" id="productsGrid">
+    {{#each products}}
+        <div class="prod-card" style="animation-delay:{{@index}}00ms"
+             data-id="{{this.id}}"
+             data-variant-id="{{this.variantId}}"
+             data-avail="{{this.avail}}">
+          <div class="prod-img-wrap">
+            {{#if this.badgeLabel}}
+              <span class="prod-badge badge-{{this.badge}}">{{this.badgeLabel}}</span>
+            {{else if this.badge}}
+              <span class="prod-badge badge-{{this.badge}}">{{this.badge}}</span>
+            {{/if}}
+            <div class="card-wish {{#if this.wished}}wished{{/if}}"
+                 data-id="{{this.id}}"
+                 title="{{#if this.wished}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+                         a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+                         1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
+            <img src="{{this.img}}" alt="{{this.name}}" loading="lazy"
+                 style="cursor:pointer"
+                 onclick="window.location.href='/user/product/{{this.id}}'">
+            <div class="prod-img-overlay"></div>
+           {{#ifEquals this.avail 'outofstock'}}
+  <button class="quick-add disabled" disabled title="Out of Stock">Out of Stock</button>
+{{else}}
+  {{#if this.inCart}}
+    <button class="quick-add"
+            style="background:transparent;color:var(--gold);border:1px solid var(--gold);"
+            data-id="{{this.id}}"
+            data-variant-id="{{this.variantId}}"
+            data-in-cart="true">View in Cart</button>
+  {{else}}
+    <button class="quick-add"
+            data-id="{{this.id}}"
+            data-variant-id="{{this.variantId}}"
+            data-in-cart="">+ Add to Bag</button>
+  {{/if}}
+{{/ifEquals}}
+          </div>
+          <div class="prod-info">
+            <div class="prod-atelier">{{this.brand}}</div>
+            <div class="prod-rating">★ {{this.rating}}
+              <span class="rating-count">({{this.reviews}})</span>
+            </div>
+            <div class="prod-name">{{this.name}}</div>
+            <div class="prod-price-wrap">
+              <span class="prod-price">₹{{this.price}}</span>
+              {{#if this.oldPrice}}
+                <span class="prod-price-old">₹{{this.oldPrice}}</span>
+                {{#if this.discountPct}}
+                  <span class="prod-discount-pill">{{this.discountPct}}% OFF</span>
+                {{/if}}
+              {{/if}}
+            </div>
+            <button class="prod-btn" onclick="window.location.href='/user/product/{{this.id}}'">View Details</button>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="no-results visible" id="noResults">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <p>No timepieces found</p>
+      <small>Try adjusting your search or filters</small>
+    </div>
+  {{/if}}
 </div>
 
-<!-- PAGINATION -->
-<div class="pagination-wrap" id="paginationWrap"></div>
+<!-- PAGINATION — server-rendered -->
+{{#if pagination.pages.length}}
+<div class="pagination-wrap" id="paginationWrap">
 
-<!-- FEATURED SECTION -->
+  {{!-- Build the base URL without page param --}}
+  <a class="page-btn {{#unless pagination.hasPrev}}disabled{{/unless}}"
+     href="?q={{filters.q}}&cat={{filters.cat}}&brand={{filters.brand}}&style={{filters.style}}&avail={{filters.avail}}&sort={{filters.sort}}&priceMin={{filters.priceMin}}&priceMax={{filters.priceMax}}&page={{pagination.prevPage}}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </a>
+
+  {{#each pagination.pages}}
+    {{#if this.dots}}
+      <span class="page-dots">···</span>
+    {{else}}
+      <a class="page-btn {{#if this.active}}active{{/if}}"
+         href="?q={{../filters.q}}&cat={{../filters.cat}}&brand={{../filters.brand}}&style={{../filters.style}}&avail={{../filters.avail}}&sort={{../filters.sort}}&priceMin={{../filters.priceMin}}&priceMax={{../filters.priceMax}}&page={{this.num}}">
+        {{this.num}}
+      </a>
+    {{/if}}
+  {{/each}}
+
+  <a class="page-btn {{#unless pagination.hasNext}}disabled{{/unless}}"
+     href="?q={{filters.q}}&cat={{filters.cat}}&brand={{filters.brand}}&style={{filters.style}}&avail={{filters.avail}}&sort={{filters.sort}}&priceMin={{filters.priceMin}}&priceMax={{filters.priceMax}}&page={{pagination.nextPage}}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </a>
+
+</div>
+{{/if}}
+
+<!-- FEATURED CAROUSEL — still client-rendered from shopData -->
 <div class="featured-section">
   <div class="section-header">
-    <h2 class="section-title">Featured<em>Picks</em></h2>
+    <h2 class="section-title">Featured <em>Picks</em></h2>
     <div class="section-line"></div>
   </div>
   <div class="featured-track-outer">
     <button class="carousel-arrow left" id="carouselPrev">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
     </button>
     <div class="featured-track-wrap">
       <div class="featured-track" id="featuredTrack"></div>
     </div>
     <button class="carousel-arrow right" id="carouselNext">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
     </button>
   </div>
   <div class="carousel-dots" id="carouselDots"></div>
 </div>
-<!-- SEED DATA injected for shop.js -->
+
+<!-- Seed data for carousel only -->
 <script>
   window.SHOP_DATA = {{{json shopData}}};
+  window.SHOP_USER_LOGGED_IN = {{#if user}}true{{else}}false{{/if}};
 </script>
 <script src="/js/shop.js"></script>

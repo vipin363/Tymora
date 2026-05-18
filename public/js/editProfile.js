@@ -1,12 +1,9 @@
-/* ============================================================
-   TYMORA — editProfile.js
-   Profile editing: avatar previews, removal, and form validation
-   ============================================================ */
+
 
 (function () {
   'use strict';
 
-  /* ── DOM REFS ── */
+
   const $ = (id) => document.getElementById(id);
   
   const els = {
@@ -18,9 +15,7 @@
     toast:         $('toast'),
   };
 
-  /* ============================================================
-     AVATAR PREVIEW
-     ============================================================ */
+  
 
   if (els.avatarInput && els.avatarPreview) {
     els.avatarInput.addEventListener('change', function () {
@@ -36,9 +31,7 @@
     });
   }
 
-  /* ============================================================
-     REMOVE PHOTO MODAL
-     ============================================================ */
+
 
   window.confirmRemoveDp = function () {
     if (els.removeModal) els.removeModal.style.display = 'flex';
@@ -56,14 +49,12 @@
       els.removeAvatar.value = "true";
     }
     if (els.avatarInput) {
-      els.avatarInput.value = ""; // Clear file selection
+      els.avatarInput.value = ""; 
     }
     closeRemoveDpModal();
   };
 
-  /* ============================================================
-     TOAST HELPER
-     ============================================================ */
+ 
 
   window.showToast = function (msg) {
     if (els.toast) {

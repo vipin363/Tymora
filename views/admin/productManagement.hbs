@@ -126,6 +126,7 @@
                 <th>Product</th>
                 <th>Category</th>
                 <th>Brand</th>
+                <th>Price</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -151,6 +152,15 @@
                 <td>{{this.category}}</td>
                 <td>{{this.brand}}</td>
                 
+                <td>
+                  <div style="line-height:1.5;">
+                    <div style="text-decoration:line-through;color:#9ca3af;font-size:11px;">₹{{this.originalPrice}}</div>
+                    <div style="font-weight:700;color:#111;font-size:13px;">₹{{this.salePrice}}</div>
+                    {{#if this.discountPercentage}}
+                      <span style="display:inline-block;padding:1px 7px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:10px;font-size:10px;font-weight:800;">{{this.discountPercentage}}% OFF</span>
+                    {{/if}}
+                  </div>
+                </td>
                 <td>
                   {{#if (eq this.status "active")}}
                     <span class="badge s-active">ACTIVE</span>
@@ -209,9 +219,10 @@
         {{else}}
           <span class="badge s-inactive">● Inactive</span>
         {{/if}}
-        <span class="pd-price-tag">BASE PRICE ₹{{selectedProduct.price}}</span>
-        {{#if selectedProduct.discount}}
-          <span class="badge s-active">{{selectedProduct.discount}}% OFF</span>
+        <span class="pd-price-tag" style="text-decoration:line-through;opacity:0.6;font-size:13px;">MRP ₹{{selectedProduct.originalPrice}}</span>
+        <span class="pd-price-tag" style="color:#16a34a;font-weight:800;">₹{{selectedProduct.salePrice}}</span>
+        {{#if selectedProduct.discountPercentage}}
+          <span style="padding:3px 10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:0.04em;">{{selectedProduct.discountPercentage}}% OFF</span>
         {{/if}}
       </div>
     </div>
@@ -675,8 +686,16 @@
               <input type="text" id="vSize" placeholder="e.g. 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
             </div>
             <div class="form-group">
-              <label>Price (₹) *</label>
-              <input type="number" id="vPrice" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+              <label>MRP / Original Price (₹) *</label>
+              <input type="number" id="vOriginalPrice" placeholder="0" min="0"
+                style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;"
+                oninput="calcPdDiscount()">
+            </div>
+            <div class="form-group">
+              <label>Sale Price (₹) *</label>
+              <input type="number" id="vSalePrice" placeholder="0" min="0"
+                style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;"
+                oninput="calcPdDiscount()">
             </div>
             <div class="form-group">
               <label>Stock *</label>
@@ -690,7 +709,12 @@
               </select>
             </div>
           </div>
-
+<!-- Discount Preview -->
+          <div id="pdDiscountPreview" style="display:none;margin-bottom:16px;padding:10px 14px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:8px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🏷️</span>
+            <span style="font-size:13px;color:#92400e;font-weight:600;">Discount: <span id="pdDiscountBadge" style="font-size:15px;color:#b45309;font-weight:800;">0% OFF</span></span>
+            <span style="font-size:12px;color:#a16207;margin-left:auto;">You save ₹<span id="pdDiscountSaving">0</span></span>
+          </div>
           <!-- SKU -->
           <div class="form-group" style="margin-bottom:16px;">
             <label>SKU <small style="color:#888;font-weight:400;">(auto-generated, editable)</small></label>
@@ -881,8 +905,16 @@
       <input type="text" id="vd-vSize" placeholder="e.g. 42mm" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;" oninput="autoGenerateVariantSku()">
     </div>
     <div class="form-group">
-      <label>Price (₹) <span style="color:#dc2626">*</span></label>
-      <input type="number" id="vd-vPrice" placeholder="0" min="0" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+      <label>MRP / Original Price (₹) <span style="color:#dc2626">*</span></label>
+      <input type="number" id="vd-vOriginalPrice" placeholder="0" min="0"
+        style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;"
+        oninput="calcVdDiscount()">
+    </div>
+    <div class="form-group">
+      <label>Sale Price (₹) <span style="color:#dc2626">*</span></label>
+      <input type="number" id="vd-vSalePrice" placeholder="0" min="0"
+        style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;"
+        oninput="calcVdDiscount()">
     </div>
     <div class="form-group">
       <label>Stock <span style="color:#dc2626">*</span></label>
@@ -896,7 +928,12 @@
       </select>
     </div>
   </div>
-
+<!-- Discount Preview -->
+  <div id="vdDiscountPreview" style="display:none;margin-bottom:16px;padding:10px 14px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:8px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:18px;">🏷️</span>
+    <span style="font-size:13px;color:#92400e;font-weight:600;">Discount: <span id="vdDiscountBadge" style="font-size:15px;color:#b45309;font-weight:800;">0% OFF</span></span>
+    <span style="font-size:12px;color:#a16207;margin-left:auto;">You save ₹<span id="vdDiscountSaving">0</span></span>
+  </div>
   <!-- SKU -->
   <div class="form-group" style="margin-bottom:16px;">
     <label>SKU <small style="color:#888;font-weight:400;">(auto-generated, editable)</small></label>
@@ -1104,6 +1141,10 @@ function openAddModal() {
   const dvSection = document.getElementById('defaultVariantSection');
   if (dvSection) dvSection.style.display = 'block';
   clearPdImagePreviews();
+  const op = document.getElementById('vOriginalPrice'); if (op) op.value = '';
+  const sp = document.getElementById('vSalePrice');     if (sp) sp.value = '';
+  const preview = document.getElementById('pdDiscountPreview');
+  if (preview) preview.style.display = 'none';
   ['strap','dial','case'].forEach(f => {
     const panel = pdGet(`${f}ColorPanel`);
     if (panel) panel.style.display = 'none';
@@ -1184,7 +1225,8 @@ async function submitProductForm() {
     const size          = document.getElementById('vSize').value.trim();
     const strapMaterial = document.getElementById('vStrapMaterial').value;
     const caseMaterial  = document.getElementById('vCaseMaterial').value;
-    const price         = document.getElementById('vPrice').value;
+    const originalPrice = document.getElementById('vOriginalPrice').value;
+    const salePrice     = document.getElementById('vSalePrice').value;
     const stock         = document.getElementById('vStock').value;
     const vName         = document.getElementById('vName').value.trim();
 
@@ -1194,7 +1236,11 @@ async function submitProductForm() {
     if (!size)          { showToast('Size is required', 'blue'); return; }
     if (!strapMaterial) { showToast('Strap material is required', 'blue'); return; }
     if (!caseMaterial)  { showToast('Case material is required', 'blue'); return; }
-    if (!price)         { showToast('Price is required', 'blue'); return; }
+    if (!originalPrice) { showToast('Original price is required', 'blue'); return; }
+    if (!salePrice)     { showToast('Sale price is required', 'blue');     return; }
+    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
+      showToast('Sale price cannot exceed original price', 'blue'); return;
+    }
     if (!vName)         { showToast('Variant name is required', 'blue'); return; }
     if (pdCroppedBlobs.length + pdExistingImageUrls.length < 3) {
       showToast('At least 3 variant images required', 'blue'); return;
@@ -1208,7 +1254,8 @@ async function submitProductForm() {
     fd.append('size',          size);
     fd.append('strapMaterial', strapMaterial);
     fd.append('caseMaterial',  caseMaterial);
-    fd.append('price',         price);
+    fd.append('originalPrice', originalPrice);
+    fd.append('salePrice',     salePrice);
     fd.append('stock',         stock || '0');
     fd.append('offerProduct',  document.getElementById('vOfferProduct').checked);
     pdExistingImageUrls.forEach(url => fd.append('existingImages', url));
@@ -1601,6 +1648,41 @@ function showToast(msg, type = 'green') {
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
 }
 
+// ── DISCOUNT CALCULATORS ──────────────────────────────
+function calcPdDiscount() {
+  const op = parseFloat(document.getElementById('vOriginalPrice')?.value) || 0;
+  const sp = parseFloat(document.getElementById('vSalePrice')?.value)     || 0;
+  const preview = document.getElementById('pdDiscountPreview');
+  const badge   = document.getElementById('pdDiscountBadge');
+  const saving  = document.getElementById('pdDiscountSaving');
+  if (!preview) return;
+  if (op > 0 && sp >= 0 && sp <= op) {
+    const pct = Math.max(0, Math.round(((op - sp) / op) * 100));
+    preview.style.display = 'flex';
+    badge.textContent  = pct + '% OFF';
+    saving.textContent = (op - sp).toLocaleString('en-IN');
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function calcVdDiscount() {
+  const op = parseFloat(document.getElementById('vd-vOriginalPrice')?.value) || 0;
+  const sp = parseFloat(document.getElementById('vd-vSalePrice')?.value)     || 0;
+  const preview = document.getElementById('vdDiscountPreview');
+  const badge   = document.getElementById('vdDiscountBadge');
+  const saving  = document.getElementById('vdDiscountSaving');
+  if (!preview) return;
+  if (op > 0 && sp >= 0 && sp <= op) {
+    const pct = Math.max(0, Math.round(((op - sp) / op) * 100));
+    preview.style.display = 'flex';
+    badge.textContent  = pct + '% OFF';
+    saving.textContent = (op - sp).toLocaleString('en-IN');
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
 // ── MOBILE SEARCH TOGGLE ──────────────────────────────
 (function setupMobileSearch() {
   const topbar     = document.querySelector('.topbar');
@@ -1733,7 +1815,13 @@ function renderVariantTable(variants) {
       <td>${colorDots||'-'}<br><small style="color:#888;font-size:11px;">${[v.strapColor,v.dialColor,v.caseColor].filter(Boolean).join(' / ')||''}</small></td>
       <td>${v.size||'-'}</td>
       <td><small>${v.strapMaterial||''} / ${v.caseMaterial||''}</small></td>
-      <td>₹${v.price||'-'}</td>
+      <td>
+        <div style="line-height:1.5;">
+          <div style="text-decoration:line-through;color:#9ca3af;font-size:11px;">₹${v.originalPrice||v.price||0}</div>
+          <div style="font-weight:700;color:#111;font-size:13px;">₹${v.salePrice||v.price||0}</div>
+          ${v.discountPercentage ? `<span style="display:inline-block;padding:1px 6px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:8px;font-size:10px;font-weight:800;">${v.discountPercentage}% OFF</span>` : ''}
+        </div>
+      </td>
       <td>${stockBadge}</td>
       <td>${defaultBtn}</td>
       <td>
@@ -1813,7 +1901,9 @@ async function openEditVariantModal(variantId) {
     document.getElementById('vd-vName').value           = v.name||'';
     document.getElementById('vd-vSku').value            = v.sku||'';
     document.getElementById('vd-vSize').value           = v.size||'';
-    document.getElementById('vd-vPrice').value          = v.price||'';
+    document.getElementById('vd-vOriginalPrice').value  = v.originalPrice || v.price || '';
+    document.getElementById('vd-vSalePrice').value      = v.salePrice     || v.price || '';
+    calcVdDiscount();
     document.getElementById('vd-vStock').value          = v.stock||'';
     document.getElementById('vd-vStrapColor').value     = v.strapColor||'';
     document.getElementById('vd-vDialColor').value      = v.dialColor||'';
@@ -1861,7 +1951,8 @@ async function submitVariantForm() {
   const name          = document.getElementById('vd-vName').value.trim();
   const sku           = document.getElementById('vd-vSku').value.trim();
   const size          = document.getElementById('vd-vSize').value.trim();
-  const price         = document.getElementById('vd-vPrice').value;
+  const originalPrice = document.getElementById('vd-vOriginalPrice').value;
+  const salePrice     = document.getElementById('vd-vSalePrice').value;
   const stock         = document.getElementById('vd-vStock').value;
   const strapColor    = document.getElementById('vd-vStrapColor').value.trim();
   const dialColor     = document.getElementById('vd-vDialColor').value.trim();
@@ -1876,12 +1967,17 @@ async function submitVariantForm() {
   if (!size)          { showToast('Size is required','blue');         return; }
   if (!strapMaterial) { showToast('Strap material is required','blue'); return; }
   if (!caseMaterial)  { showToast('Case material is required','blue');  return; }
-  if (!price)         { showToast('Price is required','blue');        return; }
+  if (!originalPrice) { showToast('Original price is required','blue'); return; }
+  if (!salePrice)     { showToast('Sale price is required','blue');     return; }
+  if (parseFloat(salePrice) > parseFloat(originalPrice)) {
+    showToast('Sale price cannot exceed original price','blue'); return;
+  }
   if (vCroppedBlobs.length + vExistingImageUrls.length < 3) { showToast('At least 3 images required','blue'); return; }
 
   const fd = new FormData();
   fd.append('name',name); fd.append('sku',sku); fd.append('size',size);
-  fd.append('price',price); fd.append('stock',stock||'0');
+  fd.append('originalPrice', originalPrice);
+    fd.append('salePrice',     salePrice); fd.append('stock',stock||'0');
   fd.append('strapColor',strapColor); fd.append('dialColor',dialColor); fd.append('caseColor',caseColor);
   fd.append('strapMaterial',strapMaterial); fd.append('caseMaterial',caseMaterial);
   fd.append('status', document.getElementById('vd-vStatus').value);
