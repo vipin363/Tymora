@@ -1,75 +1,80 @@
-import express  from 'express';
-const router=express.Router()
-import { isLogin,isAuth,hasOtpSession,hasForgotSession,hasResetVerified } from '../middleware/userAuth.js';
-import { loadLogin,login,loadRegister,registerUser,homePage,logout,loadForgotPassword,
-        forgotPassword,loadResetPassword,resetPassword,loadProfile,loadEditProfile,updateProfile,
-        changeEmail,verifyChangeEmail,resendChangeEmailOtp,deleteAccount,changePassword,
-        loadAddressPage,addAddress,updateAddress,getAddress,setDefaultAddress,deleteAddress,
-        loadshop,loadProductDetail,loadWishlist, toggleWishlist, getWishlistIds, addAllToCart,
-        loadCart, addToCart, updateCartItem, removeCartItem, getCartCount,checkProductStatus  } from '../controller/userController.js';
-import { loadOtpPage,verifyOtp,resendOtp,loadForgotOtpPage,verifyForgotOtp } from '../controller/otpController.js';
-import  passport from 'passport';
+import express from 'express';
+const router = express.Router()
+import { isLogin, isAuth, hasOtpSession, hasForgotSession, hasResetVerified } from '../middleware/userAuth.js';
+import {
+  loadLogin, login, loadRegister, registerUser, homePage, logout, loadForgotPassword,
+  forgotPassword, loadResetPassword, resetPassword, loadProfile, loadEditProfile, updateProfile,
+  changeEmail, verifyChangeEmail, resendChangeEmailOtp, deleteAccount, changePassword,
+  loadAddressPage, addAddress, updateAddress, getAddress, setDefaultAddress, deleteAddress,
+  loadshop, loadProductDetail, loadWishlist, toggleWishlist, getWishlistIds, addAllToCart,
+  loadCart, loadCheckout, calculateCheckout, addToCart, updateCartItem, removeCartItem, getCartCount, checkProductStatus,
+  placeOrder, loadOrderSuccess, getUserOrders, buyNow, cancelOrder, trackOrder, downloadInvoice, requestReturn, loadOrderDetails
+} from '../controller/userController.js';
+import { addReview, editReview, deleteReview, getMyReviews } from '../controller/reviewController.js';
+import { loadOtpPage, verifyOtp, resendOtp, loadForgotOtpPage, verifyForgotOtp } from '../controller/otpController.js';
+import passport from 'passport';
 import upload from '../middleware/uploard.js';
 import { attachCategories } from "../middleware/attachCategories.js";
 import Product from '../model/productModel.js';
 import Variant from '../model/variantModel.js';
-import Wishlist from '../model/wishlistModel.js';   
-import Cart     from '../model/cartModel.js';        
+import Wishlist from '../model/wishlistModel.js';
+import Cart from '../model/cartModel.js';
 
 router.use(attachCategories);
 
-router.get('/',homePage);
-router.get('/login',isLogin,loadLogin)
-router.post('/login',login)
+router.get('/', homePage);
+router.get('/login', isLogin, loadLogin)
+router.post('/login', login)
 
-router.get('/register',isLogin,loadRegister)
-router.post('/register',registerUser)
+router.get('/register', isLogin, loadRegister)
+router.post('/register', registerUser)
 
-router.get('/otp',hasOtpSession,loadOtpPage)
-router.post('/verifyOtp',hasOtpSession,verifyOtp)
-router.get('/resendOtp',resendOtp);
+router.get('/otp', hasOtpSession, loadOtpPage)
+router.post('/verifyOtp', hasOtpSession, verifyOtp)
+router.get('/resendOtp', resendOtp);
 
-router.get('/logout',isAuth,logout)
+router.get('/logout', isAuth, logout)
 
-router.get('/forgotPassword', isLogin,loadForgotPassword);
-router.post('/forgotPassword',forgotPassword);
+router.get('/forgotPassword', isLogin, loadForgotPassword);
+router.post('/forgotPassword', forgotPassword);
 
-router.get('/forgotOtp',hasForgotSession,loadForgotOtpPage);
-router.post('/verifyForgotOtp',hasForgotSession,verifyForgotOtp);
+router.get('/forgotOtp', hasForgotSession, loadForgotOtpPage);
+router.post('/verifyForgotOtp', hasForgotSession, verifyForgotOtp);
 
-router.get('/resetPassword', hasResetVerified,loadResetPassword);
-router.post('/resetPassword', hasResetVerified , resetPassword);
+router.get('/resetPassword', hasResetVerified, loadResetPassword);
+router.post('/resetPassword', hasResetVerified, resetPassword);
 
-router.get('/home',(req,res)=>{
-   res.redirect('/user/');
+router.get('/home', (req, res) => {
+  res.redirect('/user/');
 });
 
 router.get('/auth/google/login', (req, res, next) => {
-  req.session.googleAuthType = 'login'; 
+  req.session.googleAuthType = 'login';
   next();
-}, passport.authenticate('google', { scope: ['profile','email'] }));
+}, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/register', (req, res, next) => {
-  req.session.googleAuthType = 'register'; 
+  req.session.googleAuthType = 'register';
   next();
-}, passport.authenticate('google', { scope: ['profile','email'] }));
+}, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/callback', (req, res, next) => {
   passport.authenticate('google', (err, user, info) => {
     if (err) return next(err);
     const isRegister = req.session.googleAuthType === 'register';
     if (!user) {
-      req.session.googleAuthType = null; 
+      req.session.googleAuthType = null;
       if (isRegister) {
         return res.redirect(`/user/register?message=${info.message}`);
       } else {
         return res.redirect(`/user/login?message=${info.message}`);
-      }}
+      }
+    }
     req.session.user = {
       id: user._id,
       name: user.name
     };
-    req.session.googleAuthType = null; 
+    req.session.googleAuthType = null;
     res.redirect('/user/home');
   })(req, res, next);
 });
@@ -87,13 +92,13 @@ router.post('/changePassword', isAuth, changePassword);
 router.post('/deleteAccount', isAuth, deleteAccount);
 
 router.get('/address', isAuth, loadAddressPage);
-router.post("/addAddress", isAuth,addAddress);
-router.get("/getAddress/:id",isAuth, getAddress);
-router.post("/updateAddress/:id",isAuth, updateAddress);
-router.get("/setDefault/:id",isAuth, setDefaultAddress);
+router.post("/addAddress", isAuth, addAddress);
+router.get("/getAddress/:id", isAuth, getAddress);
+router.post("/updateAddress/:id", isAuth, updateAddress);
+router.get("/setDefault/:id", isAuth, setDefaultAddress);
 router.post("/deleteAddress/:id", isAuth, deleteAddress);
 
-router.get('/shop',loadshop);
+router.get('/shop', loadshop);
 router.get('/product/:id', loadProductDetail);
 
 router.get('/wishlist', isAuth, loadWishlist);
@@ -106,6 +111,24 @@ router.post('/cart/add', isAuth, addToCart);
 router.post('/cart/update', isAuth, updateCartItem);
 router.post('/cart/remove', isAuth, removeCartItem);
 router.get('/cart/count', getCartCount);
+
+router.post('/checkout/buy-now', isAuth, buyNow);
+router.get('/checkout', isAuth, loadCheckout);
+router.post('/checkout/calculate', isAuth, calculateCheckout);
+router.post('/checkout/place-order', isAuth, placeOrder);
+
+router.get('/order-success', isAuth, loadOrderSuccess);
+router.get('/orders', isAuth, getUserOrders);
+router.get('/order-details/:orderId', isAuth, loadOrderDetails);
+router.get('/track-order/:orderId/:itemId', isAuth, trackOrder);
+router.get('/orders/invoice/:orderId', isAuth, downloadInvoice);
+router.post('/orders/cancel', isAuth, cancelOrder);
+router.post('/orders/return', isAuth, upload.array('evidenceImages', 3), requestReturn);
+
+router.post('/reviews/add', isAuth, addReview);
+router.post('/reviews/edit/:reviewId', isAuth, editReview);
+router.post('/reviews/delete/:reviewId', isAuth, deleteReview);
+router.get('/my-reviews', isAuth, getMyReviews);
 
 // GET /user/api/related/:productId
 router.get('/api/product-status/:id', checkProductStatus);
@@ -173,7 +196,7 @@ router.get('/api/related/:productId', async (req, res) => {
     if (!slots.length) return res.json({ success: true, products: [] });
 
     // ── Fetch wishlist + cart state ───────────────────────────────
-    let wishedSet      = new Set();
+    let wishedSet = new Set();
     let cartVariantSet = new Set();
 
     if (userId) {
@@ -193,15 +216,15 @@ router.get('/api/related/:productId', async (req, res) => {
     const DEFAULT_BADGES = ['CURATED', 'PREMIUM', 'SIGNATURE', 'CLASSIC', 'LUXURY PICK'];
 
     function buildBadge(p, rv) {
-      const stock      = rv?.stock ?? 0;
+      const stock = rv?.stock ?? 0;
       const hoursSince = p.createdAt
         ? (Date.now() - new Date(p.createdAt).getTime()) / 3_600_000
         : 9999;
       const seed = parseInt(p._id.toString().slice(-2), 16) || 0;
-      if (p.dealOfTheDay)          return { badge: 'deal',      badgeLabel: 'DEAL OF THE DAY' };
-      if (p.featured)              return { badge: 'featured',  badgeLabel: 'BEST PICK' };
+      if (p.dealOfTheDay) return { badge: 'deal', badgeLabel: 'DEAL OF THE DAY' };
+      if (p.featured) return { badge: 'featured', badgeLabel: 'BEST PICK' };
       if (stock > 0 && stock <= 5) return { badge: 'low-stock', badgeLabel: `ONLY ${stock} LEFT` };
-      if (hoursSince <= 24)        return { badge: 'new',       badgeLabel: 'NEW' };
+      if (hoursSince <= 24) return { badge: 'new', badgeLabel: 'NEW' };
       return { badge: 'default', badgeLabel: DEFAULT_BADGES[seed % DEFAULT_BADGES.length] };
     }
 
@@ -211,23 +234,23 @@ router.get('/api/related/:productId', async (req, res) => {
       const pid = p._id.toString();
       const vid = rv._id.toString();
       return {
-        id:          pid,
-        name:        p.name,
-        brand:       p.brand?.name || 'TYMORA',
-        price:       rv.salePrice  ?? rv.price  ?? p.price ?? 0,
-        oldPrice:    (p.discountPercentage ?? p.discount) > 0
-                       ? (rv.originalPrice ?? p.originalPrice ?? null)
-                       : null,
+        id: pid,
+        name: p.name,
+        brand: p.brand?.name || 'TYMORA',
+        price: rv.salePrice ?? rv.price ?? p.price ?? 0,
+        oldPrice: (p.discountPercentage ?? p.discount) > 0
+          ? (rv.originalPrice ?? p.originalPrice ?? null)
+          : null,
         discountPct: p.discountPercentage ?? p.discount ?? 0,
-        rating:      p.rating  ?? 4.5,
-        reviews:     p.reviews ?? 0,
+        rating: p.rating ?? 4.5,
+        reviews: p.reviews ?? 0,
         badge,
         badgeLabel,
-        avail:       rv.stock > 0 ? 'instock' : 'outofstock',
-        img:         rv.images?.[0] || p.images?.[0] || '',
-        variantId:   vid,                        
-        wished:      wishedSet.has(pid),          
-        inCart:      cartVariantSet.has(vid),      
+        avail: rv.stock > 0 ? 'instock' : 'outofstock',
+        img: rv.images?.[0] || p.images?.[0] || '',
+        variantId: vid,
+        wished: wishedSet.has(pid),
+        inCart: cartVariantSet.has(vid),
       };
     });
 
@@ -239,8 +262,8 @@ router.get('/api/related/:productId', async (req, res) => {
   }
 });
 
-router.use((req,res)=>{
-   res.redirect('/user/register');
+router.use((req, res) => {
+  res.redirect('/user/register');
 });
 
 export default router;

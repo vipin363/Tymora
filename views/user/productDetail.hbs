@@ -35,7 +35,7 @@
       <h1 class="pd-name pd-fade">{{product.name}}</h1>
 
       <div class="pd-rating-row pd-fade">
-        <div class="pd-stars">★★★★★</div>
+        <div class="pd-stars" style="color:var(--gold);">{{#times product.ratingRounded}}★{{/times}}{{#times (subtract 5 product.ratingRounded)}}☆{{/times}}</div>
         <span class="pd-rating-val">{{product.rating}}</span>
         <div class="pd-rating-sep"></div>
         <span class="pd-review-count">{{product.reviewCount}} Reviews</span>
@@ -192,23 +192,46 @@
 
   <div class="pd-divider"></div>
 
-  <!-- REVIEWS (static display, real count from DB) -->
+  <!-- REVIEWS -->
   <section class="pd-reviews pd-fade">
     <h2 class="pd-section-title">Customer <em>Reviews</em></h2>
+    
+    {{#if product.reviewCount}}
     <div class="pd-reviews-header">
       <div class="pd-avg-rating">
         <div class="pd-avg-num">{{product.rating}}</div>
-        <div class="pd-avg-stars">★★★★★</div>
+        <div class="pd-avg-stars" style="color:var(--gold);">
+          {{#times product.ratingRounded}}★{{/times}}{{#times (subtract 5 product.ratingRounded)}}☆{{/times}}
+        </div>
         <div class="pd-avg-count">Based on {{product.reviewCount}} reviews</div>
       </div>
       <div class="pd-rating-bars">
-        <div class="pd-rating-bar-row"><span class="pd-bar-label">5 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:78%"></div></div><span class="pd-bar-count">78%</span></div>
-        <div class="pd-rating-bar-row"><span class="pd-bar-label">4 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:14%"></div></div><span class="pd-bar-count">14%</span></div>
-        <div class="pd-rating-bar-row"><span class="pd-bar-label">3 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:5%"></div></div><span class="pd-bar-count">5%</span></div>
-        <div class="pd-rating-bar-row"><span class="pd-bar-label">2 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:2%"></div></div><span class="pd-bar-count">2%</span></div>
-        <div class="pd-rating-bar-row"><span class="pd-bar-label">1 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:1%"></div></div><span class="pd-bar-count">1%</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">5 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[5]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[5]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">4 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[4]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[4]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">3 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[3]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[3]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">2 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[2]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[2]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">1 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[1]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[1]}}</span></div>
       </div>
     </div>
+    <div class="pd-review-list" style="margin-top: 40px; display: flex; flex-direction: column; gap: 24px;">
+      {{#each product.reviews}}
+      <div class="pd-review-card" style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+          <strong style="color: var(--white); font-size: 14px;">{{this.userName}}</strong>
+          <span style="color: var(--muted); font-size: 11px;">{{this.dateFormatted}}</span>
+        </div>
+        <div style="color: var(--gold); margin-bottom: 12px; font-size: 12px;">
+          {{#times this.rating}}★{{/times}}{{#times (subtract 5 this.rating)}}☆{{/times}}
+        </div>
+        <p style="color: #ddd; font-size: 13px; line-height: 1.6;">{{this.reviewText}}</p>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div style="text-align:center; padding: 40px 0; color: var(--muted);">
+      <p>No reviews yet. Be the first to review this masterpiece.</p>
+    </div>
+    {{/if}}
   </section>
 
   <div class="pd-divider"></div>

@@ -1,0 +1,99 @@
+/* ============================================================
+   TYMORA — myReviews.css
+   Luxury Review Management Page
+   ============================================================ */
+
+.mr-wrapper {
+  padding: calc(var(--nav-height) + 60px) 40px 80px;
+  background: #050505;
+  min-height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--white);
+}
+
+.mr-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+.mr-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.mr-subtitle {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mr-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mr-card {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  gap: 24px;
+}
+
+.mr-prod-img {
+  width: 80px; height: 80px;
+  background: #000;
+  border-radius: 8px;
+  object-fit: contain;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.mr-info {
+  flex: 1;
+}
+.mr-prod-name { font-weight: 700; font-size: 1.1rem; color: var(--white); margin-bottom: 6px; }
+.mr-date { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.mr-rating { color: var(--gold); font-size: 14px; margin-bottom: 12px; }
+.mr-text { font-size: 13px; color: #ddd; line-height: 1.5; margin-bottom: 16px; }
+
+.mr-actions {
+  display: flex;
+  gap: 12px;
+}
+.mr-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: var(--white);
+}
+.mr-btn:hover { border-color: var(--gold); color: var(--gold); }
+.mr-btn-danger { border-color: #ef4444; color: #ef4444; }
+.mr-btn-danger:hover { background: #ef4444; color: #fff; }
+
+.mr-empty {
+  text-align: center;
+  padding: 60px 0;
+}
+.mr-empty h2 { font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 16px; }
+
+/* Edit Modal */
+.mr-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+.mr-modal { background: #111; border: 1px solid rgba(201,168,76,0.3); border-radius: 12px; width: 400px; padding: 30px; }
+.mr-modal h3 { color: var(--gold); font-family: 'Playfair Display', serif; margin-bottom: 16px; }
+.mr-modal select { width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; }
+.mr-modal textarea { width: 100%; height: 100px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 12px; color: #fff; margin-bottom: 20px; }
+.mr-modal-actions { display: flex; gap: 12px; justify-content: flex-end; }

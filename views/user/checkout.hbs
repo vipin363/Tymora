@@ -1,0 +1,425 @@
+<link href="/checkout.css" rel="stylesheet">
+
+<div class="checkout-wrapper">
+
+  <div class="page-heading">
+    <h1>Secure Checkout</h1>
+    <p>Complete your luxury watch purchase securely</p>
+    <div class="heading-underline"></div>
+  </div>
+
+  <div class="checkout-layout">
+    
+    <!-- LEFT: CHECKOUT STEPS -->
+    <div class="checkout-main-col">
+      
+      <!-- 1. ADDRESS SECTION -->
+      <section class="checkout-section" id="step-shipping">
+        <h2 class="section-title">Shipping <em>Destinations</em></h2>
+        
+        {{#if address}}
+        <div class="address-card">
+          <div class="address-badge">
+            <div class="dot"></div> {{#if address.addressType}}{{address.addressType}}{{else}}HOME{{/if}}
+          </div>
+          <div class="address-name">{{address.name}}</div>
+          <div class="address-phone">{{address.phone}}</div>
+          <div class="address-text">
+            {{address.street}}<br>
+            {{address.city}}, {{address.state}} {{address.pincode}}
+          </div>
+        </div>
+        {{else}}
+        <div class="address-card">
+          <div class="address-text">No default address selected. Please add an address.</div>
+        </div>
+        {{/if}}
+        
+        <div class="address-actions">
+          <button class="btn-address-action" onclick="window.location.href='/user/address?from=checkout'">
+            Manage Address
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. PRODUCT SUMMARY SECTION -->
+      <section class="checkout-section" id="step-products">
+        <h2 class="section-title">Product <em>Summary</em></h2>
+        <div class="product-summary-list">
+          {{#each cartItems}}
+          <div class="product-summary-card" data-variant="{{this.variantId}}" data-product="{{this.productId}}">
+            <div class="ps-img">
+              <img src="{{this.img}}" alt="{{this.name}}">
+            </div>
+            <div class="ps-info">
+              <div class="ps-header">
+                <div>
+                  <div class="ps-name">{{this.name}}</div>
+                  <div class="ps-variant">{{this.variantSpecs}}</div>
+                </div>
+                <div class="ps-price-block">
+                  <div class="ps-total">₹{{formatCurrency this.total}}</div>
+                  {{#if (gt this.discountPercentage 0)}}
+                  <div style="display:flex; gap: 8px;">
+                    <span class="ps-mrp">₹{{formatCurrency this.originalPrice}}</span>
+                    <span class="ps-discount">{{this.discountPercentage}}% OFF</span>
+                  </div>
+                  {{/if}}
+                </div>
+              </div>
+              <div class="ps-controls">
+                <div class="qty-display">
+                  <span style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-right:8px;">Qty:</span>
+                  <span style="font-size:12px; font-weight:600; color:var(--white);">{{this.qty}}</span>
+                </div>
+                {{#if this.isOutOfStock}}
+                <div style="color: #ff4d4d; font-size: 12px; margin-top: 8px; font-weight: 500;">
+                  This product is currently out of stock
+                </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+
+      <!-- 3. OFFERS & COUPONS (STATIC) -->
+      <section class="checkout-section" id="step-offers">
+        <h2 class="section-title">Offers & <em>Coupons</em></h2>
+        
+        <span class="section-label">Apply Promotional Code</span>
+        <div class="coupon-wrapper">
+          <div class="coupon-input-wrap">
+            <input type="text" class="coupon-input" placeholder="Enter Coupon Code" disabled>
+            <div class="coupon-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            </div>
+          </div>
+          <button class="coupon-btn" disabled style="opacity:0.5; cursor:not-allowed;">Apply</button>
+        </div>
+        
+        <span class="section-label">Available Offers</span>
+        <div class="offers-grid">
+          <div class="offer-card">
+            <div class="offer-val">10% OFF</div>
+            <div class="offer-code">TYMORA10</div>
+            <div class="offer-desc">Exclusive discount on boutique collections.</div>
+          </div>
+          <div class="offer-card">
+            <div class="offer-val">₹2,000</div>
+            <div class="offer-code">FIRSTWATCH</div>
+            <div class="offer-desc">Flat discount for your inaugural Horology piece.</div>
+          </div>
+          <div class="offer-card">
+            <div class="offer-val">FREE GIFT</div>
+            <div class="offer-code">FREEBOX</div>
+            <div class="offer-desc">Complimentary Collector travel watch roll included.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. DELIVERY TIERS -->
+      <section class="checkout-section" id="step-delivery">
+        <h2 class="section-title">Delivery <em>Tiers</em></h2>
+        
+        <div class="delivery-grid">
+          <div class="delivery-card selected" data-charge="0" id="tier-normal">
+            <div class="del-left">
+              <div class="radio-circle"><div class="radio-inner"></div></div>
+              <div class="del-info">
+                <h4>Normal Delivery</h4>
+                <p>Standard secure shipping</p>
+              </div>
+            </div>
+            <div class="del-price free">Free</div>
+          </div>
+          
+          <div class="delivery-card" data-charge="50" id="tier-fast">
+            <div class="del-left">
+              <div class="radio-circle"></div>
+              <div class="del-info">
+                <h4>Fast Delivery</h4>
+                <p>Priority expedited shipping</p>
+              </div>
+            </div>
+            <div class="del-price">₹50</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. PAYMENT METHOD -->
+      <section class="checkout-section" id="step-payment">
+        <h2 class="section-title">Payment <em>method</em></h2>
+        
+        <div class="payment-grid">
+          <div class="payment-tab disabled">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <div class="pay-name">Cards</div>
+          </div>
+          <div class="payment-tab disabled">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="pay-name">UPI / QR</div>
+          </div>
+          <div class="payment-tab disabled">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <line x1="6" y1="12" x2="6" y2="12"></line>
+                <line x1="10" y1="12" x2="10" y2="12"></line>
+              </svg>
+            </div>
+            <div class="pay-name">Wallets</div>
+          </div>
+          <div class="payment-tab active" id="tab-cod">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div class="pay-name">C.O.D.</div>
+          </div>
+        </div>
+
+        <!-- COD Info Card -->
+        <div class="cod-card active" id="cod-info-card">
+          <div class="cod-info">
+            <div class="cod-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div class="cod-text">
+              Cash on Delivery available with an additional <strong>₹30 handling charge</strong>.
+            </div>
+          </div>
+          <div class="cod-checkbox">
+            <input type="checkbox" id="cod-confirm" checked>
+            <label for="cod-confirm">Continue with Cash on Delivery</label>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Trust Badges -->
+      <div class="trust-badges-row">
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>Insured Shipping</span>
+        </div>
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>2-Year Warranty</span>
+        </div>
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Secure Checkout</span>
+        </div>
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <span>Authentic Certified</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: ORDER SUMMARY -->
+    <aside class="summary-sidebar">
+      <div class="summary-card">
+        <h3 class="summary-title">Order Summary</h3>
+
+        <div class="summary-breakdown">
+          <div class="sum-row">
+            <span>MRP</span>
+            <span class="val" id="sum-mrp">₹{{formatCurrency totalMRP}}</span>
+          </div>
+          <div class="sum-row discount">
+            <span>Discount</span>
+            <span class="val" id="sum-discount">- ₹{{formatCurrency discount}}</span>
+          </div>
+          <div class="sum-row discount">
+            <span>Coupon Discount</span>
+            <span class="val" id="sum-coupon">- ₹0</span>
+          </div>
+          <div class="sum-row">
+            <span>Delivery</span>
+            <span class="val" id="sum-delivery">₹0</span>
+          </div>
+          <div class="sum-row">
+            <span>COD Charge</span>
+            <span class="val" id="sum-cod">₹30</span>
+          </div>
+          <div class="sum-row">
+            <span>CGST (9%)</span>
+            <span class="val" id="sum-cgst">₹{{formatCurrency cgst}}</span>
+          </div>
+          <div class="sum-row">
+            <span>SGST (9%)</span>
+            <span class="val" id="sum-sgst">₹{{formatCurrency sgst}}</span>
+          </div>
+          
+          <div class="sum-row discount" style="margin-top: 12px; font-weight: 600;">
+            <span>YOU SAVED ↑</span>
+            <span class="val" id="sum-saved">- ₹{{formatCurrency discount}}</span>
+          </div>
+        </div>
+        
+        <div class="sum-total-row">
+          <div class="sum-total-label">TOTAL</div>
+          <div class="sum-total-price-wrap">
+            <div class="sum-total-price" id="sum-final-total">₹0</div>
+          </div>
+        </div>
+
+{{#if hasOutOfStock}}
+<p id="outOfStockMsg" style="color:#ff4d4d; margin-top:8px; font-weight:500;">This product is currently out of stock</p>
+{{/if}}
+<button class="btn-place-order" id="placeOrderBtn" data-address-id="{{address._id}}" {{#if hasOutOfStock}}disabled style="opacity: 0.5; cursor: not-allowed;"{{/if}}>PLACE ORDER &gt;</button>
+      </div>
+
+      <div class="concierge-assist">
+        <div class="concierge-icon">
+          <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        </div>
+        <div class="concierge-text">
+          <h4>Concierge Assistance</h4>
+          <p>Need help with your order? Speak to a concierge expert for immediate assistance.</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+  // Initial Variables
+  let deliveryCharge = 0;
+  let codCharge = 30; // COD is default
+
+  async function fetchUpdatedTotals() {
+    try {
+      const res = await fetch('/user/checkout/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deliveryCharge, codCharge })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('sum-mrp').textContent = '₹' + data.totalMRP.toLocaleString('en-IN');
+        document.getElementById('sum-discount').textContent = '- ₹' + data.discount.toLocaleString('en-IN');
+        document.getElementById('sum-coupon').textContent = '- ₹' + data.couponDiscount.toLocaleString('en-IN');
+        document.getElementById('sum-delivery').textContent = data.deliveryCharge === 0 ? 'Free' : '₹' + data.deliveryCharge;
+        document.getElementById('sum-cod').textContent = data.codCharge === 0 ? '₹0' : '₹' + data.codCharge;
+        document.getElementById('sum-cgst').textContent = '₹' + data.cgst.toLocaleString('en-IN');
+        document.getElementById('sum-sgst').textContent = '₹' + data.sgst.toLocaleString('en-IN');
+        document.getElementById('sum-saved').textContent = '- ₹' + data.youSaved.toLocaleString('en-IN');
+        document.getElementById('sum-final-total').textContent = '₹' + data.finalTotal.toLocaleString('en-IN');
+        // Handle out-of-stock flag
+        if (data.hasOutOfStock) {
+          placeOrderBtn.disabled = true;
+          placeOrderBtn.style.opacity = '0.5';
+          placeOrderBtn.style.cursor = 'not-allowed';
+        } else {
+          placeOrderBtn.disabled = false;
+          placeOrderBtn.style.opacity = '';
+          placeOrderBtn.style.cursor = '';
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Delivery Tiers Logic
+  const normalTier = document.getElementById('tier-normal');
+  const fastTier = document.getElementById('tier-fast');
+
+  normalTier.addEventListener('click', () => {
+    normalTier.classList.add('selected');
+    fastTier.classList.remove('selected');
+    normalTier.querySelector('.radio-circle').innerHTML = '<div class="radio-inner"></div>';
+    fastTier.querySelector('.radio-circle').innerHTML = '';
+    deliveryCharge = 0;
+    fetchUpdatedTotals();
+  });
+
+  fastTier.addEventListener('click', () => {
+    fastTier.classList.add('selected');
+    normalTier.classList.remove('selected');
+    fastTier.querySelector('.radio-circle').innerHTML = '<div class="radio-inner"></div>';
+    normalTier.querySelector('.radio-circle').innerHTML = '';
+    deliveryCharge = 50;
+    fetchUpdatedTotals();
+  });
+
+  // COD Checkbox Logic
+  const codConfirm = document.getElementById('cod-confirm');
+  codConfirm.addEventListener('change', (e) => {
+    codCharge = e.target.checked ? 30 : 0;
+    fetchUpdatedTotals();
+  });
+
+  // Quantity Update Logic via API has been removed as per user request
+
+  // Place Order Button
+  const placeOrderBtn = document.getElementById('placeOrderBtn');
+  placeOrderBtn.addEventListener('click', async () => {
+    const codChecked = document.getElementById('cod-confirm').checked;
+    if (!codChecked) {
+      alert("Please confirm Cash on Delivery to place the order.");
+      return;
+    }
+
+    const isFast = document.getElementById('tier-fast').classList.contains('selected');
+    const deliveryType = isFast ? 'Fast' : 'Normal';
+
+    // Loading state
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.textContent = 'PLACING ORDER...';
+
+    try {
+      const addressId = placeOrderBtn.getAttribute('data-address-id');
+      const res = await fetch('/user/checkout/place-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addressId, paymentMethod: 'COD', deliveryType, paymentDetails: {} })
+        });
+      const data = await res.json();
+
+      if (data.success) {
+        window.location.href = `/user/order-success?orderId=${data.orderId}`;
+      } else {
+        alert(data.message || 'Failed to place order. Please try again.');
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.textContent = 'PLACE ORDER >';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong. Please try again.');
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = 'PLACE ORDER >';
+    }
+  });
+
+  // Init Totals
+  fetchUpdatedTotals();
+
+  // Animations
+  gsap.from('.checkout-section', {
+    y: 20, opacity: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out', delay: 0.1
+  });
+  gsap.from('.summary-sidebar', {
+    y: 20, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.3
+  });
+</script>

@@ -1,268 +1,367 @@
 <link href="/userHome.css" rel="stylesheet">
 
-<!-- HERO -->
+<!-- DYNAMIC BACKDROP LIGHTS -->
+<div class="luxury-spotlight"></div>
+<div class="luxury-spotlight-blue"></div>
+
+<!-- HERO SECTION -->
 <section class="hero" id="home">
-  <div class="hero-bg"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <div class="hero-eyebrow">Precision in Every Second</div>
-    <h1 class="hero-title">TIME BEYOND<br><span>MEASURE</span></h1>
-    <p class="hero-sub">Curating the world's most exceptional timepieces</p>
-    <div class="hero-btns">
-      <button class="btn-primary"><span>Shop Now</span></button>
-      <button class="btn-outline">View Offers</button>
+  <div class="hero-overlay-dark"></div>
+  <div class="hero-container">
+
+    <!-- LEFT PANEL: ELEVATED TYPOGRAPHY -->
+    <div class="hero-content" id="heroContent">
+      <div class="hero-eyebrow">HOROLOGY OF DISTINCTION</div>
+      <h1 class="hero-title">
+        TIME BEYOND
+        <span>MEASURE</span>
+      </h1>
+      <p class="hero-sub">
+        Curating the world's most exceptional mechanical masterworks. Uncompromising craftsmanship, refined for the
+        modern connoisseur.
+      </p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="window.location.href='/user/shop'">
+          <span>Explore Shop</span>
+        </button>
+        <button class="btn-outline" onclick="document.getElementById('deals').scrollIntoView({behavior: 'smooth'})">
+          View Offers
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: DYNAMIC WATCH SHOWCASE -->
+    <div class="hero-visual" id="heroVisual">
+      <div class="visual-glow"></div>
+      <div class="visual-rings"></div>
+      <img class="visual-watch-img" id="heroWatch" src="/image/tymora_hero_watch.png"
+        alt="Tymora Tourbillon Skeleton Watch">
+    </div>
+
+  </div>
+
+  <!-- SCROLL DOWN INDICATOR -->
+  <div class="scroll-indicator" onclick="document.getElementById('brandStrip').scrollIntoView({behavior: 'smooth'})">
+    <span class="scroll-text">Scroll to Discover</span>
+    <div class="scroll-mouse">
+      <div class="scroll-wheel"></div>
     </div>
   </div>
 </section>
 
-<!-- BRAND STRIP -->
-<div class="brand-strip">
+<!-- BRAND MARQUEE STRIP -->
+<div class="brand-strip" id="brandStrip">
   <div class="brand-track">
     <span class="brand-name">ROLEX</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">CASIO</span>
+    <span class="brand-name">PATEK PHILIPPE</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">FOSSIL</span>
+    <span class="brand-name">AUDEMARS PIGUET</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">TITAN</span>
+    <span class="brand-name">TAG HEUER</span>
     <div class="brand-divider"></div>
     <span class="brand-name">OMEGA</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">SEIKO</span>
+    <span class="brand-name">VACHERON CONSTANTIN</span>
     <div class="brand-divider"></div>
-    <!-- duplicate for seamless loop -->
+    <span class="brand-name">BREGUET</span>
+    <div class="brand-divider"></div>
+
+    <!-- Duplicate for seamless scroll loop -->
     <span class="brand-name">ROLEX</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">CASIO</span>
+    <span class="brand-name">PATEK PHILIPPE</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">FOSSIL</span>
+    <span class="brand-name">AUDEMARS PIGUET</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">TITAN</span>
+    <span class="brand-name">TAG HEUER</span>
     <div class="brand-divider"></div>
     <span class="brand-name">OMEGA</span>
     <div class="brand-divider"></div>
-    <span class="brand-name">SEIKO</span>
+    <span class="brand-name">VACHERON CONSTANTIN</span>
+    <div class="brand-divider"></div>
+    <span class="brand-name">BREGUET</span>
     <div class="brand-divider"></div>
   </div>
 </div>
 
-<!-- COLLECTIONS -->
+<!-- COLLECTIONS SECTION -->
 <section class="collections-section" id="collections">
-  <div class="section-label">Collections</div>
+  <div class="section-label">CURATED COLLECTIONS</div>
   <div class="collections-grid">
-  {{#if categories.length}}
+    {{#if categories.length}}
     {{#each categories}}
-      <div class="coll-card">
-        {{#if this.image}}
-          <img src="{{this.image}}" alt="{{this.name}}"/>
-        {{else}}
-          <img src="/image/WhatsApp Image 2026-05-11 at 10.56.46 AM.jpeg" alt="{{this.name}}"/>
-        {{/if}}
-        <div class="coll-overlay">
-          <div class="coll-title">{{this.name}}</div>
-          <div class="coll-explore">
-            Explore
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
+    <div class="coll-card" onclick="window.location.href='/user/shop?cat={{this.name}}'">
+      {{#if this.image}}
+      <img src="{{this.image}}" alt="{{this.name}}" loading="lazy" />
+      {{else}}
+      <img src="/image/WhatsApp Image 2026-05-11 at 10.56.46 AM.jpeg" alt="{{this.name}}" loading="lazy" />
+      {{/if}}
+      <div class="coll-overlay">
+        <div class="coll-title">{{this.name}}</div>
+        <div class="coll-explore">
+          Explore Collection
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
         </div>
       </div>
+    </div>
     {{/each}}
-  {{else}}
-    <p style="color:var(--muted);font-size:0.75rem;letter-spacing:0.15em;padding:40px 0;">
+    {{else}}
+    <p
+      style="color:var(--text-muted); font-size:0.8rem; letter-spacing:0.15em; padding:40px 0; grid-column: 1 / -1; text-align: center;">
       No collections available yet.
     </p>
-  {{/if}}
-</div>
+    {{/if}}
+  </div>
 </section>
 
-<!-- FEATURED PRODUCTS -->
+<!-- FEATURED PRODUCTS SECTION -->
 <section class="featured-section" id="shop">
   <div class="feat-header">
-    <h2>FEATURED PRODUCTS</h2>
-    <p>Hand-Selected Masterworks of Precision</p>
+    <p>MASTERWORKS OF PRECISION</p>
+    <h2 id="featTitle">Featured Timepieces</h2>
   </div>
-  <div class="products-grid">
-    <!-- Card 1 -->
-    <div class="prod-card">
+
+  <div id="productsGrid" class="products-grid-home">
+    {{#if products.length}}
+    {{#each products}}
+    <div class="prod-card" data-id="{{this.id}}" data-variant-id="{{this.variantId}}" data-avail="{{this.avail}}">
       <div class="prod-img-wrap">
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        {{#if this.badgeLabel}}
+        <span class="prod-badge badge-{{this.badge}}">{{this.badgeLabel}}</span>
+        {{else if this.badge}}
+        <span class="prod-badge badge-{{this.badge}}">{{this.badge}}</span>
+        {{/if}}
+
+        <div class="card-wish {{#if this.wished}}wished{{/if}}" data-id="{{this.id}}"
+          title="{{#if this.wished}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
         </div>
-        <img src="https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=400&q=80" alt="Elysian Gold"/>
+
+        <img src="{{this.img}}" alt="{{this.name}}" loading="lazy" style="cursor:pointer"
+          onclick="window.location.href='/user/product/{{this.id}}'">
         <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
+
+        {{#ifEquals this.avail 'outofstock'}}
+        <button class="quick-add disabled" disabled title="Out of Stock">Out of Stock</button>
+        {{else}}
+        {{#if this.inCart}}
+        <button class="quick-add" style="background:transparent;color:var(--gold);border:1px solid var(--gold);"
+          data-id="{{this.id}}" data-variant-id="{{this.variantId}}" data-in-cart="true">View in Cart</button>
+        {{else}}
+        <button class="quick-add" data-id="{{this.id}}" data-variant-id="{{this.variantId}}" data-in-cart="">+ Add to
+          Bag</button>
+        {{/if}}
+        {{/ifEquals}}
+      </div>
+
+      <div class="prod-info">
+        <div class="prod-atelier">{{this.brand}}</div>
+        <div class="prod-rating">★ {{this.rating}} <span class="rating-count">({{this.reviews}})</span></div>
+        <div class="prod-name">{{this.name}}</div>
+        <div class="prod-price-wrap">
+          <span class="prod-price">₹{{this.price}}</span>
+          {{#if this.oldPrice}}
+          <span class="prod-price-old">₹{{this.oldPrice}}</span>
+          {{#if this.discountPct}}
+          <span class="prod-discount-pill">{{this.discountPct}}% OFF</span>
+          {{/if}}
+          {{/if}}
+        </div>
+        <button class="prod-btn" onclick="window.location.href='/user/product/{{this.id}}'">View Details</button>
+      </div>
+    </div>
+    {{/each}}
+    {{else}}
+    <!-- EXTREMELY PREMIUM RESILIENT FALLBACK CARDS -->
+    <!-- Card 1 -->
+    <div class="prod-card" data-id="fallback-1" data-variant-id="fallback-v1" data-avail="instock">
+      <div class="prod-img-wrap">
+        <span class="prod-badge badge-deal">SIGNATURE</span>
+        <div class="card-wish" data-id="fallback-1" title="Add to Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </div>
+        <img src="https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=400&q=80" alt="Elysian Gold" />
+        <div class="prod-img-overlay"></div>
+        <button class="quick-add" data-id="fallback-1" data-variant-id="fallback-v1">+ Add to Bag</button>
       </div>
       <div class="prod-info">
         <div class="prod-atelier">18K Rose Gold</div>
         <div class="prod-rating">★ 5.0 <span class="rating-count">(24)</span></div>
         <div class="prod-name">Elysian Gold</div>
         <div class="prod-price">₹8,12,000</div>
-        <button class="prod-btn">View Details</button>
+        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
       </div>
     </div>
     <!-- Card 2 -->
-    <div class="prod-card">
+    <div class="prod-card" data-id="fallback-2" data-variant-id="fallback-v2" data-avail="instock">
       <div class="prod-img-wrap">
-        <span class="prod-badge">-10%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span class="prod-badge badge-new">NEW ARRIVAL</span>
+        <div class="card-wish" data-id="fallback-2" title="Add to Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
         </div>
-        <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80" alt="Horizon GMT"/>
+        <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80" alt="Horizon GMT" />
         <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
+        <button class="quick-add" data-id="fallback-2" data-variant-id="fallback-v2">+ Add to Bag</button>
       </div>
       <div class="prod-info">
         <div class="prod-atelier">Tymora Atelier</div>
         <div class="prod-rating">★ 4.8 <span class="rating-count">(18)</span></div>
         <div class="prod-name">Horizon GMT</div>
         <div class="prod-price">₹3,85,000</div>
-        <button class="prod-btn">View Details</button>
+        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
       </div>
     </div>
     <!-- Card 3 -->
-    <div class="prod-card">
+    <div class="prod-card" data-id="fallback-3" data-variant-id="fallback-v3" data-avail="instock">
       <div class="prod-img-wrap">
-        <span class="prod-badge">-15%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span class="prod-badge badge-limited">LIMITED</span>
+        <div class="card-wish" data-id="fallback-3" title="Add to Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
         </div>
-        <img src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&q=80" alt="Vanguard Skeleton"/>
+        <img src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&q=80" alt="Vanguard Skeleton" />
         <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
+        <button class="quick-add" data-id="fallback-3" data-variant-id="fallback-v3">+ Add to Bag</button>
       </div>
       <div class="prod-info">
         <div class="prod-atelier">Tymora Atelier</div>
         <div class="prod-rating">★ 4.9 <span class="rating-count">(32)</span></div>
         <div class="prod-name">Vanguard Skeleton</div>
         <div class="prod-price">₹4,20,000</div>
-        <button class="prod-btn">View Details</button>
+        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
       </div>
     </div>
     <!-- Card 4 -->
-    <div class="prod-card">
+    <div class="prod-card" data-id="fallback-4" data-variant-id="fallback-v4" data-avail="instock">
       <div class="prod-img-wrap">
-        <span class="prod-badge">-5%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span class="prod-badge badge-offer">5% OFF</span>
+        <div class="card-wish" data-id="fallback-4" title="Add to Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
         </div>
-        <img src="https://images.unsplash.com/photo-1622434641406-a158123450f2?w=400&q=80" alt="Oceanic Deep"/>
+        <img src="https://images.unsplash.com/photo-1622434641406-a158123450f2?w=400&q=80" alt="Oceanic Deep" />
         <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
+        <button class="quick-add" data-id="fallback-4" data-variant-id="fallback-v4">+ Add to Bag</button>
       </div>
       <div class="prod-info">
         <div class="prod-atelier">Tymora Atelier</div>
         <div class="prod-rating">★ 4.9 <span class="rating-count">(15)</span></div>
         <div class="prod-name">Oceanic Deep</div>
         <div class="prod-price">₹2,95,000</div>
-        <button class="prod-btn">View Details</button>
+        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
       </div>
     </div>
-    <!-- Card 5 -->
-    <div class="prod-card">
-      <div class="prod-img-wrap">
-        <span class="prod-badge">-12%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1434493651957-4ec10b7f3c56?w=400&q=80" alt="Chronos IX"/>
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.9 <span class="rating-count">(21)</span></div>
-        <div class="prod-name">Chronos IX</div>
-        <div class="prod-price">₹5,40,000</div>
-        <button class="prod-btn">View Details</button>
-      </div>
-    </div>
-    <!-- Card 6 -->
-    <div class="prod-card">
-      <div class="prod-img-wrap">
-        <span class="prod-badge">-25%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1617043786394-f977fa12eddf?w=400&q=80" alt="Heritage Slim"/>
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.7 <span class="rating-count">(45)</span></div>
-        <div class="prod-name">Heritage Slim</div>
-        <div class="prod-price">₹55,000</div>
-        <button class="prod-btn">View Details</button>
-      </div>
-    </div>
-    <!-- Card 7 -->
-    <div class="prod-card">
-      <div class="prod-img-wrap">
-        <span class="prod-badge">-14%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1600003263720-95b45a4035d5?w=400&q=80" alt="The Sovereign 1952"/>
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.9 <span class="rating-count">(12)</span></div>
-        <div class="prod-name">The Sovereign 1952</div>
-        <div class="prod-price">₹1,99,000</div>
-        <button class="prod-btn">View Details</button>
-      </div>
-    </div>
-    <!-- Card 8 -->
-    <div class="prod-card">
-      <div class="prod-img-wrap">
-        <span class="prod-badge">-18%</span>
-        <div class="card-wish" data-wished="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1548169874-53e85f753f1e?w=400&q=80" alt="Moonlight Chronograph"/>
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.8 <span class="rating-count">(37)</span></div>
-        <div class="prod-name">Moonlight Chronograph</div>
-        <div class="prod-price">₹2,25,000</div>
-        <button class="prod-btn">View Details</button>
-      </div>
+    {{/if}}
+  </div>
+</section>
+
+<!-- BRAND STORY SECTION (CINEMATIC SCROLL REVEAL) -->
+<section class="brand-story" id="brandStory">
+  <div class="story-container">
+    <div class="story-eyebrow">OUR HERITAGE</div>
+    <p class="story-text" id="storyText">
+      "For over a century, <span class="gold">Tymora</span> has engineered masterpieces of high horology. We believe a
+      fine timepiece is not merely a tool of measurement, but a silent testament to character, an intricate dance of
+      <span class="gold">mechanical precision</span> and eternal luxury."
+    </p>
+    <div class="story-signature" id="storySignature">
+      Alistair Tymora
+      <span>FOUNDER & MASTER WATCHMAKER</span>
     </div>
   </div>
 </section>
 
-<!-- DEALS -->
+<!-- SKELETON & WATERPROOF SHOWCASE -->
+<section class="showcase-split">
+
+  <!-- LEFT: WATERPROOF DURABILITY -->
+  <div class="showcase-panel">
+    <div class="panel-bg" style="background-image: url('/image/tymora_waterproof_watch.png');"></div>
+    <div class="panel-overlay-grad"></div>
+    <div class="panel-content">
+      <span class="panel-tag">DURABILITY</span>
+      <h3 class="panel-title">Engineering The Depths</h3>
+      <p class="panel-desc">
+        Crafted to withstand the harshest pressures. Our professional grade seals protect the delicate automatic
+        movements up to 300 meters beneath the surface, fusing absolute structural integrity with timeless design.
+      </p>
+      <button class="btn-outline" onclick="window.location.href='/user/shop?avail=instock'">View Marine
+        Chronographs</button>
+    </div>
+  </div>
+
+  <div class="panel-divider"></div>
+
+  <!-- RIGHT: MECHANICAL PRECISION -->
+  <div class="showcase-panel">
+    <div class="panel-bg" style="background-image: url('/image/tymora_mechanical_precision.png');"></div>
+    <div class="panel-overlay-grad"></div>
+    <div class="panel-content">
+      <span class="panel-tag">HOROLOGY</span>
+      <h3 class="panel-title">Sovereign Precision</h3>
+      <p class="panel-desc">
+        Behold the intricate symphony of synthetic rubies, balance wheels, and gears operating at 28,800 vibrations per
+        hour. Exposed tourbillon details show the pure art form of mechanical movement.
+      </p>
+      <button class="btn-outline" onclick="window.location.href='/user/shop'">Discover Tourbillons</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- PRIVÉ LOUNGE & DEALS SECTION -->
 <section class="deals-section" id="deals">
+  <div class="section-label">EXCLUSIVE OFFERS</div>
   <div class="deals-grid">
+
     <!-- Deal of Day -->
     <div class="deal-day">
       <div class="deal-day-label">Deal of the Day</div>
       <div class="deal-timer">
-        <div class="timer-unit"><div class="timer-num" id="th">12</div><div class="timer-lbl">HRS</div></div>
+        <div class="timer-unit">
+          <div class="timer-num" id="th">12</div>
+          <div class="timer-lbl">HRS</div>
+        </div>
         <div class="timer-sep">:</div>
-        <div class="timer-unit"><div class="timer-num" id="tm">48</div><div class="timer-lbl">MIN</div></div>
+        <div class="timer-unit">
+          <div class="timer-num" id="tm">48</div>
+          <div class="timer-lbl">MIN</div>
+        </div>
         <div class="timer-sep">:</div>
-        <div class="timer-unit"><div class="timer-num" id="ts">14</div><div class="timer-lbl">SEC</div></div>
+        <div class="timer-unit">
+          <div class="timer-num" id="ts">14</div>
+          <div class="timer-lbl">SEC</div>
+        </div>
       </div>
-      <img class="deal-watch-img" src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=300&q=80" alt="Maestro GMT"/>
+      <img class="deal-watch-img" src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=300&q=80"
+        alt="Maestro GMT" />
       <div class="deal-watch-name">MAESTRO GMT CLASSIC</div>
-      <div class="deal-watch-price">$3,200</div>
-      <button class="deal-shop-btn">Shop Now</button>
+      <div class="deal-watch-price">₹3,85,000</div>
+      <button class="deal-shop-btn" onclick="window.location.href='/user/shop'">Shop Now</button>
     </div>
 
     <!-- Limited Time Offer -->
     <div class="deal-offer">
       <div class="deal-offer-tag">Limited Time Offer</div>
       <h3>Up to <span>40% OFF</span></h3>
-      <p>on Selected Watches</p>
-      <button class="deal-offer-link">Shop Now →</button>
+      <p>on Selected Heritage & Sports Pieces</p>
+      <button class="deal-offer-link" onclick="window.location.href='/user/shop'">Shop The Sale →</button>
     </div>
 
     <!-- Coupon -->
@@ -273,46 +372,149 @@
         <span class="coupon-code">TYMORA10</span>
       </div>
       <button class="coupon-copy" id="copyBtn">Copy Code</button>
-      <button class="coupon-explore">Explore »</button>
+      <button class="coupon-explore" onclick="window.location.href='/user/shop'">Explore Collections »</button>
     </div>
+
   </div>
 </section>
 
-<!-- TESTIMONIALS -->
+<!-- CUSTOMER REVIEWS (INFINITE SLIDER) -->
 <section class="testimonials-section">
-  <div class="test-header"><h2>What Our Customers Say</h2></div>
-  <div class="test-grid">
-    <div class="test-card">
-      <div class="test-reviewer">
-        <div class="test-avatar">J</div>
-        <div class="test-name">Julian Vance</div>
+  <div class="test-header">
+    <p>THE PATRON VOICE</p>
+    <h2>What Our Collectors Say</h2>
+  </div>
+
+  <div class="reviews-marquee-wrap">
+    <div class="reviews-track">
+      <!-- Card 1 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">J</div>
+            <div class="test-info">
+              <div class="test-name">Julian Vance</div>
+              <div class="test-title-desc">Vanguard Collector</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"The craftsmanship is unparalleled. My Tymora Chrono has become a heirloom piece I intend
+          to pass down. Exceptional service."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Maestro GMT
+        </div>
       </div>
-      <p class="test-text">"The craftsmanship is unparalleled. My Tymora Chrono has become a heirloom piece I intend to pass down. Exceptional service."</p>
-      <div class="test-watch"><div class="test-watch-dot"></div>Maestro GMT</div>
-    </div>
-    <div class="test-card">
-      <div class="test-reviewer">
-        <div class="test-avatar">E</div>
-        <div class="test-name">Elena Thorne</div>
+      <!-- Card 2 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">E</div>
+            <div class="test-info">
+              <div class="test-name">Elena Thorne</div>
+              <div class="test-title-desc">Boutique Patron</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"Searching for a skeleton watch that feels both modern and classic is hard. Tymora
+          delivered beyond my expectations."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Aurelius Rose
+        </div>
       </div>
-      <p class="test-text">"Searching for a skeleton watch that feels both modern and classic is hard. Tymora delivered beyond my expectations."</p>
-      <div class="test-watch"><div class="test-watch-dot"></div>Aurelius Rose</div>
-    </div>
-    <div class="test-card">
-      <div class="test-reviewer">
-        <div class="test-avatar">R</div>
-        <div class="test-name">Richard Sterling</div>
+      <!-- Card 3 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">R</div>
+            <div class="test-info">
+              <div class="test-name">Richard Sterling</div>
+              <div class="test-title-desc">Connoisseur</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"Speed of delivery and the white-glove packaging made the experience truly luxury. The
+          watch itself is a mechanical marvel."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Viceroy Silver
+        </div>
       </div>
-      <p class="test-text">"Speed of delivery and the white-glove packaging made the experience truly luxury. The watch itself is a mechanical marvel."</p>
-      <div class="test-watch"><div class="test-watch-dot"></div>Viceroy Silver</div>
-    </div>
-    <div class="test-card">
-      <div class="test-reviewer">
-        <div class="test-avatar">M</div>
-        <div class="test-name">Marc Antoine</div>
+      <!-- Card 4 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">M</div>
+            <div class="test-info">
+              <div class="test-name">Marc Antoine</div>
+              <div class="test-title-desc">Watch Curator</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"A brand that understands that a watch is not just a tool, but a statement of character.
+          Proud to have added them to my vault."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Obsidian Gold
+        </div>
       </div>
-      <p class="test-text">"A brand that understands that a watch is not just a tool, but a statement of character. Proud to have added them to my vault."</p>
-      <div class="test-watch"><div class="test-watch-dot"></div>Obsidian Gold</div>
+
+      <!-- Duplicate cards for seamless loop -->
+      <!-- Card 1 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">J</div>
+            <div class="test-info">
+              <div class="test-name">Julian Vance</div>
+              <div class="test-title-desc">Vanguard Collector</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"The craftsmanship is unparalleled. My Tymora Chrono has become a heirloom piece I intend
+          to pass down. Exceptional service."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Maestro GMT
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">E</div>
+            <div class="test-info">
+              <div class="test-name">Elena Thorne</div>
+              <div class="test-title-desc">Boutique Patron</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"Searching for a skeleton watch that feels both modern and classic is hard. Tymora
+          delivered beyond my expectations."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Aurelius Rose
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-reviewer">
+            <div class="test-avatar">R</div>
+            <div class="test-info">
+              <div class="test-name">Richard Sterling</div>
+              <div class="test-title-desc">Connoisseur</div>
+            </div>
+          </div>
+          <div class="test-stars">★★★★★</div>
+        </div>
+        <p class="test-text">"Speed of delivery and the white-glove packaging made the experience truly luxury. The
+          watch itself is a mechanical marvel."</p>
+        <div class="test-watch">
+          <div class="test-watch-dot"></div>Viceroy Silver
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -320,58 +522,273 @@
 <!-- TRUST STRIP -->
 <div class="trust-strip">
   <div class="trust-item">
-    <svg class="trust-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    100% Certified
+    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
+      viewBox="0 0 24 24">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+    100% Certified Horology
   </div>
   <div class="trust-item">
-    <svg class="trust-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    Secured Vaults
+    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
+      viewBox="0 0 24 24">
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+    Secured Vault Shipping
   </div>
   <div class="trust-item">
-    <svg class="trust-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
+      viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
     Historical Provenance
   </div>
   <div class="trust-item">
-    <svg class="trust-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.64 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.55 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-    Expert Care 24/7
-  </div>
-  <div class="trust-item">
-    <svg class="trust-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    Top Rated Dealer
+    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
+      viewBox="0 0 24 24">
+      <polygon
+        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+    Bespoke Concierge Care
   </div>
 </div>
 
-
-
-
 <div class="bottom-strip"></div>
 
-
+<!-- SEEDING DATA FOR SHOP ACTIONS -->
 <script>
-// ─── COUNTDOWN TIMER ───
-let totalSeconds = 12*3600+48*60+14;
-function updateTimer(){
-  if(totalSeconds<=0) return;
-  totalSeconds--;
-  const h=Math.floor(totalSeconds/3600);
-  const m=Math.floor((totalSeconds%3600)/60);
-  const s=totalSeconds%60;
-  document.getElementById('th').textContent=String(h).padStart(2,'0');
-  document.getElementById('tm').textContent=String(m).padStart(2,'0');
-  document.getElementById('ts').textContent=String(s).padStart(2,'0');
-}
-setInterval(updateTimer,1000);
-
-// ─── COPY COUPON ───
-document.getElementById('copyBtn').addEventListener('click',function(){
-  navigator.clipboard.writeText('TYMORA10').then(()=>{
-    this.textContent='Copied!';
-    setTimeout(()=>this.textContent='Copy Code',2000);
-  });
-});
-const mobileSearchBar = document.getElementById('mobileSearchBar');
-
-
+  window.SHOP_DATA = { featured: [] };
+  window.SHOP_USER_LOGGED_IN = {{#if user}}true{{else}}false{{/if}};
 </script>
+<script src="/js/shop.js"></script>
 
+<!-- GSAP LENIS INTERACTION SCRIPTS -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
 
+    // 1. Lenis Smooth Scrolling Initializer
+    let lenis;
+    if (typeof Lenis !== 'undefined') {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // smooth easeOutExpo
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 1.0,
+        infinite: false,
+      });
+
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+
+      // Bind GSAP ScrollTrigger to Lenis scroll
+      if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        lenis.on('scroll', ScrollTrigger.update);
+      }
+    }
+
+    // 2. GSAP Scroll Trigger Animations
+    if (typeof gsap !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Hero Fade & Slide In
+      gsap.to('#heroContent', {
+        opacity: 1,
+        y: 0,
+        duration: 1.4,
+        ease: 'power4.out',
+        delay: 0.2
+      });
+
+      gsap.to('#heroVisual', {
+        opacity: 1,
+        scale: 1,
+        rotation: 0,
+        duration: 1.6,
+        ease: 'power4.out',
+        delay: 0.3
+      });
+
+      // Categories Stagger In
+      gsap.to('.coll-card', {
+        scrollTrigger: {
+          trigger: '#collections',
+          start: 'top 80%',
+        },
+        opacity: 1,
+        y: 0,
+        duration: 1.0,
+        stagger: 0.15,
+        ease: 'power3.out'
+      });
+
+      // Featured Grid Reveal
+      gsap.to('#featTitle', {
+        scrollTrigger: {
+          trigger: '#shop',
+          start: 'top 85%',
+        },
+        opacity: 1,
+        y: 0,
+        duration: 1.0,
+        ease: 'power3.out'
+      });
+
+      gsap.to('.products-grid-home', {
+        scrollTrigger: {
+          trigger: '.products-grid-home',
+          start: 'top 85%',
+        },
+        opacity: 1,
+        y: 0,
+        duration: 1.2,
+        ease: 'power3.out'
+      });
+
+      // Brand Story Split Words Animation
+      const storyText = document.getElementById('storyText');
+      if (storyText) {
+        const text = storyText.textContent.trim();
+        const words = text.split(/\s+/);
+        storyText.innerHTML = words.map(word => {
+          let cleanWord = word.replace(/[",.]/g, '');
+          if (cleanWord.toLowerCase() === 'tymora' || cleanWord.toLowerCase() === 'precision' || cleanWord.toLowerCase() === 'luxury') {
+            return `<span class="gold">${word}</span>`;
+          }
+          return `<span>${word}</span>`;
+        }).join(' ');
+
+        gsap.to('#storyText span', {
+          scrollTrigger: {
+            trigger: '#brandStory',
+            start: 'top 75%',
+            end: 'bottom 50%',
+            scrub: true,
+          },
+          opacity: 1,
+          color: '#ffffff',
+          filter: 'blur(0px)',
+          stagger: 0.05,
+        });
+
+        gsap.to('#storySignature', {
+          scrollTrigger: {
+            trigger: '#brandStory',
+            start: 'top 55%',
+          },
+          opacity: 1,
+          y: 0,
+          duration: 1.0,
+          ease: 'power3.out'
+        });
+      }
+
+      // Split Showcase Parallax Fade
+      document.querySelectorAll('.showcase-panel').forEach(panel => {
+        const bg = panel.querySelector('.panel-bg');
+        const content = panel.querySelector('.panel-content');
+
+        gsap.to(bg, {
+          scrollTrigger: {
+            trigger: panel,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          },
+          yPercent: 12,
+          ease: 'none'
+        });
+
+        gsap.to(content, {
+          scrollTrigger: {
+            trigger: panel,
+            start: 'top 75%',
+          },
+          opacity: 1,
+          y: 0,
+          duration: 1.2,
+          ease: 'power3.out'
+        });
+      });
+    }
+
+    // 3. Apple-Style Mouse Interactive Parallax for Hero Watch Showcase
+    const heroVisual = document.getElementById('heroVisual');
+    const heroWatch = document.getElementById('heroWatch');
+    if (heroVisual && heroWatch) {
+      heroVisual.addEventListener('mousemove', (e) => {
+        const rect = heroVisual.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+
+        // Calculate rotation and offset
+        const rotateX = (-y / rect.height) * 25; // max 25deg rotation
+        const rotateY = (x / rect.width) * 25;
+        const transX = (x / rect.width) * 20;   // max 20px translation
+        const transY = (y / rect.height) * 20;
+
+        gsap.to(heroWatch, {
+          rotationX: rotateX,
+          rotationY: rotateY,
+          x: transX,
+          y: transY,
+          duration: 0.5,
+          ease: 'power2.out'
+        });
+      });
+
+      heroVisual.addEventListener('mouseleave', () => {
+        gsap.to(heroWatch, {
+          rotationX: 0,
+          rotationY: 0,
+          x: 0,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out'
+        });
+      });
+    }
+
+    // 4. COUNTDOWN TIMER
+    let totalSeconds = 12 * 3600 + 48 * 60 + 14;
+    function updateTimer() {
+      if (totalSeconds <= 0) return;
+      totalSeconds--;
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+
+      const th = document.getElementById('th');
+      const tm = document.getElementById('tm');
+      const ts = document.getElementById('ts');
+
+      if (th) th.textContent = String(h).padStart(2, '0');
+      if (tm) tm.textContent = String(m).padStart(2, '0');
+      if (ts) ts.textContent = String(s).padStart(2, '0');
+    }
+    setInterval(updateTimer, 1000);
+
+    // 5. COPY COUPON CODES
+    const copyBtn = document.getElementById('copyBtn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        navigator.clipboard.writeText('TYMORA10').then(() => {
+          copyBtn.textContent = 'Copied!';
+          copyBtn.style.background = '#c9a84c';
+          copyBtn.style.color = '#000';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy Code';
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+        });
+      });
+    }
+  });
+</script>

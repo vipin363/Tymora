@@ -40,6 +40,11 @@ app.engine('hbs', engine({
         }, formatCurrency: (value) => {
             if (value == null) return '0';
             return Number(value).toLocaleString('en-IN');
+        },
+        times: function(n, block) {
+            let accum = '';
+            for(let i = 0; i < n; i++) accum += block.fn(i);
+            return accum;
         }
     }
 }));

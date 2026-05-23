@@ -1,0 +1,365 @@
+<link href="/adminUserManagement.css" rel="stylesheet">
+<style>
+.ret-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin-bottom:28px; }
+.ret-stat  { background:var(--card-bg,#1a1a2e); border:1px solid var(--border,#2a2a3e); border-radius:12px; padding:18px 20px; }
+.ret-stat .slabel { font-size:10px; letter-spacing:2px; color:var(--muted,#888); text-transform:uppercase; margin-bottom:6px; }
+.ret-stat .svalue { font-size:24px; font-weight:700; color:#c9a84c; }
+
+.return-card { background:var(--card-bg,#1a1a2e); border:1px solid var(--border,#2a2a3e); border-radius:14px; padding:24px; margin-bottom:18px; transition:border-color .2s; }
+.return-card:hover { border-color:#c9a84c55; }
+.rc-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.rc-id { font-size:13px; font-weight:700; color:#c9a84c; letter-spacing:1px; }
+.rc-customer { font-size:13px; color:var(--text,#e8e8e8); font-weight:600; margin-top:2px; }
+.rc-email { font-size:11px; color:var(--muted,#888); margin-top:1px; }
+.rc-date { font-size:11px; color:var(--muted,#888); text-align:right; }
+.rc-reason { margin-top:12px; font-size:12px; color:var(--muted,#888); background:rgba(255,255,255,.03); border-left:3px solid #c9a84c55; padding:8px 12px; border-radius:0 6px 6px 0; }
+.rc-reason strong { color:#c9a84c; }
+.rc-pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.pill { font-size:10px; font-weight:700; letter-spacing:1.2px; padding:4px 10px; border-radius:20px; border:1px solid; }
+.pill-pending  { background:rgba(245,158,11,.12); color:#f59e0b; border-color:rgba(245,158,11,.3); }
+.pill-approved { background:rgba(34,197,94,.12); color:#22c55e; border-color:rgba(34,197,94,.3); }
+.pill-rejected { background:rgba(239,68,68,.12); color:#ef4444; border-color:rgba(239,68,68,.3); }
+.pill-picked   { background:rgba(59,130,246,.12); color:#3b82f6; border-color:rgba(59,130,246,.3); }
+.pill-refund   { background:rgba(168,85,247,.12); color:#a855f7; border-color:rgba(168,85,247,.3); }
+.pill-returned { background:rgba(16,185,129,.12); color:#10b981; border-color:rgba(16,185,129,.3); }
+
+.rc-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border,#2a2a3e); }
+.ra-btn { font-size:11px; font-weight:700; letter-spacing:1px; padding:7px 14px; border-radius:8px; border:1px solid; cursor:pointer; transition:all .2s; background:transparent; }
+.ra-btn:hover { transform:translateY(-1px); }
+.ra-btn-green { color:#22c55e; border-color:#22c55e; }
+.ra-btn-green:hover { background:#22c55e; color:#0a0a14; }
+.ra-btn-red { color:#ef4444; border-color:#ef4444; }
+.ra-btn-red:hover { background:#ef4444; color:#fff; }
+.ra-btn-blue { color:#3b82f6; border-color:#3b82f6; }
+.ra-btn-blue:hover { background:#3b82f6; color:#fff; }
+.ra-btn-gold { color:#c9a84c; border-color:#c9a84c; }
+.ra-btn-gold:hover { background:#c9a84c; color:#0a0a14; }
+.ra-btn-purple { color:#a855f7; border-color:#a855f7; }
+.ra-btn-purple:hover { background:#a855f7; color:#fff; }
+
+.rc-rejection-note { margin-top:10px; font-size:11px; color:#ef4444; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); border-radius:6px; padding:8px 12px; }
+
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9000; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:#1a1a2e; border:1px solid #2a2a3e; border-radius:16px; padding:32px; max-width:440px; width:90%; }
+.modal h3 { font-size:16px; font-weight:700; color:#e8e8e8; margin-bottom:8px; }
+.modal p { font-size:13px; color:#888; margin-bottom:20px; }
+.modal textarea { width:100%; background:#0f0f1e; border:1px solid #2a2a3e; border-radius:8px; color:#e8e8e8; font-size:13px; padding:12px; resize:vertical; min-height:80px; box-sizing:border-box; }
+.modal-btns { display:flex; gap:12px; margin-top:20px; justify-content:flex-end; }
+.btn-cancel { background:transparent; border:1px solid #2a2a3e; color:#888; border-radius:8px; padding:9px 18px; font-size:12px; font-weight:700; letter-spacing:1px; cursor:pointer; }
+.btn-confirm { border:none; border-radius:8px; padding:9px 18px; font-size:12px; font-weight:700; letter-spacing:1px; cursor:pointer; }
+.btn-confirm.green { background:#22c55e; color:#0a0a14; }
+.btn-confirm.red   { background:#ef4444; color:#fff; }
+.btn-confirm.gold  { background:#c9a84c; color:#0a0a14; }
+.btn-confirm.purple{ background:#a855f7; color:#fff; }
+.empty-returns { text-align:center; padding:60px 20px; color:var(--muted,#888); font-size:13px; letter-spacing:2px; }
+</style>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">
+        <div class="logo-icon">T</div>
+        <div class="logo-text">
+          <div class="name">Tymora</div>
+          <div class="tagline">Tym of Refined Aesthetics</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}" href="/admin/dashboard">Dashboard</a>
+      <a class="nav-item {{#ifEquals activePage 'categoryManagement'}}active{{/ifEquals}}" href="/admin/categoryManagement">Category Management</a>
+      <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}" href="/admin/products">Products</a>
+      <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
+      <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
+      <a class="nav-item {{#ifEquals activePage 'returns'}}active{{/ifEquals}}" href="/admin/returns">Returns</a>
+      <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings">Settings</a>
+    </div>
+    <div class="nav-footer">
+      <a class="nav-item logout" href="#" onclick="openLogoutModal()">Logout</a>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-title">Return Management</span>
+
+      <form method="GET" action="/admin/returns" class="search-bar" style="margin-left:auto">
+        <input class="searchbar" type="text" name="search" placeholder="Search by order ID…" value="{{search}}">
+        <select name="status" class="sort-select">
+          <option value="all" {{#ifEquals status "all"}}selected{{/ifEquals}}>All Statuses</option>
+          <option value="Return Requested" {{#ifEquals status "Return Requested"}}selected{{/ifEquals}}>Return Requested</option>
+          <option value="Return Approved"  {{#ifEquals status "Return Approved"}}selected{{/ifEquals}}>Return Approved</option>
+          <option value="Pickup Scheduled" {{#ifEquals status "Pickup Scheduled"}}selected{{/ifEquals}}>Pickup Scheduled</option>
+          <option value="Return Picked"    {{#ifEquals status "Return Picked"}}selected{{/ifEquals}}>Return Picked</option>
+          <option value="Returned"         {{#ifEquals status "Returned"}}selected{{/ifEquals}}>Returned</option>
+          <option value="Refund Processed" {{#ifEquals status "Refund Processed"}}selected{{/ifEquals}}>Refund Processed</option>
+          <option value="Return Rejected"  {{#ifEquals status "Return Rejected"}}selected{{/ifEquals}}>Return Rejected</option>
+        </select>
+        <button type="submit" class="btn-search">Filter</button>
+        {{#if search}}<a href="/admin/returns" class="btn-clear">Clear</a>{{/if}}
+      </form>
+
+      <div class="admin-info">
+        <div class="admin-avatar">A</div>
+        <div class="admin-meta"><div class="admin-name">Admin</div></div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h2>Return Management</h2>
+          <p>Review, approve, inspect and process customer return requests.</p>
+        </div>
+      </div>
+
+      {{#if returns.length}}
+        {{#each returns}}
+        <div class="return-card" id="rc-{{this.orderId}}">
+          <div class="rc-top">
+            <div>
+              <div class="rc-id">#{{this.orderId}}</div>
+              <div class="rc-customer">{{this.customerName}}</div>
+              <div class="rc-email">{{this.customerEmail}}</div>
+            </div>
+            <div class="rc-date">
+              <div>Ordered: {{this.orderDateFormatted}}</div>
+              <div style="margin-top:4px">Updated: {{this.updatedDateFormatted}}</div>
+              <div style="margin-top:6px; font-weight:700; font-size:13px; color:#c9a84c;">₹{{formatCurrency this.totalAmount}}</div>
+            </div>
+          </div>
+
+          <div class="rc-reason"><strong>Return Reason:</strong> {{this.returnReason}}</div>
+
+          {{#if this.returnRejectionReason}}
+          <div class="rc-rejection-note">⛔ Rejected: {{this.returnRejectionReason}}</div>
+          {{/if}}
+
+          <div class="rc-pills">
+            {{!-- Order Status --}}
+            {{#ifEquals this.orderStatus "Return Requested"}}<span class="pill pill-pending">Return Requested</span>{{/ifEquals}}
+            {{#ifEquals this.orderStatus "Return Approved"}}<span class="pill pill-approved">Return Approved</span>{{/ifEquals}}
+            {{#ifEquals this.orderStatus "Pickup Scheduled"}}<span class="pill pill-approved">Pickup Scheduled</span>{{/ifEquals}}
+            {{#ifEquals this.orderStatus "Return Picked"}}<span class="pill pill-picked">Return Picked</span>{{/ifEquals}}
+            {{#ifEquals this.orderStatus "Returned"}}<span class="pill pill-returned">Returned</span>{{/ifEquals}}
+            {{#ifEquals this.orderStatus "Refund Processed"}}<span class="pill pill-refund">Refund Processed</span>{{/ifEquals}}
+            {{#ifEquals this.orderStatus "Return Rejected"}}<span class="pill pill-rejected">Return Rejected</span>{{/ifEquals}}
+
+            {{!-- Sub-statuses --}}
+            <span class="pill pill-pending">Pickup: {{this.returnPickupStatus}}</span>
+            <span class="pill pill-pending">Inspection: {{this.returnInspectionStatus}}</span>
+            <span class="pill pill-pending">Refund: {{this.returnRefundStatus}}</span>
+            {{#if this.returnInspectionDecision}}<span class="pill pill-picked">Decision: {{this.returnInspectionDecision}}</span>{{/if}}
+          </div>
+
+          <div class="rc-actions">
+            <a href="/admin/orders/{{this.orderId}}" class="ra-btn ra-btn-gold">View Order</a>
+
+            {{!-- Approve/Reject: only when Return Requested --}}
+            {{#ifEquals this.orderStatus "Return Requested"}}
+              <button class="ra-btn ra-btn-green" onclick="approveReturn('{{this.orderId}}')">✔ Approve</button>
+              <button class="ra-btn ra-btn-red"   onclick="openRejectModal('{{this.orderId}}')">✖ Reject</button>
+            {{/ifEquals}}
+
+            {{!-- Pickup update: Approved or Scheduled --}}
+            {{#ifEquals this.orderStatus "Return Approved"}}
+              <button class="ra-btn ra-btn-blue" onclick="updatePickup('{{this.orderId}}','Picked')">📦 Mark Picked Up</button>
+            {{/ifEquals}}
+            {{#ifEquals this.orderStatus "Pickup Scheduled"}}
+              <button class="ra-btn ra-btn-blue" onclick="updatePickup('{{this.orderId}}','Picked')">📦 Mark Picked Up</button>
+            {{/ifEquals}}
+
+            {{!-- Inspect: only after Picked --}}
+            {{#ifEquals this.orderStatus "Return Picked"}}
+              <button class="ra-btn ra-btn-green"  onclick="openInspectModal('{{this.orderId}}','Restock')">🔍 Pass — Restock</button>
+              <button class="ra-btn ra-btn-red"    onclick="openInspectModal('{{this.orderId}}','Damaged')">🚫 Fail — Damaged</button>
+            {{/ifEquals}}
+
+            {{!-- Refund: after inspection / picked --}}
+            {{#ifEquals this.orderStatus "Returned"}}
+              <button class="ra-btn ra-btn-purple" onclick="processRefund('{{this.orderId}}')">💰 Process Refund</button>
+            {{/ifEquals}}
+          </div>
+        </div>
+        {{/each}}
+
+        <div class="pagination">
+          {{#if (gt currentPage 1)}}
+            <a href="/admin/returns?page={{subtract currentPage 1}}&search={{search}}&status={{status}}">Prev</a>
+          {{/if}}
+          <span>Page {{currentPage}} of {{totalPages}}</span>
+          {{#if (lt currentPage totalPages)}}
+            <a href="/admin/returns?page={{add currentPage 1}}&search={{search}}&status={{status}}">Next</a>
+          {{/if}}
+        </div>
+
+      {{else}}
+        <div class="empty-returns">
+          <div style="font-size:40px;margin-bottom:16px">📦</div>
+          <div>No return requests found.</div>
+        </div>
+      {{/if}}
+    </main>
+  </div>
+</div>
+
+{{!-- Logout Modal --}}
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <h3>Confirm Logout</h3>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+{{!-- Reject Reason Modal --}}
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal">
+    <h3>Reject Return Request</h3>
+    <p>Please provide a reason for rejection (shown to customer).</p>
+    <textarea id="rejectReasonInput" placeholder="e.g. Item shows signs of use beyond 7 days..."></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+{{!-- Inspect Modal --}}
+<div class="modal-overlay" id="inspectModal">
+  <div class="modal">
+    <h3 id="inspectModalTitle">Inspection Decision</h3>
+    <p id="inspectModalDesc">Confirm your inspection decision.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeInspectModal()">Cancel</button>
+      <button class="btn-confirm green" id="inspectConfirmBtn" onclick="confirmInspect()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+{{!-- Toast --}}
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+let _rejectOrderId   = null;
+let _inspectOrderId  = null;
+let _inspectDecision = null;
+
+// ── Logout
+function openLogoutModal()  { document.getElementById('logoutModal').classList.add('open'); }
+function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
+function confirmLogout()    { window.location.href = '/admin/logout'; }
+
+// ── Sidebar
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+// ── Approve
+async function approveReturn(orderId) {
+  const r = await apiFetch(`/admin/returns/${orderId}/approve`, 'POST', {});
+  if (r.success) {
+    showToast(r.message, 'green');
+    // Hide reject button for this order to prevent further actions before reload
+    const rejectBtn = document.querySelector(`#rc-${orderId} .ra-btn-red`);
+    if (rejectBtn) rejectBtn.style.display = 'none';
+    setTimeout(() => location.reload(), 900);
+  } else {
+    showToast(r.message || 'Failed', 'red');
+  }
+}
+
+// ── Reject modal
+function openRejectModal(orderId) {
+  _rejectOrderId = orderId;
+  document.getElementById('rejectReasonInput').value = '';
+  document.getElementById('rejectModal').classList.add('open');
+}
+function closeRejectModal() {
+  document.getElementById('rejectModal').classList.remove('open');
+  _rejectOrderId = null;
+}
+async function confirmReject() {
+  const reason = document.getElementById('rejectReasonInput').value.trim();
+  if (reason.length < 5) { showToast('Please enter a valid reason (min 5 chars).', 'red'); return; }
+  const r = await apiFetch(`/admin/returns/${_rejectOrderId}/reject`, 'POST', { reason });
+  closeRejectModal();
+  if (r.success) {
+    showToast(r.message, 'green');
+    // Hide approve button for this order to prevent further actions before reload
+    const approveBtn = document.querySelector(`#rc-${_rejectOrderId} .ra-btn-green`);
+    if (approveBtn) approveBtn.style.display = 'none';
+    setTimeout(() => location.reload(), 900);
+  } else {
+    showToast(r.message || 'Failed', 'red');
+  }
+}
+
+// ── Pickup
+async function updatePickup(orderId, status) {
+  const r = await apiFetch(`/admin/returns/${orderId}/pickup-status`, 'POST', { pickupStatus: status });
+  if (r.success) { showToast(r.message, 'green'); setTimeout(() => location.reload(), 900); }
+  else showToast(r.message || 'Failed', 'red');
+}
+
+// ── Inspect modal
+function openInspectModal(orderId, decision) {
+  _inspectOrderId  = orderId;
+  _inspectDecision = decision;
+  const isRestock = decision === 'Restock';
+  document.getElementById('inspectModalTitle').textContent = isRestock ? '✔ Pass Inspection — Restock' : '🚫 Fail Inspection — Damaged';
+  document.getElementById('inspectModalDesc').textContent  = isRestock
+    ? 'Marking as Restocked will add items back to inventory after inspection passes.'
+    : 'Marking as Damaged will NOT restock items. Please confirm.';
+  const btn = document.getElementById('inspectConfirmBtn');
+  btn.className = 'btn-confirm ' + (isRestock ? 'green' : 'red');
+  document.getElementById('inspectModal').classList.add('open');
+}
+function closeInspectModal() {
+  document.getElementById('inspectModal').classList.remove('open');
+  _inspectOrderId = _inspectDecision = null;
+}
+async function confirmInspect() {
+  const r = await apiFetch(`/admin/returns/${_inspectOrderId}/inspect`, 'POST', { decision: _inspectDecision });
+  closeInspectModal();
+  if (r.success) { showToast(r.message, 'green'); setTimeout(() => location.reload(), 900); }
+  else showToast(r.message || 'Failed', 'red');
+}
+
+// ── Refund
+async function processRefund(orderId) {
+  if (!confirm('Process wallet refund for this order?')) return;
+  const r = await apiFetch(`/admin/returns/${orderId}/refund-status`, 'POST', { refundStatus: 'Processed' });
+  if (r.success) { showToast(r.message, 'green'); setTimeout(() => location.reload(), 900); }
+  else showToast(r.message || 'Failed', 'red');
+}
+
+// ── Fetch helper
+async function apiFetch(url, method, body) {
+  try {
+    const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    return await res.json();
+  } catch { return { success: false, message: 'Network error' }; }
+}
+
+// ── Toast
+function showToast(msg, type = 'green') {
+  const icons = { green:'<polyline points="20 6 9 17 4 12"/>', red:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' };
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+</script>

@@ -1,11 +1,17 @@
 <link rel="stylesheet" href="/myAddress.css">
 <!-- BREADCRUMB -->
 <div class="breadcrumb">
+  {{#if fromCheckout}}
+  <a href="/user/checkout">Checkout</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Addresses</span>
+  {{else}}
   <a href="/user/home">Home</a>
   &nbsp;›&nbsp;
   <a href="/user/profile">My Account</a>
   &nbsp;›&nbsp;
   <span class="current">My Addresses</span>
+  {{/if}}
 </div>
 
 <!-- PAGE HEADER -->

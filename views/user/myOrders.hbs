@@ -1,0 +1,242 @@
+<link href="/myOrders.css" rel="stylesheet">
+
+<div class="mo-wrapper">
+
+  <div class="mo-header">
+    <h1 class="mo-title">My <em>Orders</em></h1>
+    <p class="mo-sub">Your complete order history with TYMORA</p>
+    <div class="heading-underline"></div>
+  </div>
+
+  <div class="mo-search-bar">
+    <form action="/user/orders" method="GET" style="display:flex; gap:10px;">
+      <input type="text" name="search" class="mo-search-input" placeholder="Search by Order ID or Product Name" value="{{search}}">
+      <button type="submit" class="mo-btn-search">Search</button>
+      {{#if search}}
+      <a href="/user/orders" class="mo-btn-search" style="background:transparent; border:1px solid var(--muted); color:var(--white); text-decoration:none;">Clear</a>
+      {{/if}}
+    </form>
+  </div>
+
+  {{#if orders.length}}
+  <div class="mo-list">
+
+    {{#each orders}}
+    <div class="mo-card">
+
+      <div class="mo-card-top">
+        <div class="mo-order-meta">
+          <div class="mo-order-id">#{{this.orderId}}</div>
+          <div class="mo-order-date">Placed on {{this.orderDateFormatted}}</div>
+        </div>
+        <div class="mo-status-wrap">
+          <span class="mo-status status-{{this.orderStatus}}">{{this.orderStatus}}</span>
+        </div>
+      </div>
+
+      <div class="mo-products">
+        {{#each this.products}}
+        <div class="mo-prod-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+          <div style="display: flex; gap: 15px; align-items: center;">
+            {{#if this.productImage}}
+            <img class="mo-prod-img" src="{{this.productImage}}" alt="{{this.productName}}">
+            {{/if}}
+            <div class="mo-prod-info" style="flex: 1;">
+              <div class="mo-prod-name">{{this.productName}}</div>
+              <div class="mo-prod-meta">{{this.variantSpecs}} · Qty: {{this.quantity}}</div>
+              <div class="mo-prod-meta" style="margin-top: 4px;">Status: <strong style="color:var(--gold);">{{this.orderStatus}}</strong></div>
+            </div>
+            <div class="mo-prod-price">₹{{formatCurrency this.itemTotal}}</div>
+          </div>
+          <div class="mo-prod-actions" style="display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap;">
+            {{#if this.canTrack}}
+            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding: 5px 15px; font-size: 0.85rem;">Track Order</a>
+            {{/if}}
+            {{#if this.isReturned}}
+            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding: 5px 15px; font-size: 0.85rem;">View Tracking</a>
+            {{/if}}
+            <a href="/user/order-details/{{../orderId}}" class="mo-btn mo-btn-primary" style="padding: 5px 15px; font-size: 0.85rem;">View Details</a>
+            {{#if this.canCancel}}
+            <button class="mo-btn mo-btn-danger" style="padding: 5px 15px; font-size: 0.85rem;" onclick="openCancelModal('{{../orderId}}', '{{this._id}}')">Cancel Order</button>
+            {{/if}}
+            {{#if this.canReturn}}
+            <button class="mo-btn" style="background:transparent; border:1px solid #fff; color:#fff; padding: 5px 15px; font-size: 0.85rem;" onclick="openReturnModal('{{../orderId}}', '{{this._id}}')">Return Order</button>
+            {{/if}}
+            {{#if this.showReview}}
+            <a href="/user/product/{{this.productId}}#reviews" class="mo-btn" style="background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding: 5px 15px; font-size: 0.85rem; text-decoration:none;">Add Review</a>
+            {{/if}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="mo-card-foot">
+        <div class="mo-delivery-info">
+          <span>Est. Delivery:</span>
+          <strong>{{this.estimatedDeliveryFormatted}}</strong>
+          &nbsp;·&nbsp;
+          <span>{{this.deliveryType}} Delivery</span>
+          &nbsp;·&nbsp;
+          <span>{{this.paymentMethod}}</span>
+        </div>
+        <div class="mo-total">
+          Total: <strong>₹{{formatCurrency this.totalAmount}}</strong>
+        </div>
+      </div>
+
+    </div>
+    {{/each}}
+
+  </div>
+
+  {{#if hasPages}}
+  <div class="mo-pagination">
+    {{#each pagination}}
+      <a href="{{this.url}}" class="mo-page-link {{#if this.active}}active{{/if}}">{{this.page}}</a>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{else}}
+  <div class="mo-empty">
+    <div class="mo-empty-icon">
+      <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+        <line x1="8" y1="8" x2="16" y2="8"></line>
+        <line x1="8" y1="16" x2="12" y2="16"></line>
+      </svg>
+    </div>
+    <h2>No Orders Found</h2>
+    <p>We couldn't find any orders matching your request.</p>
+    <a href="/user/shop" class="mo-btn mo-btn-primary">Explore Collections</a>
+  </div>
+  {{/if}}
+
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="mo-modal-overlay" id="cancelModalOverlay">
+  <div class="mo-modal">
+    <h3>Cancel Product</h3>
+    <p>Are you sure you want to cancel this product? This action cannot be undone.</p>
+    <textarea id="cancelReasonInput" placeholder="Optional: Please tell us why you are cancelling this product..."></textarea>
+    <div class="mo-modal-actions">
+      <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeCancelModal()">Keep Product</button>
+      <button class="mo-btn mo-btn-danger" id="confirmCancelBtn">Confirm Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Return Order Modal -->
+<div class="mo-modal-overlay" id="returnModalOverlay">
+  <div class="mo-modal">
+    <h3>Return Product</h3>
+    <p>Please provide a reason for returning this product.</p>
+    <textarea id="returnReasonInput" placeholder="Reason for return..."></textarea>
+    <div class="mo-modal-actions">
+      <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeReturnModal()">Cancel</button>
+      <button class="mo-btn mo-btn-primary" id="confirmReturnBtn">Submit Return Request</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let targetCancelOrderId = null;
+  let targetCancelItemId = null;
+  let targetReturnOrderId = null;
+  let targetReturnItemId = null;
+
+  function openCancelModal(orderId, itemId) {
+    targetCancelOrderId = orderId;
+    targetCancelItemId = itemId;
+    document.getElementById('cancelReasonInput').value = '';
+    document.getElementById('cancelModalOverlay').classList.add('active');
+  }
+
+  function closeCancelModal() {
+    targetCancelOrderId = null;
+    targetCancelItemId = null;
+    document.getElementById('cancelModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmCancelBtn').addEventListener('click', async () => {
+    if (!targetCancelOrderId || !targetCancelItemId) return;
+    
+    const reason = document.getElementById('cancelReasonInput').value.trim();
+    const btn = document.getElementById('confirmCancelBtn');
+    btn.disabled = true;
+    btn.innerText = 'Cancelling...';
+
+    try {
+      const res = await fetch('/user/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetCancelOrderId, itemId: targetCancelItemId, reason })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || 'Failed to cancel order.');
+        btn.disabled = false;
+        btn.innerText = 'Confirm Cancel';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred. Please try again.');
+      btn.disabled = false;
+      btn.innerText = 'Confirm Cancel';
+    }
+  });
+
+  function openReturnModal(orderId, itemId) {
+    targetReturnOrderId = orderId;
+    targetReturnItemId = itemId;
+    document.getElementById('returnReasonInput').value = '';
+    document.getElementById('returnModalOverlay').classList.add('active');
+  }
+
+  function closeReturnModal() {
+    targetReturnOrderId = null;
+    targetReturnItemId = null;
+    document.getElementById('returnModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+    if (!targetReturnOrderId || !targetReturnItemId) return;
+
+    const reason = document.getElementById('returnReasonInput').value.trim();
+    if (!reason) {
+      alert("Please provide a reason for the return.");
+      return;
+    }
+
+    const btn = document.getElementById('confirmReturnBtn');
+    btn.disabled = true;
+    btn.innerText = 'Submitting...';
+
+    try {
+      const res = await fetch('/user/orders/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetReturnOrderId, itemId: targetReturnItemId, reason })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || 'Failed to submit return request.');
+        btn.disabled = false;
+        btn.innerText = 'Submit Return Request';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred. Please try again.');
+      btn.disabled = false;
+      btn.innerText = 'Submit Return Request';
+    }
+  });
+</script>

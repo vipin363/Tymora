@@ -91,7 +91,7 @@ async function guardedAction(fn) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  ALL_VARIANTS  = window.PD_DATA?.variants || [];
+  ALL_VARIANTS  = typeof window.PD_DATA?.variants === 'string' ? JSON.parse(window.PD_DATA.variants) : window.PD_DATA?.variants || [];
   activeVariant = ALL_VARIANTS.find(v => v.isDefault) || ALL_VARIANTS[0] || null;
 
   
@@ -533,7 +533,7 @@ function initAddToCart() {
       updateCartCountBadge(data.cartCount);
 
       showToast('Added to cart!', 'gold');
-      if (redirectAfter) setTimeout(() => window.location.href = '/user/cart', 500);
+      if (redirectAfter) setTimeout(() => window.location.href = '/user/checkout', 500);
 
     } catch (e) {
       console.error(e);
@@ -847,13 +847,17 @@ function initShare() {
 }
 
 function initFadeIn() {
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+  // Simple implementation: make all elements with .pd-fade visible on page load.
+  // This can be enhanced with IntersectionObserver for lazy reveal.
+  document.querySelectorAll('.pd-fade').forEach(el => {
+    // Use requestAnimationFrame to ensure CSS transition works.
+    requestAnimationFrame(() => {
+      el.classList.add('visible');
     });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.pd-fade').forEach(el => obs.observe(el));
+  });
 }
+
+
 
 
 function showToast(msg, type = 'gold') {

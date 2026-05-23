@@ -1,0 +1,723 @@
+<link href="/adminUserManagement.css" rel="stylesheet">
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">
+        <div class="logo-icon">T</div>
+        <div class="logo-text">
+          <div class="name">Tymora</div>
+          <div class="tagline">Tym of Refined Aesthetics</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}" href="/admin/dashboard">Dashboard</a>
+      <a class="nav-item {{#ifEquals activePage 'categoryManagement'}}active{{/ifEquals}}" href="/admin/categoryManagement">Category management</a>
+      <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}" href="/admin/products">Products</a>
+      <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
+      <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
+      <div class="nav-label" style="margin-top:12px">Store</div>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Returns</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
+      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
+      <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
+    </div>
+    <div class="nav-footer">
+      <a class="nav-item logout" href="#" onclick="openLogoutModal()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <span class="topbar-title">Order #{{order.orderId}}</span>
+      <div class="admin-info">
+        <div class="admin-avatar">A</div>
+        <div class="admin-meta">
+          <div class="admin-name">Admin</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div style="padding: 1.5rem;">
+
+        <a href="/admin/orders" class="back-link">← Back to Orders</a>
+
+        <!-- ORDER HEADER -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-top:1rem; margin-bottom:1.5rem;">
+          <div>
+            <h2 style="margin:0; color:#000;">Order #{{order.orderId}}</h2>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">
+              Placed on {{order.orderDateFormatted}} · Est. delivery {{order.estimatedDeliveryFormatted}}
+            </p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge s-active" style="font-size:0.85rem; padding:6px 14px;">{{order.orderStatus}}</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+
+          <!-- LEFT COLUMN -->
+          <div>
+
+            <!-- CUSTOMER INFO -->
+            {{#if user}}
+            <div class="details-card" style="margin-bottom:1.5rem;">
+              <div class="section-title">Customer</div>
+              <p><b>Name:</b> {{user.name}}</p>
+              <p><b>Email:</b> {{user.email}}</p>
+              <p><b>Phone:</b> {{user.phone}}</p>
+            </div>
+            {{/if}}
+
+            <!-- SHIPPING ADDRESS -->
+            <div class="details-card" style="margin-bottom:1.5rem;">
+              <div class="section-title">Shipping Address</div>
+              <p>{{order.shippingAddress.fullName}}</p>
+              <p>{{order.shippingAddress.addressLine}}</p>
+              <p>{{order.shippingAddress.city}}, {{order.shippingAddress.state}} - {{order.shippingAddress.pincode}}</p>
+              <p>Phone: {{order.shippingAddress.phone}}</p>
+            </div>
+
+            <div class="table-card">
+              <div class="section-title" style="padding:1rem 1rem 0.5rem;">Products</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each order.products}}
+                  <tr>
+                    <td>
+                      <div class="user-cell">
+                        {{#if this.productImage}}
+                          <div class="user-av"><img src="{{this.productImage}}" alt="product" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>
+                        {{/if}}
+                        <div>
+                          <div class="uname">{{this.productName}}</div>
+                          <div class="uemail">{{this.variantLabel}}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{this.quantity}}</td>
+                    <td>₹{{formatCurrency this.salePrice}}</td>
+                    <td style="font-weight:600">₹{{formatCurrency this.itemTotal}}</td>
+                    <td>
+                      {{!-- Status badge --}}
+                      <span style="font-size:0.78rem; font-weight:700; padding:3px 8px; border-radius:20px;
+                        background:{{#ifEquals this.orderStatus 'Delivered'}}rgba(34,197,94,0.15){{else}}{{#ifEquals this.orderStatus 'Cancelled'}}rgba(239,68,68,0.15){{else}}rgba(201,168,76,0.15){{/ifEquals}}{{/ifEquals}};
+                        color:{{#ifEquals this.orderStatus 'Delivered'}}#22c55e{{else}}{{#ifEquals this.orderStatus 'Cancelled'}}#ef4444{{else}}#c9a84c{{/ifEquals}}{{/ifEquals}};">
+                        {{this.orderStatus}}
+                      </span>
+
+                      {{#if this.returnReason}}
+                      <div style="margin-top:10px; padding:8px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); border-radius:6px;">
+                        <div style="font-size:0.75rem; color:#aaa; font-weight:600; margin-bottom:4px;">Return Reason:</div>
+                        <div style="font-size:0.72rem; color:#fff;">{{this.returnReason}}</div>
+                      </div>
+                      {{/if}}
+
+                      {{!-- Return actions: shown only when this product has return requested --}}
+                      {{#ifEquals this.orderStatus "Return Requested"}}
+                      <div style="margin-top:10px; padding:10px; background:rgba(251,146,60,0.06); border:1px solid rgba(251,146,60,0.3); border-radius:8px;">
+                        <div style="font-size:0.75rem; color:#fb923c; font-weight:700; margin-bottom:6px;">↩ Return Requested</div>
+
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+                          <button onclick="approveItemReturn('{{../order.orderId}}','{{this._id}}')"
+                            style="font-size:0.75rem; padding:5px 10px; border:none; border-radius:6px; background:#16a34a; color:#fff; cursor:pointer; font-weight:600;">
+                            ✓ Approve
+                          </button>
+                          <button onclick="openItemRejectModal('{{../order.orderId}}','{{this._id}}')"
+                            style="font-size:0.75rem; padding:5px 10px; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer; font-weight:600;">
+                            ✕ Reject
+                          </button>
+                        </div>
+                        <div style="font-size:0.72rem; color:#aaa; margin-bottom:4px;">Or update tracking status:</div>
+                        <select onchange="updateItemReturnStatus('{{../order.orderId}}','{{this._id}}',this.value)"
+                          style="width:100%; padding:5px 8px; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #444; font-size:0.78rem; cursor:pointer;">
+                          <option value="">— Select Status —</option>
+                          <option value="Return Approved">Return Approved</option>
+                          <option value="Pickup Scheduled">Pickup Scheduled</option>
+                          <option value="Return Picked">Return Picked</option>
+                          <option value="Return Rejected">Return Rejected</option>
+                        </select>
+                      </div>
+                      {{/ifEquals}}
+
+                      {{!-- After approval: show further tracking dropdown --}}
+                      {{#ifEquals this.orderStatus "Return Approved"}}
+                      <div style="margin-top:8px;">
+                        <select onchange="updateItemReturnStatus('{{../order.orderId}}','{{this._id}}',this.value)"
+                          style="width:100%; padding:5px 8px; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #3b82f6; font-size:0.78rem; cursor:pointer;">
+                          <option value="">— Next Step —</option>
+                          <option value="Pickup Scheduled">Pickup Scheduled</option>
+                          <option value="Return Picked">Return Picked</option>
+                        </select>
+                      </div>
+                      {{/ifEquals}}
+
+                      {{#ifEquals this.orderStatus "Pickup Scheduled"}}
+                      <div style="margin-top:8px;">
+                        <select onchange="updateItemReturnStatus('{{../order.orderId}}','{{this._id}}',this.value)"
+                          style="width:100%; padding:5px 8px; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #3b82f6; font-size:0.78rem; cursor:pointer;">
+                          <option value="">— Next Step —</option>
+                          <option value="Return Picked">Return Picked</option>
+                        </select>
+                      </div>
+                      {{/ifEquals}}
+
+                      {{#ifEquals this.orderStatus "Return Picked"}}
+                      <div style="margin-top:8px;">
+                        <select onchange="updateItemReturnStatus('{{../order.orderId}}','{{this._id}}',this.value)"
+                          style="width:100%; padding:5px 8px; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #a855f7; font-size:0.78rem; cursor:pointer;">
+                          <option value="">— Inspection —</option>
+                          <option value="Returned|Stock">Returned (Move to Stock)</option>
+                          <option value="Returned|Repair">Returned (Send for Repair)</option>
+                          <option value="Refund Processed">Refund Processed</option>
+                        </select>
+                      </div>
+                      {{/ifEquals}}
+                    </td>
+                  </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN -->
+          <div>
+
+            <!-- UPDATE STATUS -->
+            {{#if allowedNextStatuses.length}}
+            <div class="details-card" style="margin-bottom:1.5rem;">
+              <div class="section-title">Update Order Status</div>
+              <div style="margin-top:12px; font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
+                Current status: <strong style="color:#c9a84c;">{{order.orderStatus}}</strong>
+              </div>
+              <select class="status-select" id="statusDropdown" onchange="handleStatusChange(this)"
+                style="width:100%; padding:10px 12px; border-radius:6px; background:#1a1a1a; color:#fff; border:1px solid #444; font-size:0.9rem; cursor:pointer;">
+                <option disabled selected value="">— Select next status —</option>
+                {{#each allowedNextStatuses}}
+                  <option value="{{this}}">{{this}}</option>
+                {{/each}}
+              </select>
+              <p style="margin-top:8px; font-size:0.78rem; color:#888;">
+                ⚠️ Status must be updated <strong>one step at a time</strong> in sequence.
+              </p>
+            </div>
+            {{/if}}
+
+            <!-- PAYMENT SUMMARY -->
+            <div class="details-card" style="margin-bottom:1.5rem;">
+              <div class="section-title">Payment Summary</div>
+              <div style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; margin-top:10px;">
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">Subtotal (MRP)</span><span>₹{{formatCurrency order.subtotalMrp}}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">Discount</span><span style="color:#22c55e">- ₹{{formatCurrency order.discount}}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">Delivery</span><span>₹{{formatCurrency order.deliveryCharge}}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">COD Charge</span><span>₹{{formatCurrency order.codCharge}}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">CGST (9%)</span><span>₹{{formatCurrency order.cgst}}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">SGST (9%)</span><span>₹{{formatCurrency order.sgst}}</span></div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border-color); padding-top:10px; font-weight:700; font-size:1rem; color:#c9a84c;"><span>Total</span><span>₹{{formatCurrency order.totalAmount}}</span></div>
+              </div>
+              <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
+                <strong style="color:#fff">{{order.paymentMethod}}</strong> · <strong style="color:#fff">{{order.deliveryType}}</strong>
+              </div>
+            </div>
+
+            <!-- TIMELINE -->
+            <div class="details-card">
+              <div class="section-title">Order Timeline</div>
+              <div style="margin-top:12px;">
+                {{#each timeline}}
+                <div style="display:flex; gap:12px; margin-bottom:16px; position:relative; padding-left:20px;">
+                  <div style="position:absolute; left:0; top:6px; width:10px; height:10px; border-radius:50%; background:{{#if @first}}#c9a84c{{else}}#333{{/if}};"></div>
+                  {{#unless @last}}
+                    <div style="position:absolute; left:4px; top:18px; bottom:-16px; width:2px; background:#222;"></div>
+                  {{/unless}}
+                  <div>
+                    <div style="font-weight:600; font-size:0.9rem; color:#fff;">{{this.status}}</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">{{this.message}}</div>
+                    <div style="font-size:0.75rem; color:#555; margin-top:4px;">{{this.dateFormatted}} · {{this.timeFormatted}}</div>
+                  </div>
+                </div>
+                {{/each}}
+              </div>
+            </div>
+
+            {{#if order.returnReason}}
+            <div class="details-card" style="margin-top:1.5rem; border-color:rgba(251,146,60,0.4); background:rgba(251,146,60,0.04);">
+              <div class="section-title" style="color:#fb923c;">↩ Return Request</div>
+
+              <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px; font-size:0.9rem;">
+                <div style="display:flex; gap:8px; align-items:flex-start;">
+                  <span style="color:var(--text-muted); min-width:72px;">Reason:</span>
+                  <span style="color:#fff; font-weight:500;">{{order.returnReason}}</span>
+                </div>
+                {{#if order.returnRejectionReason}}
+                <div style="display:flex; gap:8px; align-items:flex-start;">
+                  <span style="color:var(--text-muted); min-width:72px;">Rejected:</span>
+                  <span style="color:#ef4444;">{{order.returnRejectionReason}}</span>
+                </div>
+                {{/if}}
+              </div>
+
+              {{!-- ACTION BUTTONS: only when status is Return Requested --}}
+              {{#ifEquals order.orderStatus "Return Requested"}}
+              <div style="display:flex; gap:10px; margin-top:18px;">
+                <button
+                  id="approveReturnBtn"
+                  onclick="handleApproveReturn()"
+                  style="flex:1; padding:10px 0; border:none; border-radius:6px;
+                         background:linear-gradient(135deg,#16a34a,#15803d);
+                         color:#fff; font-weight:600; font-size:0.9rem; cursor:pointer;
+                         display:flex; align-items:center; justify-content:center; gap:6px;
+                         transition:opacity 0.2s;"
+                  onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                  ✓ Approve Return
+                </button>
+                <button
+                  id="rejectReturnBtn"
+                  onclick="openRejectModal()"
+                  style="flex:1; padding:10px 0; border:none; border-radius:6px;
+                         background:linear-gradient(135deg,#dc2626,#b91c1c);
+                         color:#fff; font-weight:600; font-size:0.9rem; cursor:pointer;
+                         display:flex; align-items:center; justify-content:center; gap:6px;
+                         transition:opacity 0.2s;"
+                  onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                  ✕ Reject Return
+                </button>
+              </div>
+              {{/ifEquals}}
+
+              {{!-- ACTION BUTTONS: Pickup --}}
+              {{#ifEquals order.orderStatus "Return Approved"}}
+              <div style="margin-top:18px;">
+                <button class="mo-btn" style="width:100%; padding:10px; background:#3b82f6; border:none; color:#fff; cursor:pointer; border-radius:6px;" onclick="updatePickup('{{order.orderId}}','Picked')">📦 Mark Picked Up</button>
+              </div>
+              {{/ifEquals}}
+              {{#ifEquals order.orderStatus "Pickup Scheduled"}}
+              <div style="margin-top:18px;">
+                <button class="mo-btn" style="width:100%; padding:10px; background:#3b82f6; border:none; color:#fff; cursor:pointer; border-radius:6px;" onclick="updatePickup('{{order.orderId}}','Picked')">📦 Mark Picked Up</button>
+              </div>
+              {{/ifEquals}}
+
+              {{!-- ACTION BUTTONS: Inspect --}}
+              {{#ifEquals order.orderStatus "Return Picked"}}
+              <div style="display:flex; gap:10px; margin-top:18px;">
+                <button class="mo-btn" style="flex:1; padding:10px; background:#16a34a; border:none; color:#fff; cursor:pointer; border-radius:6px;" onclick="openInspectModal('{{order.orderId}}','Restock')">🔍 Pass — Restock</button>
+                <button class="mo-btn" style="flex:1; padding:10px; background:#dc2626; border:none; color:#fff; cursor:pointer; border-radius:6px;" onclick="openInspectModal('{{order.orderId}}','Damaged')">🚫 Fail — Damaged</button>
+              </div>
+              {{/ifEquals}}
+
+              {{!-- ACTION BUTTONS: Refund --}}
+              {{#ifEquals order.orderStatus "Returned"}}
+              <div style="margin-top:18px;">
+                <button class="mo-btn" style="width:100%; padding:10px; background:#a855f7; border:none; color:#fff; cursor:pointer; border-radius:6px;" onclick="processRefund('{{order.orderId}}')">💰 Process Refund</button>
+              </div>
+              {{/ifEquals}}
+
+              {{!-- Already actioned badge --}}
+              {{#ifEquals order.orderStatus "Refund Processed"}}
+              <div style="margin-top:14px; padding:8px 14px; border-radius:6px; background:rgba(168,85,247,0.15);
+                          border:1px solid rgba(168,85,247,0.35); color:#a855f7; font-size:0.85rem; font-weight:600; text-align:center;">
+                ✓ Refund Processed
+              </div>
+              {{/ifEquals}}
+
+              {{#ifEquals order.orderStatus "Return Rejected"}}
+              <div style="margin-top:14px; padding:8px 14px; border-radius:6px; background:rgba(220,38,38,0.12);
+                          border:1px solid rgba(220,38,38,0.3); color:#f87171; font-size:0.85rem; font-weight:600; text-align:center;">
+                ✕ Return Rejected
+              </div>
+              {{/ifEquals}}
+
+            </div>
+            {{/if}}
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Logout Modal -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <h3>Confirm Logout</h3>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Status Confirmation Modal -->
+<div class="modal-overlay" id="statusConfirmModal">
+  <div class="modal">
+    <h3 id="statusModalTitle" style="color:#c9a84c;">Confirm Status Update</h3>
+    <p id="statusModalBody" style="margin:12px 0; font-size:0.95rem; line-height:1.5;"></p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cancelStatusChange()">Cancel</button>
+      <button class="btn-confirm" id="statusConfirmBtn" onclick="confirmStatusChange()" style="background:linear-gradient(135deg,#c9a84c,#a07830);">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Inspect Modal -->
+<div class="modal-overlay" id="inspectModal">
+  <div class="modal">
+    <h3 id="inspectModalTitle">Inspection Decision</h3>
+    <p id="inspectModalDesc">Confirm your inspection decision.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeInspectModal()">Cancel</button>
+      <button class="btn-confirm" id="inspectConfirmBtn" onclick="confirmInspect()" style="background:#16a34a;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Return Modal -->
+<div class="modal-overlay" id="rejectReturnModal">
+  <div class="modal">
+    <h3 style="color:#ef4444;">✕ Reject Return</h3>
+    <p style="font-size:0.88rem; color:var(--text-muted); margin:8px 0 14px;">Please provide a reason for rejecting this return request. The customer will see this.</p>
+    <textarea
+      id="rejectReasonInput"
+      rows="4"
+      placeholder="e.g. Product shows signs of use beyond acceptable limits..."
+      style="width:100%; padding:10px 12px; border-radius:6px; background:#111; color:#fff;
+             border:1px solid #444; font-size:0.9rem; resize:vertical; font-family:inherit; box-sizing:border-box;"
+    ></textarea>
+    <div id="rejectReasonError" style="color:#ef4444; font-size:0.8rem; margin-top:4px; display:none;">Please enter a reason (min 5 characters).</div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+      <button class="btn-confirm" onclick="submitRejectReturn()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);">Reject Return</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openLogoutModal() { document.getElementById("logoutModal").classList.add("open"); }
+function closeLogoutModal() { document.getElementById("logoutModal").classList.remove("open"); }
+function confirmLogout() { window.location.href = "/admin/logout"; }
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+async function updateStatus(orderId, newStatus) {
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newStatus })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message, 'green');
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      showToast(data.message || 'Failed to update', 'red');
+    }
+  } catch (err) {
+    showToast('Network error', 'red');
+  }
+}
+
+// ─── Status flow constants (mirrors the backend) ───────────────────────────
+const FORWARD_CHAIN = ['Pending','Confirmed','Packed','Shipped','Out for Delivery','Delivered'];
+const REQUIRED_PREV = {
+  'Confirmed':        ['Pending'],
+  'Packed':           ['Confirmed'],
+  'Shipped':          ['Packed'],
+  'Out for Delivery': ['Shipped'],
+  'Delivered':        ['Out for Delivery']
+};
+
+let _pendingStatus = null;
+
+function handleStatusChange(sel) {
+  const newStatus = sel.value;
+  if (!newStatus) return;
+
+  const currentStatus = '{{order.orderStatus}}';
+  const currentIdx = FORWARD_CHAIN.indexOf(currentStatus);
+  const newIdx     = FORWARD_CHAIN.indexOf(newStatus);
+
+  // ── Frontend guard: must be exact next step ──
+  if (newIdx === -1) {
+    showToast('Unknown status selected.', 'red');
+    sel.value = ''; return;
+  }
+  if (currentIdx === -1) {
+    showToast('Cannot determine current order position.', 'red');
+    sel.value = ''; return;
+  }
+  if (newIdx !== currentIdx + 1) {
+    const required = REQUIRED_PREV[newStatus];
+    const msg = required
+      ? `Cannot set to "${newStatus}" — order must be "${required.join('" or "')}" first.`
+      : `You must follow the status sequence step by step.`;
+    showToast(msg, 'red');
+    sel.value = ''; return;
+  }
+
+  // ── All good — show confirmation modal ──
+  _pendingStatus = newStatus;
+  const isCancellation = (newStatus === 'Cancelled');
+  document.getElementById('statusModalTitle').textContent =
+    isCancellation ? '⚠️ Confirm Cancellation' : 'Confirm Status Update';
+  document.getElementById('statusModalBody').innerHTML =
+    isCancellation
+      ? `You are about to <strong style="color:#ef4444;">cancel</strong> this order. <br>Stock will be restored automatically. This action cannot be undone.`
+      : `Move order status from <strong style="color:#c9a84c;">${currentStatus}</strong> → <strong style="color:#22c55e;">${newStatus}</strong>?`;
+  document.getElementById('statusConfirmModal').classList.add('open');
+}
+
+function cancelStatusChange() {
+  _pendingStatus = null;
+  document.getElementById('statusConfirmModal').classList.remove('open');
+  document.getElementById('statusDropdown').value = '';
+}
+
+function confirmStatusChange() {
+  if (!_pendingStatus) return;
+  document.getElementById('statusConfirmModal').classList.remove('open');
+  updateStatus('{{order.orderId}}', _pendingStatus);
+  _pendingStatus = null;
+}
+
+// ─── Return Request Handlers ─────────────────────────────────────────────────
+async function handleApproveReturn() {
+  const btn = document.getElementById('approveReturnBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Approving...'; }
+  try {
+    const res = await fetch(`/admin/orders/{{order.orderId}}/return/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Return approved successfully.', 'green');
+      setTimeout(() => window.location.reload(), 900);
+    } else {
+      showToast(data.message || 'Failed to approve return.', 'red');
+      if (btn) { btn.disabled = false; btn.textContent = '✓ Approve Return'; }
+    }
+  } catch (err) {
+    showToast('Network error. Please try again.', 'red');
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Approve Return'; }
+  }
+}
+
+function openRejectModal() {
+  document.getElementById('rejectReasonInput').value = '';
+  document.getElementById('rejectReasonError').style.display = 'none';
+  document.getElementById('rejectReturnModal').classList.add('open');
+}
+
+function closeRejectModal() {
+  document.getElementById('rejectReturnModal').classList.remove('open');
+}
+
+async function submitRejectReturn() {
+  const reason = document.getElementById('rejectReasonInput').value.trim();
+  const errEl  = document.getElementById('rejectReasonError');
+  if (reason.length < 5) {
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  closeRejectModal();
+  try {
+    const res = await fetch(`/admin/orders/{{order.orderId}}/return/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Return rejected.', 'green');
+      setTimeout(() => window.location.reload(), 900);
+    } else {
+      showToast(data.message || 'Failed to reject return.', 'red');
+    }
+  } catch (err) {
+    showToast('Network error. Please try again.', 'red');
+  }
+}
+
+// ── Pickup
+async function updatePickup(orderId, status) {
+  try {
+    const res = await fetch(`/admin/returns/${orderId}/pickup-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pickupStatus: status })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'green'); setTimeout(() => location.reload(), 900); }
+    else showToast(data.message || 'Failed', 'red');
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+// ── Inspect modal
+let _inspectDecision = null;
+function openInspectModal(orderId, decision) {
+  _inspectDecision = decision;
+  const isRestock = decision === 'Restock';
+  document.getElementById('inspectModalTitle').textContent = isRestock ? '✔ Pass Inspection — Restock' : '🚫 Fail Inspection — Damaged';
+  document.getElementById('inspectModalDesc').textContent  = isRestock
+    ? 'Marking as Restocked will add items back to inventory after inspection passes.'
+    : 'Marking as Damaged will NOT restock items. Please confirm.';
+  const btn = document.getElementById('inspectConfirmBtn');
+  btn.style.background = isRestock ? '#16a34a' : '#dc2626';
+  document.getElementById('inspectModal').classList.add('open');
+}
+function closeInspectModal() {
+  document.getElementById('inspectModal').classList.remove('open');
+  _inspectDecision = null;
+}
+async function confirmInspect() {
+  try {
+    const res = await fetch(`/admin/returns/{{order.orderId}}/inspect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision: _inspectDecision })
+    });
+    const data = await res.json();
+    closeInspectModal();
+    if (data.success) { showToast(data.message, 'green'); setTimeout(() => location.reload(), 900); }
+    else showToast(data.message || 'Failed', 'red');
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+// ── Refund
+async function processRefund(orderId) {
+  if (!confirm('Process wallet refund for this order?')) return;
+  try {
+    const res = await fetch(`/admin/returns/${orderId}/refund-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refundStatus: 'Processed' })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'green'); setTimeout(() => location.reload(), 900); }
+    else showToast(data.message || 'Failed', 'red');
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+function showToast(msg, type='green') {
+  const icons = {
+    green:'<polyline points="20 6 9 17 4 12"/>',
+    red:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+  };
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ── Per-product item return actions ─────────────────────────────────
+
+async function approveItemReturn(orderId, itemId) {
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/items/${itemId}/return-action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve' })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'green'); setTimeout(() => location.reload(), 900); }
+    else showToast(data.message || 'Failed', 'red');
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+let _rejectItemOrderId = null;
+let _rejectItemId = null;
+
+function openItemRejectModal(orderId, itemId) {
+  _rejectItemOrderId = orderId;
+  _rejectItemId = itemId;
+  document.getElementById('itemRejectReasonInput').value = '';
+  document.getElementById('itemRejectModal').classList.add('open');
+}
+function closeItemRejectModal() {
+  document.getElementById('itemRejectModal').classList.remove('open');
+  _rejectItemOrderId = _rejectItemId = null;
+}
+async function confirmItemReject() {
+  const reason = document.getElementById('itemRejectReasonInput').value.trim();
+  if (reason.length < 5) { showToast('Please enter a valid reason (min 5 chars).', 'red'); return; }
+  closeItemRejectModal();
+  try {
+    const res = await fetch(`/admin/orders/${_rejectItemOrderId}/items/${_rejectItemId}/return-action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject', reason })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'green'); setTimeout(() => location.reload(), 900); }
+    else showToast(data.message || 'Failed', 'red');
+  } catch (e) { showToast('Network error', 'red'); }
+}
+
+async function updateItemReturnStatus(orderId, itemId, statusValue) {
+  if (!statusValue) return;
+
+  let newStatus = statusValue;
+  let returnCondition = '';
+
+  if (statusValue.includes('|')) {
+    const parts = statusValue.split('|');
+    newStatus = parts[0];
+    returnCondition = parts[1];
+  }
+
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/items/${itemId}/return-action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'status', newStatus, returnCondition })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(data.message, 'green'); setTimeout(() => location.reload(), 900); }
+    else showToast(data.message || 'Failed', 'red');
+  } catch (e) { showToast('Network error', 'red'); }
+}
+</script>
+
+<!-- Item-level Reject Modal -->
+<div class="modal-overlay" id="itemRejectModal">
+  <div class="modal">
+    <h3 style="color:#ef4444;">✕ Reject Return</h3>
+    <p style="font-size:0.88rem; color:var(--text-muted); margin:8px 0 14px;">Provide a reason for rejecting this item's return. The customer will see this.</p>
+    <textarea id="itemRejectReasonInput" rows="3" placeholder="e.g. Product shows signs of use beyond acceptable limits..."
+      style="width:100%; padding:10px 12px; border-radius:6px; background:#111; color:#fff; border:1px solid #444; font-size:0.9rem; resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+    <div class="modal-btns" style="margin-top:14px;">
+      <button class="btn-cancel" onclick="closeItemRejectModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmItemReject()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);">Reject Return</button>
+    </div>
+  </div>
+</div>

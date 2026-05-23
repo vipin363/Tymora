@@ -146,7 +146,7 @@
              <span class="total-amount">₹{{formatCurrency subtotal}}</span>
           </div>
 
-          <button class="btn-checkout {{#if hasOutOfStock}}blocked{{/if}}" id="checkoutBtn" {{#if hasOutOfStock}}disabled{{/if}}>Proceed to Checkout</button>
+          <button class="btn-checkout {{#if hasOutOfStock}}blocked{{/if}}" id="checkoutBtn" {{#if hasOutOfStock}}disabled{{/if}} onclick="window.location.href='/user/checkout'">Proceed to Checkout</button>
           {{#if hasOutOfStock}}
             <div class="checkout-blocked-msg">Remove unavailable items to continue checkout.</div>
           {{/if}}

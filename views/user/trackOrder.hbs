@@ -1,0 +1,73 @@
+<link href="/trackOrder.css" rel="stylesheet">
+
+<div class="trk-wrapper">
+  
+  <div class="trk-header">
+    <h1 class="trk-title">Shipment Tracker</h1>
+    <p class="trk-subtitle">Monitor the journey of your Tymora timepiece</p>
+  </div>
+
+  <div class="trk-container">
+
+    <!-- Left: Timeline Activity Log -->
+    <div class="trk-main">
+      <h2 class="trk-section-title">Activity Log</h2>
+      
+      <div class="trk-timeline">
+        {{#each activityLogs}}
+        <div class="trk-event {{#if @first}}active{{/if}}">
+          <div class="trk-dot"></div>
+          <div class="trk-event-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span class="trk-status">{{this.status}}</span>
+              <span class="trk-time">{{this.dateFormatted}} · {{this.timeFormatted}}</span>
+            </div>
+            <div class="trk-desc">{{this.message}}</div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+
+    <!-- Right: Logistics Summary -->
+    <div class="trk-side">
+      
+      <div class="trk-info-card">
+        <div class="trk-label">Order Number</div>
+        <div class="trk-val">#{{order.orderId}}</div>
+      </div>
+
+      <div class="trk-info-card">
+        <div class="trk-label">Product</div>
+        <div class="trk-val small">{{item.productName}} ({{item.quantity}}x)</div>
+      </div>
+
+      <div class="trk-info-card">
+        <div class="trk-label">Current Status</div>
+        <div class="trk-val" style="color: #4ade80;">{{item.orderStatus}}</div>
+      </div>
+
+      <div class="trk-info-card">
+        <div class="trk-label">Est. Delivery</div>
+        <div class="trk-val small">{{order.estimatedDeliveryFormatted}}</div>
+      </div>
+
+      <div class="trk-info-card">
+        <div class="trk-label">Shipping Partner</div>
+        <div class="trk-val small">{{shippingPartner}}</div>
+      </div>
+
+      <a href="/user/orders" class="trk-btn-back">Back to My Orders</a>
+      
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+  gsap.from('.trk-header', { y: -20, opacity: 0, duration: 1, ease: 'power3.out' });
+  gsap.from('.trk-info-card', { x: 30, opacity: 0, duration: 0.8, stagger: 0.1, delay: 0.2 });
+  gsap.from('.trk-event', { y: 20, opacity: 0, duration: 0.6, stagger: 0.1, delay: 0.4 });
+</script>

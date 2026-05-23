@@ -8,7 +8,9 @@ import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,
        getProductJson, softDeleteProduct, loadProductTrash,restoreProduct, permanentDeleteProduct, 
        getProductDetail, getVariants, addVariant, editVariant, getVariantJson,softDeleteVariant, 
        getVariantTrash, restoreVariant, permanentDeleteVariant,getMaterials, addMaterial, 
-       getSavedColors, saveColor,generateProductSku, generateVariantSku,setDefaultVariant } from '../controller/adminController.js';
+       getSavedColors, saveColor,generateProductSku, generateVariantSku,setDefaultVariant,
+       loadAdminOrders, loadAdminOrderDetail, updateOrderStatus, loadSettings, updateSettings,
+       loadAdminReturns, approveReturn, rejectReturn, updatePickupStatus, inspectReturn, updateRefundStatus, updateItemReturnAction } from '../controller/adminController.js';
 import { loadAdminOtpPage, verifyAdminForgotOtp,resendAdminOtp } from '../controller/otpController.js';
 import upload from '../middleware/uploard.js';
 import Category from '../model/categoryModel.js';
@@ -97,9 +99,25 @@ router.post('/saved-colors', saveColor);
 router.get('/sku/product', generateProductSku);
 router.get('/sku/variant', generateVariantSku);
 
-router.get("/logout", logout);
+router.get('/logout', logout);
 
+router.get('/orders', isAdminAuth, loadAdminOrders);
+router.get('/orders/:orderId', isAdminAuth, loadAdminOrderDetail);
+router.post('/orders/:orderId/status', isAdminAuth, updateOrderStatus);
 
+router.get('/settings', isAdminAuth, loadSettings);
+router.post('/settings', isAdminAuth, updateSettings);
+
+// ── Return Management ─────────────────────────────────────────
+router.get('/returns', isAdminAuth, loadAdminReturns);
+router.post('/returns/:orderId/approve', isAdminAuth, approveReturn);
+router.post('/returns/:orderId/reject', isAdminAuth, rejectReturn);
+router.post('/returns/:orderId/pickup-status', isAdminAuth, updatePickupStatus);
+router.post('/returns/:orderId/inspect', isAdminAuth, inspectReturn);
+router.post('/returns/:orderId/refund-status', isAdminAuth, updateRefundStatus);
+
+// ── Per-item return action ────────────────────────────────────────────
+router.post('/orders/:orderId/items/:itemId/return-action', isAdminAuth, updateItemReturnAction);
 
 router.use((req,res)=>{
    res.redirect('/admin/login');

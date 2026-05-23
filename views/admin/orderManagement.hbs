@@ -1,6 +1,5 @@
 <link href="/adminUserManagement.css" rel="stylesheet">
 
-
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
@@ -14,10 +13,10 @@
     </div>
     <div class="nav-section">
       <div class="nav-label">Main</div>
-     <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}" href="/admin/dashboard">Dashboard</a>
+      <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}" href="/admin/dashboard">Dashboard</a>
       <a class="nav-item {{#ifEquals activePage 'categoryManagement'}}active{{/ifEquals}}" href="/admin/categoryManagement">Category management</a>
       <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}" href="/admin/products">Products</a>
-     <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
+      <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
       <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
       <div class="nav-label" style="margin-top:12px">Store</div>
       <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Returns</a>
@@ -25,6 +24,7 @@
       <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
       <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
       <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
+      <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
     </div>
     <div class="nav-footer">
       <a class="nav-item logout" href="#" onclick="openLogoutModal()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
@@ -34,35 +34,249 @@
   <div class="main">
     <header class="topbar">
       <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <span class="topbar-title">Dashboard</span>
-    
-<form method="GET" action="/admin/categoryManagement" class="search-bar">
+      <span class="topbar-title">Order Management</span>
 
-  <input 
-    class="searchbar"
-    type="text" 
-    name="search" 
-    placeholder="Search category..."
-    value="{{search}}">
-
+<form method="GET" action="/admin/orders" class="search-bar">
+  <input class="searchbar" type="text" name="search" placeholder="Search orders..." value="{{search}}">
 
   <select name="status" class="sort-select">
-          <option value="">All</option>
-          <option value="visible">Visible</option>
-          <option value="hidden">Hidden</option>
-</select>
+    <option value="all" {{#ifEquals status "all"}}selected{{/ifEquals}}>All Status</option>
+    <option value="Pending" {{#ifEquals status "Pending"}}selected{{/ifEquals}}>Pending</option>
+    <option value="Confirmed" {{#ifEquals status "Confirmed"}}selected{{/ifEquals}}>Confirmed</option>
+    <option value="Packed" {{#ifEquals status "Packed"}}selected{{/ifEquals}}>Packed</option>
+    <option value="Shipped" {{#ifEquals status "Shipped"}}selected{{/ifEquals}}>Shipped</option>
+    <option value="Delivered" {{#ifEquals status "Delivered"}}selected{{/ifEquals}}>Delivered</option>
+    <option value="Cancelled" {{#ifEquals status "Cancelled"}}selected{{/ifEquals}}>Cancelled</option>
+    <option value="Return Requested" {{#ifEquals status "Return Requested"}}selected{{/ifEquals}}>Return Requested</option>
+  </select>
+
+  <select name="sort" class="sort-select">
+    <option value="latest" {{#ifEquals sort "latest"}}selected{{/ifEquals}}>Latest</option>
+    <option value="oldest" {{#ifEquals sort "oldest"}}selected{{/ifEquals}}>Oldest</option>
+    <option value="amount_high" {{#ifEquals sort "amount_high"}}selected{{/ifEquals}}>Amount ↓</option>
+    <option value="amount_low" {{#ifEquals sort "amount_low"}}selected{{/ifEquals}}>Amount ↑</option>
+  </select>
 
   <button type="submit" class="btn-search">Search</button>
 
   {{#if search}}
-    <a href="/admin/users" class="btn-clear">Clear</a>
+    <a href="/admin/orders" class="btn-clear">Clear</a>
   {{/if}}
-
 </form>
+
       <div class="admin-info">
-        <div class="admin-avatar">AU</div>
+        <div class="admin-avatar">A</div>
         <div class="admin-meta">
-          <div class="admin-name">Admin User</div>
+          <div class="admin-name">Admin</div>
         </div>
       </div>
     </header>
+
+    <main class="content">
+
+  <div class="page active" id="page-list">
+
+    <div class="page-header">
+      <div>
+        <h2>Order Management</h2>
+        <p>Manage and track all customer orders.</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="slabel">Total Orders</div>
+        <div class="svalue">{{stats.totalOrders}}</div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Pending</div>
+        <div class="svalue" style="color:#f59e0b">{{stats.pendingCount}}</div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Delivered</div>
+        <div class="svalue" style="color:#22c55e">{{stats.deliveredCount}}</div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Cancelled</div>
+        <div class="svalue" style="color:#ef4444">{{stats.cancelledCount}}</div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Amount</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each orders}}
+          <tr id="order-row-{{this.orderId}}">
+            <td><span style="color:#c9a84c; font-weight:600">#{{this.orderId}}</span></td>
+            <td>
+              <div class="user-cell">
+                <div class="user-av"><img src="{{this.userImage}}" alt="user" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>
+                <div>
+                  <div class="uname">{{this.customerName}}</div>
+                  <div class="uemail">{{this.customerEmail}}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{this.productCount}}</td>
+            <td style="font-weight:600">₹{{formatCurrency this.totalAmount}}</td>
+            <td>
+              {{#ifEquals this.paymentMethod "COD"}}
+                <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">COD</span>
+              {{else}}
+                <span class="badge" style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)">Online</span>
+              {{/ifEquals}}
+            </td>
+            <td>
+              {{#ifEquals this.orderStatus "Pending"}}
+                <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">Pending</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Confirmed"}}
+                <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Confirmed</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Packed"}}
+                <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">Packed</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Shipped"}}
+                <span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)">Shipped</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Out for Delivery"}}
+                <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">Out for Delivery</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Delivered"}}
+                <span class="badge s-active">Delivered</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Cancelled"}}
+                <span class="badge s-blocked">Cancelled</span>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Return Requested"}}
+                <span class="badge" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3)">Return Req.</span>
+              {{/ifEquals}}
+            </td>
+            <td>{{this.orderDateFormatted}}</td>
+            <td>
+              <button class="act-btn" onclick="window.location.href='/admin/orders/{{this.orderId}}'">View</button>
+              {{#ifEquals this.orderStatus "Pending"}}
+                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Confirmed')">Confirm</button>
+                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Confirmed"}}
+                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Packed')">Pack</button>
+                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Packed"}}
+                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Shipped')">Ship</button>
+                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Shipped"}}
+                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Out for Delivery')">Out for Delivery</button>
+                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
+              {{/ifEquals}}
+              {{#ifEquals this.orderStatus "Out for Delivery"}}
+                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Delivered')">Deliver</button>
+                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
+              {{/ifEquals}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        {{#if (gt currentPage 1)}}
+          <a href="/admin/orders?page={{subtract currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Prev</a>
+        {{/if}}
+        <span>Page {{currentPage}} of {{totalPages}}</span>
+        {{#if (lt currentPage totalPages)}}
+          <a href="/admin/orders?page={{add currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Next</a>
+        {{/if}}
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+{{!-- Logout Modal --}}
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <h3>Confirm Logout</h3>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+      <button class="btn-confirm red" onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+
+function openLogoutModal() {
+  document.getElementById("logoutModal").classList.add("open");
+}
+function closeLogoutModal() {
+  document.getElementById("logoutModal").classList.remove("open");
+}
+function confirmLogout() {
+  window.location.href = "/admin/logout";
+}
+
+async function updateStatus(orderId, newStatus) {
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newStatus })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message, 'green');
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      showToast(data.message || 'Failed to update status', 'red');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Network error', 'red');
+  }
+}
+
+// ── TOAST
+function showToast(msg, type='green') {
+  const icons = {
+    green:'<polyline points="20 6 9 17 4 12"/>',
+    red:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    blue:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+  };
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ── SIDEBAR
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+</script>

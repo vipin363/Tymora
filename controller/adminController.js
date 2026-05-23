@@ -10,6 +10,8 @@ import Brand from "../model/brandModel.js";
 import Variant from "../model/variantModel.js";
 import Material from "../model/materialModel.js";
 import SavedColor from "../model/savedColorModel.js";
+import Order from "../model/orderModel.js";
+import Settings from "../model/settingsModel.js";
 
 // auth and user management
 
@@ -318,7 +320,7 @@ export const loadCategoryManagement = async (req, res) => {
     if (search) query.name = { $regex: search, $options: "i" };
 
     const categories = await Category.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ created_at: -1 })
       .skip(skip)
       .limit(limit);
     const total = await Category.countDocuments(query);
@@ -1696,3 +1698,662 @@ export const generateVariantSku = async (req, res) => {
   }
 };
 
+
+// ----------------------------------------------------------------
+// ADMIN ORDER MANAGEMENT
+// ----------------------------------------------------------------
+
+// The main forward-progression chain (strict sequential)
+const STATUS_FLOW = [
+  "Pending","Confirmed","Packed","Quality Checked","Shipped",
+  "Out for Delivery","Delivered",
+  "Return Requested","Return Approved","Pickup Scheduled",
+  "Return Picked","Refund Processed","Return Rejected","Returned"
+];
+
+// Finalized statuses – no more updates allowed
+const FINALIZED_STATUSES = ["Cancelled","Delivered","Refund Processed","Return Rejected","Returned"];
+
+// Returns only the ONE allowed next status for a given current status (strict sequential)
+// Returns null if no forward step is possible.
+function getNextAllowedStatus(currentStatus) {
+  const forwardChain = [
+    "Pending", "Confirmed", "Packed",
+    "Shipped", "Out for Delivery", "Delivered"
+  ];
+  const idx = forwardChain.indexOf(currentStatus);
+  if (idx === -1 || idx === forwardChain.length - 1) return null;
+  return forwardChain[idx + 1];
+}
+
+// Validation map: each status that CAN be set must be preceded by exactly these statuses
+const REQUIRED_PREV_STATUS = {
+  "Confirmed":        ["Pending"],
+  "Packed":           ["Confirmed"],
+  "Shipped":          ["Packed"],
+  "Out for Delivery": ["Shipped"],
+  "Delivered":        ["Out for Delivery"]
+};
+
+export const loadAdminOrders = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 8;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sort = req.query.sort || "latest";
+    const statusFilter = req.query.status || "all";
+    const paymentFilter = req.query.payment || "all";
+    const deliveryFilter = req.query.delivery || "all";
+
+    let query = {};
+    if (search) {
+      query.$or = [
+        { orderId: { $regex: search, $options: "i" } },
+        { "products.productName": { $regex: search, $options: "i" } }
+      ];
+    }
+    if (statusFilter !== "all") query.orderStatus = statusFilter;
+    if (paymentFilter !== "all") query.paymentMethod = paymentFilter;
+    if (deliveryFilter !== "all") query.deliveryType = deliveryFilter;
+
+    let sortQuery = { createdAt: -1 };
+    if (sort === "oldest") sortQuery = { createdAt: 1 };
+    else if (sort === "amount_high") sortQuery = { totalAmount: -1 };
+    else if (sort === "amount_low") sortQuery = { totalAmount: 1 };
+
+    const totalOrders = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalOrders / limit) || 1;
+
+    const orders = await Order.find(query)
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "image email")
+      .lean();
+
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
+
+    const formatted = orders.map(o => ({
+      ...o,
+      orderDateFormatted: fmtDate(o.orderDate),
+      customerName: o.shippingAddress?.fullName || "-",
+      customerEmail: o.userId?.email || "-",
+      userImage: o.userId?.image || "/image/useravathar.png",
+      productCount: o.products?.length || 0,
+      firstProductImage: o.products?.[0]?.productImage || "",
+      firstProductName: o.products?.[0]?.productName || "-"
+    }));
+
+    const totalRevenue = await Order.aggregate([
+      { $match: { orderStatus: { $nin: ["Cancelled"] } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+
+    const pendingCount = await Order.countDocuments({ orderStatus: "Pending" });
+    const deliveredCount = await Order.countDocuments({ orderStatus: "Delivered" });
+    const cancelledCount = await Order.countDocuments({ orderStatus: "Cancelled" });
+
+    res.render("admin/orderManagement", {
+      activePage: "orders",
+      orders: formatted,
+      currentPage: page,
+      totalPages,
+      search,
+      sort,
+      status: statusFilter,
+      payment: paymentFilter,
+      delivery: deliveryFilter,
+      stats: {
+        totalOrders: await Order.countDocuments(),
+        pendingCount,
+        deliveredCount,
+        cancelledCount,
+        totalRevenue: totalRevenue[0]?.total || 0
+      }
+    });
+  } catch (err) {
+    console.error("loadAdminOrders error:", err);
+    res.redirect("/admin/dashboard");
+  }
+};
+
+export const loadAdminOrderDetail = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ orderId }).lean();
+    if (!order) return res.redirect("/admin/orders");
+
+    const user = await User.findById(order.userId).lean();
+
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "-";
+    const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+
+    // For the admin timeline, we can aggregate the first product's timeline or a general timeline.
+    // Let's use the first product's timeline as representative for the order-level view, 
+    // since admin updates apply to all non-cancelled products.
+    const representativeTimeline = order.products && order.products.length > 0 
+      ? (order.products[0].trackingTimeline || [])
+      : [];
+
+    const timeline = representativeTimeline.map(t => ({
+      ...t,
+      dateFormatted: fmtDate(t.timestamp),
+      timeFormatted: fmtTime(t.timestamp)
+    })).reverse();
+
+    // Strict sequential: only the immediate next status is offered (no Cancelled option)
+    const allowedNextStatuses = [];
+    if (!FINALIZED_STATUSES.includes(order.orderStatus) && order.orderStatus !== "Cancelled") {
+      const nextStatus = getNextAllowedStatus(order.orderStatus);
+      if (nextStatus) allowedNextStatuses.push(nextStatus);
+    }
+
+    res.render("admin/adminOrderDetail", {
+      activePage: "orders",
+      order: {
+        ...order,
+        orderDateFormatted: fmtDate(order.orderDate),
+        estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery)
+      },
+      user: user ? { name: user.name, email: user.email, phone: user.phone || "-" } : null,
+      timeline,
+      allowedNextStatuses
+    });
+  } catch (err) {
+    console.error("loadAdminOrderDetail error:", err);
+    res.redirect("/admin/orders");
+  }
+};
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { newStatus } = req.body;
+    const { orderId } = req.params;
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    const currentStatus = order.orderStatus;
+
+    // Block updates on finalized orders
+    if (FINALIZED_STATUSES.includes(currentStatus) || currentStatus === "Cancelled") {
+      return res.status(400).json({ success: false, message: "Cannot update a finalized order." });
+    }
+
+    // Validate the requested new status is known
+    if (!STATUS_FLOW.includes(newStatus)) {
+      return res.status(400).json({ success: false, message: "Invalid status." });
+    }
+
+    if (newStatus !== "Cancelled") {
+      // ── Strict sequential validation ──
+      // The new status MUST be exactly the next step after current
+      const allowedNext = getNextAllowedStatus(currentStatus);
+      if (newStatus !== allowedNext) {
+        // Provide a helpful, specific error message
+        const requiredPrev = REQUIRED_PREV_STATUS[newStatus];
+        if (requiredPrev && !requiredPrev.includes(currentStatus)) {
+          return res.status(400).json({
+            success: false,
+            message: `Cannot set status to "${newStatus}" — order must be "${requiredPrev.join('" or "')}" first.`
+          });
+        }
+        return res.status(400).json({
+          success: false,
+          message: allowedNext
+            ? `Next allowed status is "${allowedNext}". You cannot skip steps.`
+            : "No further status change is allowed for this order."
+        });
+      }
+    }
+
+    order.orderStatus = newStatus;
+    
+    // Sync the new status and tracking timeline to all active products
+    const timelineEntry = {
+      status: newStatus,
+      message: `Status updated to ${newStatus} by admin`,
+      timestamp: new Date(),
+      completed: true
+    };
+    
+    for (let item of order.products) {
+      if (!["Cancelled", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(item.orderStatus)) {
+        item.orderStatus = newStatus;
+        if (!item.trackingTimeline) item.trackingTimeline = [];
+        item.trackingTimeline.push(timelineEntry);
+      }
+    }
+
+    if (newStatus === "Cancelled") {
+      for (const item of order.products) {
+        await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+      }
+    }
+
+    await order.save();
+    res.json({ success: true, message: `Order status updated to "${newStatus}" successfully.` });
+  } catch (err) {
+    console.error("updateOrderStatus error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const loadSettings = async (req, res) => {
+  try {
+    let settings = await Settings.findOne().lean();
+    if (!settings) {
+      settings = {
+        standardShippingFee: 0,
+        fastShippingFee: 50,
+        returnPeriodDays: 7
+      };
+    }
+    res.render('admin/settings', { activePage: 'settings', settings });
+  } catch (err) {
+    console.log(err);
+    res.redirect('/admin/dashboard');
+  }
+};
+
+export const updateSettings = async (req, res) => {
+  try {
+    const { standardShippingFee, fastShippingFee, returnPeriodDays } = req.body;
+    
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings({});
+    }
+    
+    settings.standardShippingFee = parseFloat(standardShippingFee) || 0;
+    settings.fastShippingFee = parseFloat(fastShippingFee) || 0;
+    settings.returnPeriodDays = parseInt(returnPeriodDays) || 7;
+    
+    await settings.save();
+    res.json({ success: true, message: 'Settings updated successfully.' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const loadAdminReturns = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 8;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
+    const statusFilter = req.query.status || "all";
+
+    let query = {
+      orderStatus: {
+        $in: [
+          'Return Requested', 'Return Approved', 'Pickup Scheduled',
+          'Return Picked', 'Refund Processed', 'Return Rejected', 'Returned'
+        ]
+      }
+    };
+
+    if (search) {
+      query.orderId = { $regex: search, $options: "i" };
+    }
+    if (statusFilter !== "all") {
+      query.orderStatus = statusFilter;
+    }
+
+    const totalReturns = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalReturns / limit) || 1;
+
+    const returnsList = await Order.find(query)
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "name email")
+      .lean();
+
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
+
+    const formatted = returnsList.map(o => ({
+      ...o,
+      orderDateFormatted: fmtDate(o.orderDate),
+      updatedDateFormatted: fmtDate(o.updatedAt),
+      customerName: o.shippingAddress?.fullName || o.userId?.name || "-",
+      customerEmail: o.userId?.email || "-",
+      productCount: o.products?.length || 0,
+      firstProductName: o.products?.[0]?.productName || "-",
+      // Return details
+      returnReason: o.returnReason || "No reason provided",
+      returnRejectionReason: o.returnRejectionReason || "",
+      returnPickupStatus: o.returnPickupStatus || "Pending",
+      returnRefundStatus: o.returnRefundStatus || "Pending",
+      returnInspectionStatus: o.returnInspectionStatus || "Pending",
+      returnInspectionDecision: o.returnInspectionDecision || ""
+    }));
+
+    res.render("admin/returnManagement", {
+      activePage: "returns",
+      returns: formatted,
+      currentPage: page,
+      totalPages,
+      search,
+      status: statusFilter,
+    });
+  } catch (err) {
+    console.error("loadAdminReturns error:", err);
+    res.redirect("/admin/dashboard");
+  }
+};
+
+export const approveReturn = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    if (order.orderStatus !== "Return Requested") {
+      return res.status(400).json({ success: false, message: "Only Return Requested orders can be approved." });
+    }
+
+    order.orderStatus = "Return Approved";
+    order.returnPickupStatus = "Scheduled"; // Automatically updates pickup status
+    
+    // Sync to products
+    for (let item of order.products) {
+      if (item.orderStatus === "Return Requested") {
+        item.orderStatus = "Return Approved";
+        item.returnStatus = "Approved";
+        if (!item.trackingTimeline) item.trackingTimeline = [];
+        item.trackingTimeline.push({
+          status: "Return Approved",
+          message: "Your return request has been approved by the admin. Pickup is scheduled.",
+          timestamp: new Date(),
+          completed: true
+        });
+      }
+    }
+
+    await order.save();
+    res.json({ success: true, message: "Return request approved. Pickup status updated to Scheduled." });
+  } catch (err) {
+    console.error("approveReturn error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const rejectReturn = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || reason.trim().length < 5) {
+      return res.status(400).json({ success: false, message: "Please provide a valid rejection reason (min 5 chars)." });
+    }
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    if (order.orderStatus !== "Return Requested") {
+      return res.status(400).json({ success: false, message: "Only Return Requested orders can be rejected." });
+    }
+
+    order.orderStatus = "Return Rejected";
+    order.returnRejectionReason = reason;
+
+    // Sync to products
+    for (let item of order.products) {
+      if (item.orderStatus === "Return Requested") {
+        item.orderStatus = "Return Rejected";
+        item.returnStatus = "Rejected";
+        item.returnRejectionReason = reason;
+        if (!item.trackingTimeline) item.trackingTimeline = [];
+        item.trackingTimeline.push({
+          status: "Return Rejected",
+          message: `Return request rejected. Reason: ${reason}`,
+          timestamp: new Date(),
+          completed: true
+        });
+      }
+    }
+
+    await order.save();
+    res.json({ success: true, message: "Return request rejected." });
+  } catch (err) {
+    console.error("rejectReturn error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updatePickupStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { pickupStatus } = req.body; // e.g. 'Pending', 'Scheduled', 'Picked'
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    if (!["Return Approved", "Pickup Scheduled", "Return Picked"].includes(order.orderStatus)) {
+      return res.status(400).json({ success: false, message: "Cannot update pickup status for this order." });
+    }
+
+    order.returnPickupStatus = pickupStatus;
+    
+    // Sync to products
+    const timelineEntry = {
+      timestamp: new Date(),
+      completed: true
+    };
+    
+    if (pickupStatus === "Picked") {
+      order.orderStatus = "Return Picked";
+      timelineEntry.status = "Return Picked";
+      timelineEntry.message = "Returned product picked up and received at sorting facility.";
+    } else if (pickupStatus === "Scheduled") {
+      order.orderStatus = "Pickup Scheduled";
+      timelineEntry.status = "Pickup Scheduled";
+      timelineEntry.message = "Return pickup has been scheduled.";
+    }
+
+    for (let item of order.products) {
+      if (item.orderStatus === "Return Approved" || item.orderStatus === "Pickup Scheduled") {
+        if (pickupStatus === "Picked") {
+          item.orderStatus = "Return Picked";
+          item.returnStatus = "Picked";
+        } else if (pickupStatus === "Scheduled") {
+          item.orderStatus = "Pickup Scheduled";
+        }
+        
+        if (!item.trackingTimeline) item.trackingTimeline = [];
+        item.trackingTimeline.push(timelineEntry);
+      }
+    }
+
+    await order.save();
+    res.json({ success: true, message: `Pickup status updated to ${pickupStatus}.` });
+  } catch (err) {
+    console.error("updatePickupStatus error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const inspectReturn = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { decision } = req.body; // 'Restock' or 'Damaged'
+
+    if (!['Restock', 'Damaged'].includes(decision)) {
+      return res.status(400).json({ success: false, message: "Invalid inspection decision." });
+    }
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    if (order.orderStatus !== "Return Picked") {
+      return res.status(400).json({ success: false, message: "Inspection can only be performed after return is Picked up." });
+    }
+
+    order.returnInspectionStatus = "Inspected";
+    order.returnInspectionDecision = decision;
+    order.orderStatus = "Returned"; // Mark return as completed
+
+    const isRestocked = decision === 'Restock';
+    const message = `Return inspection completed. Decision: ${isRestocked ? 'Restocked to inventory' : 'Marked as damaged'}`;
+
+    for (let item of order.products) {
+      if (item.orderStatus === "Return Picked") {
+        item.orderStatus = "Returned";
+        item.returnStatus = "Returned";
+        item.returnInspectionStatus = "Inspected";
+        item.returnInspectionDecision = decision;
+        
+        // Also trigger a mock refund logic mark here for completeness based on user requirements
+        item.refundStatus = "Processed";
+        
+        if (!item.trackingTimeline) item.trackingTimeline = [];
+        item.trackingTimeline.push({
+          status: "Returned",
+          message,
+          timestamp: new Date(),
+          completed: true
+        });
+
+        if (isRestocked) {
+          await Variant.findByIdAndUpdate(item.variantId, { $$inc: { stock: item.quantity } });
+          const variant = await Variant.findById(item.variantId);
+          if (variant && variant.isDefault) {
+            await Product.findByIdAndUpdate(item.productId, { stock: variant.stock });
+          }
+        }
+      }
+    }
+
+    await order.save();
+    res.json({ success: true, message: `Inspection completed successfully. Decision: ${decision}.` });
+  } catch (err) {
+    console.error("inspectReturn error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updateRefundStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { refundStatus } = req.body; // e.g. 'Processed'
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    if (!["Returned", "Return Picked", "Refund Processed"].includes(order.orderStatus)) {
+      return res.status(400).json({ success: false, message: "Refund can only be processed after pickup/inspection." });
+    }
+
+    order.returnRefundStatus = refundStatus;
+    if (refundStatus === "Processed") {
+      order.orderStatus = "Refund Processed";
+      order.paymentStatus = "Refunded";
+      order.trackingTimeline.push({
+        status: "Refund Processed",
+        message: `Refund of ₹${order.totalAmount} processed successfully to user account.`,
+        timestamp: new Date(),
+        completed: true
+      });
+
+      // Credit the user's wallet
+      const user = await User.findById(order.userId);
+      if (user) {
+        user.walletBalance = (user.walletBalance || 0) + order.totalAmount;
+        await user.save();
+      }
+    }
+
+    await order.save();
+    res.json({ success: true, message: `Refund status updated to ${refundStatus}.` });
+  } catch (err) {
+    console.error("updateRefundStatus error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+// -- Per-item return action (approve / reject / status update) ----
+export const updateItemReturnAction = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { action, reason, newStatus } = req.body;
+
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    const item = order.products.id(itemId);
+    if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+
+    const STATUS_META = {
+      'Return Approved':  { returnStatus: 'Approved',  msg: 'Return approved. Pickup scheduled.' },
+      'Pickup Scheduled': { returnStatus: 'Scheduled', msg: 'Pickup has been scheduled.' },
+      'Return Picked':    { returnStatus: 'Picked',    msg: 'Item picked up by courier.' },
+      'Return Rejected':  { returnStatus: 'Rejected',  msg: 'Return rejected by admin.' },
+      'Returned':         { returnStatus: 'Returned',  msg: 'Item returned and restocked.' },
+      'Refund Processed': { returnStatus: 'Refunded',  msg: 'Refund processed to customer wallet.' },
+    };
+
+    if (action === 'approve') {
+      item.orderStatus  = 'Return Approved';
+      item.returnStatus = 'Approved';
+      item.trackingTimeline.push({ status: 'Return Approved', message: 'Return request approved by admin. Pickup is scheduled.', timestamp: new Date(), completed: true });
+      order.orderStatus = 'Return Approved';
+      await order.save();
+      return res.json({ success: true, message: 'Return approved successfully.' });
+    }
+
+    if (action === 'reject') {
+      if (!reason || reason.trim().length < 5)
+        return res.status(400).json({ success: false, message: 'Please provide a valid rejection reason (min 5 chars).' });
+      item.orderStatus           = 'Return Rejected';
+      item.returnStatus          = 'Rejected';
+      item.returnRejectionReason = reason;
+      item.trackingTimeline.push({ status: 'Return Rejected', message: 'Return rejected. Reason: ' + reason, timestamp: new Date(), completed: true });
+      order.orderStatus           = 'Return Rejected';
+      order.returnRejectionReason = reason;
+      await order.save();
+      return res.json({ success: true, message: 'Return rejected.' });
+    }
+
+    if (action === 'status') {
+      const meta = STATUS_META[newStatus];
+      if (!meta) return res.status(400).json({ success: false, message: 'Invalid status.' });
+
+      let trackingMsg = meta.msg;
+
+      if (newStatus === 'Returned') {
+        const condition = req.body.returnCondition;
+        if (condition === 'Stock') {
+          await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+          trackingMsg = 'Item returned and restocked.';
+        } else if (condition === 'Repair') {
+          trackingMsg = 'Item returned and sent for repair.';
+        }
+      }
+
+      item.orderStatus  = newStatus;
+      item.returnStatus = meta.returnStatus;
+      item.trackingTimeline.push({ status: newStatus, message: trackingMsg, timestamp: new Date(), completed: true });
+      order.orderStatus = newStatus;
+
+      if (newStatus === 'Refund Processed') {
+        item.refundStatus = 'Processed';
+        const user = await User.findById(order.userId);
+        if (user) {
+          user.walletBalance = (user.walletBalance || 0) + (item.itemTotal || 0);
+          await user.save();
+        }
+      }
+
+      await order.save();
+      return res.json({ success: true, message: 'Status updated to ' + newStatus + '.' });
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid action.' });
+  } catch (err) {
+    console.error('updateItemReturnAction error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
