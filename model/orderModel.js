@@ -7,7 +7,7 @@ const trackingEntrySchema = new mongoose.Schema({
   completed:  { type: Boolean, default: false },
 }, { _id: false });
 
-// ── Product snapshot (frozen at purchase time) ──────────────────
+// ── Product snapshot (frozen at purchase time) 
 const orderItemSchema = new mongoose.Schema({
   productId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
   variantId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Variant' },
@@ -20,7 +20,7 @@ const orderItemSchema = new mongoose.Schema({
   itemTotal:      { type: Number, required: true },
   discountPercent:{ type: Number, default: 0 },
   
-  // ── Product-Level Order Management ───────────────────────────────
+  // ── Product-Level Order Management 
   orderStatus: {
     type: String,
     enum: [
@@ -55,7 +55,6 @@ const orderItemSchema = new mongoose.Schema({
   returnInspectionDecision: { type: String, default: '' }, // 'Restocked', 'Damaged'
 }, { _id: true }); // Enable _id for subdocuments so we can easily find specific products in an order
 
-// ── Address snapshot (frozen at purchase time) ──────────────────
 const addressSnapshotSchema = new mongoose.Schema({
   fullName:     { type: String, required: true },
   phone:        { type: String, required: true },
@@ -66,7 +65,7 @@ const addressSnapshotSchema = new mongoose.Schema({
   addressType:  { type: String, default: 'Home' },
 }, { _id: false });
 
-// ── Main Order Schema ───────────────────────────────────────────
+// ── Main Order Schema 
 const orderSchema = new mongoose.Schema({
 
   orderId: {
@@ -110,7 +109,7 @@ const orderSchema = new mongoose.Schema({
     default: 'Normal',
   },
 
-  // ── Financials ────────────────────────────────────────────────
+  // ── Financials
   subtotalMrp:    { type: Number, default: 0 },
   discount:       { type: Number, default: 0 },
   couponDiscount: { type: Number, default: 0 },
@@ -121,7 +120,7 @@ const orderSchema = new mongoose.Schema({
   totalAmount:    { type: Number, required: true },
   totalSaved:     { type: Number, default: 0 },
 
-  // ── Dates ──────────────────────────────────────────────────────
+  // ── Dates 
   orderDate:         { type: Date, default: Date.now },
   estimatedDelivery: { type: Date },
 
@@ -131,7 +130,7 @@ const orderSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-// ── Static: generate unique TYM-XXXXXXX order ID ───────────────
+
 orderSchema.statics.generateOrderId = async function () {
   let orderId, exists;
   const year = new Date().getFullYear();

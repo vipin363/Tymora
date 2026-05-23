@@ -11,6 +11,8 @@ import Wishlist from "../model/wishlistModel.js";
 import Cart from "../model/cartModel.js";
 import Order from "../model/orderModel.js";
 import PDFDocument from "pdfkit";
+import Settings from "../model/settingsModel.js";
+import Review from "../model/reviewModel.js";
 
 // user auth and profile
 
@@ -1828,12 +1830,10 @@ export const checkProductStatus = async (req, res) => {
 
 
 
-// ==========================================
-// ORDER MANAGEMENT & TRACKING RE-IMPLEMENTATION
-// ==========================================
 
-import Settings from "../model/settingsModel.js";
-import Review from "../model/reviewModel.js";
+// ORDER MANAGEMENT 
+
+
 
 export const getUserOrders = async (req, res) => {
   try {
@@ -2283,9 +2283,8 @@ export const buyNow = async (req, res) => {
 };
 
 
-// ==========================================
-// CHECKOUT & ORDER CREATION RE-IMPLEMENTATION
-// ==========================================
+
+// CHECKOUT 
 
 export const loadCheckout = async (req, res) => {
   try {

@@ -2,7 +2,7 @@
 import Review from "../model/reviewModel.js";
 import Order from "../model/orderModel.js";
 
-// ADD REVIEW
+
 export const addReview = async (req, res) => {
   try {
     const userId = req.session.user?.id;
@@ -12,13 +12,13 @@ export const addReview = async (req, res) => {
     if (!rating || !reviewText) return res.status(400).json({ success: false, message: "Rating and review text are required." });
     if (reviewText.length < 5) return res.status(400).json({ success: false, message: "Review must be at least 5 characters." });
 
-    // Verify order is delivered
+    
     const order = await Order.findOne({ orderId, userId });
     if (!order || order.orderStatus !== "Delivered") {
       return res.status(400).json({ success: false, message: "You can only review products after the order is delivered." });
     }
 
-    // Check if the product is in the order
+   
     const hasProduct = order.products.some(p => p.productId.toString() === productId);
     if (!hasProduct) return res.status(400).json({ success: false, message: "Product not found in this order." });
 
@@ -37,7 +37,7 @@ export const addReview = async (req, res) => {
   }
 };
 
-// EDIT REVIEW
+
 export const editReview = async (req, res) => {
   try {
     const userId = req.session.user?.id;
@@ -65,7 +65,7 @@ export const editReview = async (req, res) => {
   }
 };
 
-// DELETE REVIEW
+
 export const deleteReview = async (req, res) => {
   try {
     const userId = req.session.user?.id;
@@ -83,7 +83,7 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-// GET MY REVIEWS (RENDER PAGE)
+
 export const getMyReviews = async (req, res) => {
   try {
     const userId = req.session.user?.id;

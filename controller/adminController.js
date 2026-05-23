@@ -1699,11 +1699,10 @@ export const generateVariantSku = async (req, res) => {
 };
 
 
-// ----------------------------------------------------------------
-// ADMIN ORDER MANAGEMENT
-// ----------------------------------------------------------------
 
-// The main forward-progression chain (strict sequential)
+// ADMIN ORDER MANAGEMENT
+
+
 const STATUS_FLOW = [
   "Pending","Confirmed","Packed","Quality Checked","Shipped",
   "Out for Delivery","Delivered",
@@ -1711,11 +1710,10 @@ const STATUS_FLOW = [
   "Return Picked","Refund Processed","Return Rejected","Returned"
 ];
 
-// Finalized statuses – no more updates allowed
+
 const FINALIZED_STATUSES = ["Cancelled","Delivered","Refund Processed","Return Rejected","Returned"];
 
-// Returns only the ONE allowed next status for a given current status (strict sequential)
-// Returns null if no forward step is possible.
+
 function getNextAllowedStatus(currentStatus) {
   const forwardChain = [
     "Pending", "Confirmed", "Packed",
@@ -2126,7 +2124,7 @@ export const rejectReturn = async (req, res) => {
 export const updatePickupStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { pickupStatus } = req.body; // e.g. 'Pending', 'Scheduled', 'Picked'
+    const { pickupStatus } = req.body; 
 
     const order = await Order.findOne({ orderId });
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
@@ -2273,8 +2271,6 @@ export const updateRefundStatus = async (req, res) => {
   }
 };
 
-
-// -- Per-item return action (approve / reject / status update) ----
 export const updateItemReturnAction = async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
