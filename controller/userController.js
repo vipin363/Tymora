@@ -13,47 +13,127 @@ import Order from "../model/orderModel.js";
 import PDFDocument from "pdfkit";
 import Settings from "../model/settingsModel.js";
 import Review from "../model/reviewModel.js";
+import Coupon from "../model/couponModel.js";
+import Offer from "../model/offerModel.js";
+import WalletTransaction from "../model/walletTransactionModel.js";
+import Referral from "../model/referralModel.js";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import { calculateRefundAmount } from "../utils/refundCalculator.js";
+import { getReferralCode, clearReferralCookie } from "../middleware/captureReferral.js";
+import passport from 'passport';
 
 // user auth and profile
 
 export const loadRegister = async (req, res) => {
   let message = req.query.message || "";
-  res.render("user/register", { layout: "auth", message });
+  // Cookie is the primary source; URL ?ref= is the fallback (and sets the cookie via middleware)
+  const prefillRef = (req.query.ref || req.cookies?._tyref || "").toUpperCase();
+  console.log(`[Register] Page loaded | prefillRef=${prefillRef || 'none'}`);
+  res.render("user/register", { layout: "auth", message, prefillRef });
+};
+
+export const googleLoginInit = (req, res, next) => {
+  console.log('[Google OAuth] Login flow initiated');
+  req.session.googleAuthType = 'login';
+  next();
+};
+
+export const googleRegisterInit = (req, res, next) => {
+  console.log('[Google OAuth] Register flow initiated');
+  req.session.googleAuthType = 'register';
+  
+  next();
+};
+
+export const googleCallback = (req, res, next) => {
+  passport.authenticate('google', (err, user, info) => {
+    if (err) return next(err);
+    const isRegister = req.session.googleAuthType === 'register';
+    req.session.googleAuthType = null;
+    
+    if (!user) {
+      console.log('[Google OAuth] Auth failed:', info?.message);
+      if (isRegister) {
+        return res.redirect(`/user/register?message=${encodeURIComponent(info?.message || 'Registration failed')}`);
+      } else {
+        return res.redirect(`/user/login?message=${encodeURIComponent(info?.message || 'Login failed')}`);
+      }
+    }
+    
+    req.session.user = { id: user._id, name: user.name };
+    
+    if (isRegister) {
+      clearReferralCookie(res); // Consume the referral cookie after account creation
+      console.log(`[Google OAuth] Referral cookie cleared after registration.`);
+    }
+    
+    console.log(`[Google OAuth] Session set for user: ${user.email}`);
+    res.redirect('/user/home');
+  })(req, res, next);
 };
 
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    // Form field is the explicit choice; cookie is the fallback
+    const formCode = (req.body.referralCode || "").trim().toUpperCase();
+    const cookieCode = getReferralCode(req) || "";
+    const referralCode = formCode || cookieCode;
+    const referralSource = formCode ? 'Code' : 'Link';
+
+    console.log(`[Register] Attempt: email=${email} | referralCode=${referralCode || 'none'} | source=${referralSource}`);
+
     const user = await userSchema.findOne({ email });
-
     if (user) {
-      return res.render("user/login", {
-        layout: "auth",
-        message: "user already exists",
-      });
+      return res.render("user/login", { layout: "auth", message: "user already exists" });
     }
 
-    const passwordPattern =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
     if (!passwordPattern.test(password)) {
-      return res.render("user/register", {
-        layout: "auth",
-        message:
-          "Password must be strong (uppercase, lowercase, number, symbol)",
-      });
+      return res.render("user/register", { layout: "auth", message: "Password must be strong (uppercase, lowercase, number, symbol)", prefillRef: referralCode });
     }
 
-    req.session.userData = { name, email, password };
-    await generateAndSaveOtp({ email, purpose: "register" });
+    let referrerId = null;
+    let referralCodeUsed = null;
 
+    if (referralCode) {
+      const settings = await Settings.findOne();
+      if (settings && !settings.referralProgramEnabled) {
+        console.log(`[Register] Referral program disabled – ignoring code`);
+        // Don't block registration, just skip referral
+      } else {
+        const referrer = await userSchema.findOne({ referralCode });
+        if (!referrer) {
+          console.log(`[Register] Invalid referral code: ${referralCode}`);
+          return res.render("user/register", { layout: "auth", message: "Invalid referral code. Please check and try again.", prefillRef: referralCode });
+        }
+        // Self-referral check
+        if (referrer.email === email) {
+          console.log(`[Register] Self-referral attempt detected - skipping.`);
+        } else {
+          // Duplicate check: has this email already been referred?
+          const alreadyReferred = await Referral.findOne({ referredEmail: email });
+          if (alreadyReferred) {
+            console.log(`[Register] Duplicate referral attempt detected (email already referred) – skipping.`);
+          } else {
+            referrerId = referrer._id;
+            referralCodeUsed = referralCode;
+            console.log(`[Register] Referral valid – referrer: ${referrer.email}`);
+          }
+        }
+      }
+    }
+
+    req.session.userData = { name, email, password, referrerId, referralCodeUsed, referralSource };
+    await generateAndSaveOtp({ email, purpose: "register" });
     req.session.changeEmailLink = "/user/register";
+    console.log(`[Register] OTP sent to: ${email}`);
     res.redirect("/user/otp");
   } catch (err) {
-    res.render("user/register", {
-      layout: "auth",
-      message: "Something went wrong",
-    });
+    console.error("registerUser error:", err);
+    res.render("user/register", { layout: "auth", message: "Something went wrong" });
   }
 };
 
@@ -143,28 +223,90 @@ export const homePage = async (req, res) => {
       if (!user) {
         req.session.user = null;
         return res.render("user/home", {
-          layout: "main",
-          user: null,
+          layout: "main", user: null,
           message: "Your account has been deleted by admin",
-          navCategories,
-          categories: navCategories,
+          navCategories, categories: navCategories,
+          trendingProducts: [], testimonials: [],
         });
       }
       if (user.isBlocked) {
         req.session.user = null;
         return res.render("user/home", {
-          layout: "main",
-          user: null,
+          layout: "main", user: null,
           message: "Your account has been blocked by admin",
-          navCategories,
-          categories: navCategories,
+          navCategories, categories: navCategories,
+          trendingProducts: [], testimonials: [],
         });
       }
     }
-    res.render("user/home", { layout: "main", user: req.session.user || null, message, navCategories, categories: navCategories });
+
+    // ── Fetch Trending Products (up to 8) ──
+    const trendingRaw = await Product.find({
+      _id: { $in: productIdsWithVariants },
+      status: "active", deleted_at: null,
+    }).populate("brand", "name").sort({ createdAt: -1 }).limit(8).lean();
+
+    const trendingProducts = [];
+    for (const p of trendingRaw) {
+      const variant = await Variant.findOne({
+        product: p._id, status: "active", deleted_at: null,
+      }).sort({ isDefault: -1 }).lean();
+      if (!variant) continue;
+      const salePrice = variant.salePrice || variant.price || 0;
+      const originalPrice = variant.originalPrice || salePrice;
+      const discountPct = variant.discountPercentage || 0;
+      trendingProducts.push({
+        _id: p._id.toString(),
+        name: p.name,
+        brand: p.brand?.name || "TYMORA",
+        image: variant.images?.[0] || p.images?.[0] || "",
+        salePrice,
+        originalPrice,
+        discountPct,
+        hasDiscount: discountPct > 0,
+        rating: p.rating || 0,
+        reviewCount: p.reviews || 0,
+        variantId: variant._id.toString(),
+        badge: p.featured ? "Featured" : (discountPct >= 20 ? `${discountPct}% OFF` : ""),
+        hasBadge: p.featured || discountPct >= 20,
+      });
+    }
+
+    // ── Fetch Testimonials (real 4-5 star reviews, up to 6) ──
+    const rawReviews = await Review.find({
+      rating: { $gte: 4 }, isVisible: true,
+    }).populate("userId", "name avatar").populate("productId", "name")
+      .sort({ createdAt: -1 }).limit(6).lean();
+
+    const testimonials = rawReviews.map(r => ({
+      rating: r.rating,
+      stars: "★".repeat(r.rating) + "☆".repeat(5 - r.rating),
+      text: r.reviewText,
+      userName: r.userId?.name || "Valued Customer",
+      avatar: r.userId?.avatar || null,
+      initials: (r.userId?.name || "VC").split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2),
+      productName: r.productId?.name || "Premium Watch",
+      date: new Date(r.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" }),
+    }));
+
+    res.render("user/home", {
+      layout: "main",
+      user: req.session.user || null,
+      message,
+      navCategories,
+      categories: navCategories,
+      trendingProducts,
+      hasProducts: trendingProducts.length > 0,
+      testimonials,
+      hasTestimonials: testimonials.length > 0,
+    });
   } catch (err) {
-    console.log(err);
-    res.render("user/home", { layout: "main", user: null, message: "Something went wrong", navCategories: [], categories: [] });
+    console.log("homePage error:", err);
+    res.render("user/home", {
+      layout: "main", user: null, message: "Something went wrong",
+      navCategories: [], categories: [],
+      trendingProducts: [], testimonials: [],
+    });
   }
 };
 
@@ -285,15 +427,105 @@ export const loadProfile = async (req, res) => {
       user.dob = new Date(user.dob).toLocaleDateString("en-GB");
     }
 
+    // Referral stats for snippet
+    const allReferrals = await Referral.find({ referrer: user._id })
+      .populate("referredUser", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const totalEarned = allReferrals
+      .filter(r => r.rewardStatus === "COMPLETED")
+      .reduce((sum, r) => sum + (r.referrerRewardAmount || 0), 0);
+
+    const referralStats = {
+      total: allReferrals.length,
+      released: allReferrals.filter(r => r.rewardStatus === "COMPLETED").length,
+      pending:  allReferrals.filter(r => r.rewardStatus === "PENDING").length,
+      totalEarned,
+      recent: allReferrals.slice(0, 3),
+    };
+
+    // Order stats for top strip
+    const orders = await Order.find({ userId: user._id, "products.orderStatus": "Delivered" }).lean();
+    const totalSpent = orders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+    const activeReturns = await Order.countDocuments({
+      userId: user._id,
+      "products.orderStatus": { $in: ["Return Requested", "Return Approved", "Return Picked"] }
+    });
+
     res.render("user/userProfile", {
       layout: "main",
       user,
       hasPassword: !!user.password,
       isGoogleUser: !user.password,
+      referralStats,
+      stats: {
+        watchesOwned: orders.reduce((s, o) => s + (o.products?.length || 0), 0),
+        totalSpent: `₹${totalSpent.toLocaleString("en-IN")}`,
+        activeReturns,
+      },
     });
   } catch (err) {
-    console.log(err);
+    console.error("loadProfile error:", err);
     res.redirect("/user/");
+  }
+};
+
+export const loadReferrals = async (req, res) => {
+  try {
+    const userId = req.session.user?.id;
+    const user = await userSchema.findById(userId).lean();
+    if (!user) return res.redirect("/user/login");
+
+    const settings = await Settings.findOne().lean();
+    const referralUrl = `${process.env.BASE_URL || "http://localhost:3000"}/user/register?ref=${user.referralCode}`;
+
+    const allReferrals = await Referral.find({ referrer: userId })
+      .populate("referredUser", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // For each referral, check the referred user's first order status
+    const fmtDate = d => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
+
+    const referralsFormatted = await Promise.all(allReferrals.map(async (r) => {
+      const firstOrder = await Order.findOne({ userId: r.referredUser?._id }).sort({ createdAt: 1 }).lean();
+      let firstOrderStatus = "No Orders Yet";
+      if (firstOrder) {
+        const allStatuses = firstOrder.products.map(p => p.orderStatus);
+        const hasDelivered = allStatuses.includes("Delivered");
+        firstOrderStatus = hasDelivered ? "Delivered" : (allStatuses[0] || "Pending");
+      }
+      return {
+        ...r,
+        signupDate: fmtDate(r.createdAt),
+        firstOrderStatus,
+      };
+    }));
+
+    const totalEarned = referralsFormatted
+      .filter(r => r.rewardStatus === "COMPLETED")
+      .reduce((s, r) => s + (r.referrerRewardAmount || 0), 0);
+
+    res.render("user/referrals", {
+      layout: "main",
+      user,
+      referralUrl,
+      referrals: referralsFormatted,
+      rewardAmounts: {
+        referrer: settings?.referrerReward || 100,
+        referred:  settings?.referredReward  || 50,
+      },
+      stats: {
+        total:      referralsFormatted.length,
+        released:   referralsFormatted.filter(r => r.rewardStatus === "COMPLETED").length,
+        pending:    referralsFormatted.filter(r => r.rewardStatus === "PENDING").length,
+        totalEarned,
+      },
+    });
+  } catch (err) {
+    console.error("loadReferrals error:", err);
+    res.redirect("/user/profile");
   }
 };
 
@@ -590,7 +822,11 @@ export const loadAddressPage = async (req, res) => {
   try {
     const userId = req.session.user.id;
     const addresses = await addressModel.find({ userId });
-    res.render("user/myAddress", { layout: "main", addresses });
+    res.render("user/myAddress", { 
+      layout: "main", 
+      addresses,
+      fromCheckout: req.query.from === 'checkout'
+    });
   } catch (err) {
     console.log(err);
     res.redirect("/user/profile");
@@ -715,6 +951,274 @@ export const deleteAddress = async (req, res) => {
 };
 
 // categorys and products
+
+export const loadCollectionPage = async (req, res) => {
+  try {
+    const { collectionId } = req.params;
+    
+    // Fetch the category to ensure it exists and get its details
+    const category = await Category.findOne({
+      _id: collectionId,
+      is_visible: true,
+      deleted_at: null
+    }).lean();
+
+    if (!category) {
+      return res.redirect('/user/shop');
+    }
+
+    const {
+      q = "",
+      brand = "",
+      style = "",
+      avail = "",
+      sort = "",
+      priceMin = "",
+      priceMax = "",
+      page = "1",
+    } = req.query;
+
+    const currentPage = Math.max(1, parseInt(page, 10) || 1);
+    const PER_PAGE = 8;
+
+    const mongoFilter = {
+      status: "active",
+      deleted_at: null,
+      category: category._id
+    };
+
+    if (avail === "instock") mongoFilter.stock = { $gt: 0 };
+    if (avail === "outofstock") mongoFilter.stock = { $lte: 0 };
+    if (avail === "sale") mongoFilter.discount = { $gt: 0 };
+    if (avail === "new") mongoFilter.featured = true;
+
+    if (priceMin !== "" || priceMax !== "") {
+      mongoFilter.price = {};
+      if (priceMin !== "") mongoFilter.price.$gte = parseFloat(priceMin);
+      if (priceMax !== "") mongoFilter.price.$lte = parseFloat(priceMax);
+    }
+
+    const sortMap = {
+      "price-asc": { price: 1 },
+      "price-desc": { price: -1 },
+      az: { name: 1 },
+      za: { name: -1 },
+      newest: { createdAt: -1 },
+    };
+    const mongoSort = sortMap[sort] || { createdAt: -1 };
+
+    let dbProducts = await Product.find(mongoFilter)
+      .populate("brand", "name")
+      .sort(mongoSort)
+      .lean();
+
+    if (brand.trim()) {
+      dbProducts = dbProducts.filter(
+        (p) => (p.brand?.name || "").toLowerCase() === brand.trim().toLowerCase(),
+      );
+    }
+
+    if (style.trim()) {
+      dbProducts = dbProducts.filter(
+        (p) => (p.gender || "").toLowerCase() === style.trim().toLowerCase(),
+      );
+    }
+
+    if (q.trim()) {
+      const qLower = q.trim().toLowerCase();
+      dbProducts = dbProducts.filter(
+        (p) =>
+          p.name.toLowerCase().includes(qLower) ||
+          (p.brand?.name || "").toLowerCase().includes(qLower),
+      );
+    }
+
+    if (sort === "rating") {
+      dbProducts.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+
+    const productIds = dbProducts.map((p) => p._id);
+
+    const activeVariants = await Variant.find({
+      product: { $in: productIds },
+      status: "active",
+      deleted_at: null,
+    }).lean();
+
+    const variantsByProduct = {};
+    activeVariants.forEach((v) => {
+      const pid = v.product.toString();
+      if (!variantsByProduct[pid]) variantsByProduct[pid] = [];
+      variantsByProduct[pid].push(v);
+    });
+
+    dbProducts = dbProducts.filter(
+      (p) => (variantsByProduct[p._id.toString()] || []).length > 0,
+    );
+
+    const DEFAULT_BADGES = ['CURATED', 'PREMIUM', 'SIGNATURE', 'CLASSIC', 'LUXURY PICK'];
+    function getPrimaryBadge(p, displayVariant) {
+      const stock = displayVariant?.stock ?? 0;
+      const hoursSince = p.createdAt ? (Date.now() - new Date(p.createdAt).getTime()) / 3_600_000 : 9999;
+      const seed = parseInt(p._id.toString().slice(-2), 16) || 0;
+      if (p.dealOfTheDay) return { badge: 'deal', badgeLabel: 'DEAL OF THE DAY' };
+      if (p.featured) return { badge: 'featured', badgeLabel: 'BEST PICK' };
+      if (stock > 0 && stock <= 5) return { badge: 'low-stock', badgeLabel: `ONLY ${stock} LEFT` };
+      if (hoursSince <= 24) return { badge: 'new', badgeLabel: 'NEW' };
+      return { badge: 'default', badgeLabel: DEFAULT_BADGES[seed % DEFAULT_BADGES.length] };
+    }
+
+    const shaped = dbProducts.map((p) => {
+      const variants = variantsByProduct[p._id.toString()] || [];
+      const displayVariant = variants.find((v) => v.isDefault) || variants[0];
+      const basePrice = displayVariant?.price ?? p.price;
+
+      return {
+        id: p._id.toString(),
+        name: p.name,
+        brand: p.brand?.name || "Unknown",
+        price:
+          displayVariant?.salePrice ??
+          displayVariant?.price ??
+          p.salePrice ??
+          p.price ??
+          0,
+        oldPrice:
+          (p.discountPercentage ?? p.discount) > 0
+            ? (displayVariant?.originalPrice ?? p.originalPrice ?? null)
+            : null,
+        discountPct: p.discountPercentage ?? p.discount ?? 0,
+        rating: p.rating ?? 4.5,
+        reviews: p.reviews ?? 0,
+        ...getPrimaryBadge(p, displayVariant),
+        cat: category.name.toLowerCase(),
+        style: (p.gender || "").toLowerCase(),
+        avail: displayVariant?.stock > 0 ? "instock" : "outofstock",
+        stock: displayVariant?.stock ?? 0,
+        variantId: displayVariant?._id.toString() || "",
+        img:
+          displayVariant?.images?.[0] ||
+          p.images?.[0] ||
+          "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80",
+        wished: false,
+      };
+    });
+
+    if (req.session.user) {
+      const [wl, cart] = await Promise.all([
+        Wishlist.findOne({ userId: req.session.user.id }).lean(),
+        Cart.findOne({ userId: req.session.user.id }).lean(),
+      ]);
+
+      if (wl && wl.products.length) {
+        const wishedSet = new Set(
+          wl.products.map((p) => p.productId.toString()),
+        );
+        shaped.forEach((p) => {
+          p.wished = wishedSet.has(p.id);
+        });
+      }
+
+      if (cart && cart.items.length) {
+        const cartVariantSet = new Set(
+          cart.items.map((i) => i.variantId.toString()),
+        );
+        shaped.forEach((p) => {
+          p.inCart = cartVariantSet.has(p.variantId);
+        });
+      }
+    }
+
+    const totalProducts = shaped.length;
+    const totalPages = Math.ceil(totalProducts / PER_PAGE) || 1;
+    const safePage = Math.min(currentPage, totalPages);
+    const startIdx = (safePage - 1) * PER_PAGE;
+    const pageProducts = shaped.slice(startIdx, startIdx + PER_PAGE);
+
+    function buildPageRange(curr, total) {
+      const range = [];
+      const delta = 1;
+      for (let i = 1; i <= total; i++) {
+        if (i === 1 || i === total || (i >= curr - delta && i <= curr + delta)) {
+          range.push({ num: i, active: i === curr, dots: false });
+        } else if (range[range.length - 1] && !range[range.length - 1].dots) {
+          range.push({ dots: true });
+        }
+      }
+      return range;
+    }
+    const paginationPages = buildPageRange(safePage, totalPages);
+
+    const unique = (arr) => [...new Set(arr.filter(Boolean))];
+
+    const allBrands = unique(shaped.map((p) => p.brand))
+      .sort()
+      .map((v) => ({
+        value: v.toLowerCase(),
+        label: v,
+        selected: v.toLowerCase() === brand.toLowerCase(),
+      }));
+
+    const allStyles = unique(shaped.map((p) => p.style))
+      .filter((v) => v && v.trim())
+      .sort()
+      .map((v) => ({
+        value: v,
+        label: v.charAt(0).toUpperCase() + v.slice(1),
+        selected: v === style.toLowerCase(),
+      }));
+
+    const activeTags = [];
+    if (q) activeTags.push({ label: `"${q}"`, key: "q" });
+    if (brand) activeTags.push({ label: brand, key: "brand" });
+    if (style) activeTags.push({ label: style, key: "style" });
+    if (avail) activeTags.push({ label: avail, key: "avail" });
+    if (priceMin || priceMax)
+      activeTags.push({
+        label: `₹${priceMin || 0} – ₹${priceMax || "∞"}`,
+        key: "price",
+      });
+
+    res.render("user/collection", {
+      layout: "main",
+      user: req.session.user || null,
+      category,
+      searchPlaceholder: "Search within " + category.name + "...",
+      totalProducts,
+      shownCount: pageProducts.length,
+      startCount: totalProducts ? startIdx + 1 : 0,
+
+      filters: { q, brand, style, avail, priceMin, priceMax, sort },
+
+      sortOptions: [
+        { value: "price-asc", label: "Price: Low to High", selected: sort === "price-asc" },
+        { value: "price-desc", label: "Price: High to Low", selected: sort === "price-desc" },
+        { value: "newest", label: "New Arrivals", selected: sort === "newest" },
+        { value: "rating", label: "Customer Rating", selected: sort === "rating" },
+        { value: "az", label: "Name: A - Z", selected: sort === "az" },
+        { value: "za", label: "Name: Z - A", selected: sort === "za" },
+      ],
+
+      filterOptions: { brands: allBrands, styles: allStyles },
+
+      products: pageProducts,
+      shopData: { products: shaped },
+
+      activeTags,
+
+      pagination: {
+        pages: paginationPages,
+        hasPrev: safePage > 1,
+        hasNext: safePage < totalPages,
+        prevPage: safePage - 1,
+        nextPage: safePage + 1,
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.redirect("/user/shop");
+  }
+};
 
 export const loadshop = async (req, res) => {
   try {
@@ -1253,7 +1757,7 @@ export const loadProductDetail = async (req, res) => {
         };
       });
 
-    const productReviews = await Review.find({ productId: id })
+    const productReviews = await Review.find({ productId: id, isVisible: true })
       .populate("userId", "name")
       .sort({ createdAt: -1 })
       .lean();
@@ -1317,6 +1821,8 @@ export const loadProductDetail = async (req, res) => {
     res.redirect("/user/shop");
   }
 };
+
+// WISHLIST MANAGEMENT
 
 export const loadWishlist = async (req, res) => {
   try {
@@ -1389,6 +1895,7 @@ export const loadWishlist = async (req, res) => {
             (p.discountPercentage ?? p.discount) > 0
               ? (display.originalPrice ?? p.originalPrice ?? null)
               : null,
+          discountPct: p.discountPercentage ?? p.discount ?? 0,
           rating: p.rating ?? 4.5,
           reviews: p.reviews ?? 0,
           ...getPrimaryBadge(p, display),
@@ -1434,14 +1941,14 @@ export const toggleWishlist = async (req, res) => {
       await Wishlist.findOneAndUpdate(
         { userId },
         { $pull: { products: { productId } } },
-        { new: true },
+        { returnDocument: 'after' },
       );
       return res.json({ success: true, status: "removed" });
     } else {
       await Wishlist.findOneAndUpdate(
         { userId, "products.productId": { $ne: productId } },
         { $push: { products: { productId } } },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
       return res.json({ success: true, status: "added" });
     }
@@ -1537,12 +2044,12 @@ async function buildCartView(cart) {
   await cart.populate([
     {
       path: "items.productId",
-      select: "name images status deleted_at",
+      select: "name images status deleted_at discount discountPercentage originalPrice",
       populate: { path: "brand", select: "name" },
     },
     {
       path: "items.variantId",
-      select: "salePrice price stock images status deleted_at",
+      select: "salePrice price originalPrice discountPercentage stock images status deleted_at",
     },
   ]);
 
@@ -1570,6 +2077,9 @@ async function buildCartView(cart) {
     }
 
     const price = variant.salePrice ?? variant.price ?? item.price;
+    const rawOldPrice = variant.originalPrice ?? product.originalPrice ?? null;
+    const discountPct = variant.discountPercentage ?? product.discountPercentage ?? product.discount ?? 0;
+    const oldPrice = (rawOldPrice && rawOldPrice > price) ? rawOldPrice : (discountPct > 0 ? rawOldPrice : null);
     const total = price * qty;
 
     if (!isOutOfStock) subtotal += total;
@@ -1582,6 +2092,8 @@ async function buildCartView(cart) {
       name: product.name,
       img: variant.images?.[0] || product.images?.[0] || "",
       price,
+      oldPrice,
+      discountPct,
       qty,
       total: isOutOfStock ? 0 : total,
       stock: variant.stock ?? 0,
@@ -1605,6 +2117,11 @@ async function buildCartView(cart) {
 
 export const loadCart = async (req, res) => {
   try {
+    // Clear any active buyNow session to prevent flow mixing
+    if (req.session.buyNow) {
+      delete req.session.buyNow;
+    }
+
     const cart = await Cart.findOne({ userId: req.session.user.id });
     const data = await buildCartView(cart);
     res.render("user/cart", {
@@ -1828,12 +2345,7 @@ export const checkProductStatus = async (req, res) => {
   }
 };
 
-
-
-
 // ORDER MANAGEMENT 
-
-
 
 export const getUserOrders = async (req, res) => {
   try {
@@ -1863,6 +2375,8 @@ export const getUserOrders = async (req, res) => {
       .lean();
 
     const settings = await Settings.findOne().lean() || { returnPeriodDays: 7 };
+    const userReviews = await Review.find({ userId }).lean();
+    const reviewedSet = new Set(userReviews.map(r => `${r.orderId}_${r.productId.toString()}`));
     const fmtDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
     orders = orders.map(order => {
@@ -1874,16 +2388,17 @@ export const getUserOrders = async (req, res) => {
         let isReturned = false;
 
         const st = item.orderStatus;
-        if (["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery"].includes(st)) {
+        if (["Pending", "Confirmed", "Packed"].includes(st)) {
           canCancel = true;
         }
         
-        if (["Packed", "Shipped", "Out for Delivery", "Delivered"].includes(st)) {
+        if (["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Delivered"].includes(st)) {
           canTrack = true;
         }
 
         if (st === "Delivered") {
-          showReview = true;
+          const key = `${order.orderId}_${item.productId.toString()}`;
+          showReview = !reviewedSet.has(key);
           const deliveryLog = (item.trackingTimeline || []).find(t => t.status === "Delivered");
           const deliveryDate = deliveryLog ? deliveryLog.timestamp : order.updatedAt;
           const daysSinceDelivery = (new Date() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24);
@@ -1951,8 +2466,8 @@ export const cancelOrder = async (req, res) => {
     const item = order.products.id(itemId);
     if (!item) return res.status(404).json({ success: false, message: "Product not found in this order" });
 
-    if (!["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery"].includes(item.orderStatus)) {
-      return res.status(400).json({ success: false, message: "This product cannot be cancelled after delivery." });
+    if (!["Pending", "Confirmed", "Packed"].includes(item.orderStatus)) {
+      return res.status(400).json({ success: false, message: "This product cannot be cancelled after shipping." });
     }
 
     item.orderStatus = "Cancelled";
@@ -1967,6 +2482,35 @@ export const cancelOrder = async (req, res) => {
 
     // Restore stock
     await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+
+    // Process Automated Refund
+    const refundData = await calculateRefundAmount(order, item._id.toString(), item.quantity);
+    let refundAmount = refundData.refundAmount;
+
+    // "Full Order Cancellation: Refund shipping charge."
+    const willBeAllCancelled = order.products.every(p => 
+      p._id.toString() === item._id.toString() || p.orderStatus === "Cancelled"
+    );
+
+    if (willBeAllCancelled && order.deliveryCharge > 0) {
+      refundAmount += order.deliveryCharge;
+    }
+
+    if (order.paymentStatus === "Paid" && order.paymentMethod !== "COD" && refundAmount > 0) {
+      item.refundAmountProcessed = refundAmount;
+      item.refundStatus = "Processed";
+      
+      await userSchema.findByIdAndUpdate(userId, { $inc: { walletBalance: refundAmount } });
+      const newTxn = new WalletTransaction({
+        userId,
+        type: 'Credit',
+        amount: refundAmount,
+        description: `Refund for Cancelled Product (${item.productName})${willBeAllCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
+        orderId: order.orderId,
+        status: 'Success'
+      });
+      await newTxn.save();
+    }
 
     // Check if all items are cancelled, if so update order status
     const allCancelled = order.products.every(p => p.orderStatus === "Cancelled");
@@ -2031,6 +2575,8 @@ export const loadOrderDetails = async (req, res) => {
     if (!order) return res.redirect("/user/orders");
 
     const settings = await Settings.findOne().lean() || { returnPeriodDays: 7 };
+    const userReviews = await Review.find({ userId }).lean();
+    const reviewedSet = new Set(userReviews.map(r => `${r.orderId}_${r.productId.toString()}`));
     const fmtDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
     const mappedProducts = order.products.map(item => {
@@ -2041,16 +2587,17 @@ export const loadOrderDetails = async (req, res) => {
       let isReturned = false;
 
       const st = item.orderStatus;
-      if (["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery"].includes(st)) {
+      if (["Pending", "Confirmed", "Packed"].includes(st)) {
         canCancel = true;
       }
       
-      if (["Packed", "Shipped", "Out for Delivery", "Delivered"].includes(st)) {
+      if (["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Delivered"].includes(st)) {
         canTrack = true;
       }
 
       if (st === "Delivered") {
-        showReview = true;
+        const key = `${order.orderId}_${item.productId.toString()}`;
+        showReview = !reviewedSet.has(key);
         const deliveryLog = (item.trackingTimeline || []).find(t => t.status === "Delivered");
         const deliveryDate = deliveryLog ? deliveryLog.timestamp : order.updatedAt;
         const daysSinceDelivery = (new Date() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24);
@@ -2100,7 +2647,7 @@ export const loadOrderDetails = async (req, res) => {
       };
     });
 
-    const canDownloadInvoice = mappedProducts.some(p => 
+    const canDownloadInvoice = order.orderStatus === "Delivered" || (['Razorpay', 'Wallet', 'Online', 'Card', 'UPI', 'Stripe'].includes(order.paymentMethod) && order.paymentStatus === 'Paid') || mappedProducts.some(p => 
       ["Delivered", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(p.orderStatus)
     );
 
@@ -2130,12 +2677,13 @@ export const downloadInvoice = async (req, res) => {
     const order = await Order.findOne({ orderId, userId }).lean();
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-    const hasDelivered = order.products.some(p => 
-      ["Delivered", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(p.orderStatus)
-    );
+    const deliveredStatuses = ["Delivered", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"];
+    
+    const isOnlinePaid = ['Razorpay', 'Wallet', 'Online', 'Card', 'UPI', 'Stripe'].includes(order.paymentMethod) && order.paymentStatus === 'Paid';
+    const invoiceProducts = isOnlinePaid ? order.products : order.products.filter(p => deliveredStatuses.includes(p.orderStatus));
 
-    if (!hasDelivered) {
-      return res.status(400).json({ success: false, message: "Invoice is only available after delivery." });
+    if (invoiceProducts.length === 0) {
+      return res.status(400).json({ success: false, message: "Invoice is only available for delivered products or successful online payments." });
     }
 
     const doc = new PDFDocument({ margin: 50 });
@@ -2156,6 +2704,7 @@ export const downloadInvoice = async (req, res) => {
     doc.text(`Order Date: ${new Date(order.orderDate).toLocaleDateString()}`);
     doc.text(`Invoice Date: ${new Date().toLocaleDateString()}`);
     doc.text(`Payment Method: ${order.paymentMethod}`);
+    doc.text(`Payment Status: ${order.paymentStatus}`);
     doc.moveDown();
 
     doc.fontSize(12).font("Helvetica-Bold").text("Billed To:");
@@ -2168,34 +2717,76 @@ export const downloadInvoice = async (req, res) => {
 
     const tableTop = doc.y;
     doc.font("Helvetica-Bold");
-    doc.text("Product Details", 50, tableTop);
-    doc.text("Qty", 350, tableTop);
-    doc.text("Price", 420, tableTop);
-    doc.text("Total", 490, tableTop);
+    doc.text("Product Details", 50, tableTop, { width: 170 });
+    doc.text("Status", 230, tableTop, { width: 80 });
+    doc.text("Qty", 315, tableTop, { width: 30 });
+    doc.text("MRP", 350, tableTop, { width: 60 });
+    doc.text("Disc%", 415, tableTop, { width: 40 });
+    doc.text("Price", 460, tableTop, { width: 55 });
+    doc.text("Total", 515, tableTop, { width: 60 });
 
     doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor("#cccccc").stroke();
 
     let yPosition = tableTop + 25;
     doc.font("Helvetica");
+    
+    let computedSubtotal = 0;
 
-    for (const item of order.products) {
-      doc.text(`${item.productName} (${item.variantSpecs})`, 50, yPosition, { width: 280 });
-      doc.text(`${item.quantity}`, 350, yPosition);
-      doc.text(`Rs. ${item.salePrice}`, 420, yPosition);
-      doc.text(`Rs. ${item.itemTotal}`, 490, yPosition);
-      yPosition += 30;
+    for (const item of invoiceProducts) {
+      doc.text(`${item.productName} (${item.variantSpecs})`, 50, yPosition, { width: 170 });
+      if (["Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(item.orderStatus) && item.refundMethod) {
+         doc.fontSize(8).fillColor("#888").text(`Refund: ${item.refundMethod}`, 50, yPosition + 22, { width: 170 });
+         doc.fontSize(10).fillColor("#000");
+      }
+      doc.text(`${item.orderStatus}`, 230, yPosition, { width: 80 });
+      doc.text(`${item.quantity}`, 315, yPosition, { width: 30 });
+      const mrp = item.mrp || item.salePrice;
+      const discPct = item.discountPercent || (mrp > item.salePrice ? Math.round((mrp - item.salePrice) / mrp * 100) : 0);
+      doc.text(`Rs. ${mrp}`, 350, yPosition, { width: 60 });
+      doc.text(discPct > 0 ? `${discPct}%` : `-`, 415, yPosition, { width: 40 });
+      doc.text(`Rs. ${item.salePrice}`, 460, yPosition, { width: 55 });
+      doc.text(`Rs. ${item.itemTotal}`, 515, yPosition, { width: 60 });
+      computedSubtotal += item.itemTotal;
+      yPosition += 40;
     }
 
     doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
     yPosition += 15;
 
     doc.text("Subtotal:", 380, yPosition);
-    doc.text(`Rs. ${order.subtotalMrp - order.discount}`, 490, yPosition);
+    doc.text(`Rs. ${computedSubtotal}`, 490, yPosition);
+    yPosition += 20;
+
+    if (order.offerDiscount > 0) {
+      doc.text(`Offer Applied (${order.offerName || 'Offer'}):`, 380, yPosition);
+      doc.text(`- Rs. ${order.offerDiscount}`, 490, yPosition);
+      yPosition += 20;
+    }
+
+    if (order.couponDiscount > 0) {
+      doc.text(`Coupon Applied (${order.couponCode || 'Coupon'}):`, 380, yPosition);
+      doc.text(`- Rs. ${order.couponDiscount}`, 490, yPosition);
+      yPosition += 20;
+    }
+
+
+    doc.text("CGST (9%):", 380, yPosition);
+    doc.text(`Rs. ${order.cgst}`, 490, yPosition);
+    yPosition += 20;
+
+    doc.text("SGST (9%):", 380, yPosition);
+    doc.text(`Rs. ${order.sgst}`, 490, yPosition);
     yPosition += 20;
 
     doc.text("Shipping:", 380, yPosition);
     doc.text(`Rs. ${order.deliveryCharge}`, 490, yPosition);
     yPosition += 20;
+
+    if (order.codCharge > 0) {
+      doc.text("COD Charge:", 380, yPosition);
+      doc.text(`Rs. ${order.codCharge}`, 490, yPosition);
+      yPosition += 20;
+    }
 
     doc.font("Helvetica-Bold").fontSize(12);
     doc.text("Grand Total:", 380, yPosition);
@@ -2239,6 +2830,7 @@ export const requestReturn = async (req, res) => {
     item.orderStatus = "Return Requested";
     item.returnStatus = "Requested";
     item.returnReason = reason;
+    item.refundMethod = "Wallet";
     item.returnEvidenceImages = req.files ? req.files.map(f => f.path) : [];
     item.trackingTimeline.push({
       status: "Return Requested",
@@ -2260,7 +2852,6 @@ export const requestReturn = async (req, res) => {
   }
 };
 
-
 export const buyNow = async (req, res) => {
   try {
     const { productId, variantId, quantity } = req.body;
@@ -2281,8 +2872,6 @@ export const buyNow = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-
 
 // CHECKOUT 
 
@@ -2387,6 +2976,34 @@ export const loadCheckout = async (req, res) => {
     const codCharge = 0;
     const totalAmount = subtotal + cgst + sgst + deliveryCharge + codCharge;
     
+    const userDoc = await userSchema.findById(userId).lean();
+    const walletBalance = userDoc?.walletBalance || 0;
+
+    // Fetch applicable coupons
+    const now = new Date();
+    const coupons = await Coupon.find({ 
+      isActive: true,
+      isDeleted: { $ne: true },
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    }).sort({ priority: -1, createdAt: -1 }).lean();
+
+    const availableCoupons = coupons.filter(c => {
+      const usageCount = c.usedBy ? c.usedBy.filter(id => id.toString() === userId.toString()).length : 0;
+      return usageCount < (c.perUserLimit || 1);
+    });
+
+    const offers = await Offer.find({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    }).sort({ priority: -1, createdAt: -1 }).lean();
+
+    const availableOffers = offers.filter(o => {
+      if (o.usageLimit && o.usedCount >= o.usageLimit) return false;
+      return true;
+    });
+
     await res.render('user/checkout', {
       layout: 'main',
       cartItems,
@@ -2394,13 +3011,16 @@ export const loadCheckout = async (req, res) => {
       discount: totalDiscount,
       hasOutOfStock,
       address: defaultAddress,
-  addresses,
-  cgst,
-  sgst,
-  deliveryCharge,
-  codCharge,
-  totalAmount,
-});
+      addresses,
+      cgst,
+      sgst,
+      deliveryCharge,
+      codCharge,
+      totalAmount,
+      walletBalance,
+      availableCoupons,
+      availableOffers
+    });
 
   } catch (err) {
     console.error("loadCheckout error:", err);
@@ -2410,7 +3030,7 @@ export const loadCheckout = async (req, res) => {
 
 export const calculateCheckout = async (req, res) => {
   try {
-    const { deliveryType, deliveryCharge: clientDeliveryCharge, codCharge: clientCodCharge } = req.body;
+    const { deliveryType, deliveryCharge: clientDeliveryCharge, codCharge: clientCodCharge, couponCode, offerId, paymentMethod } = req.body;
     const userId = req.session.user.id;
     let cartItems = [];
     let subtotalMrp = 0;
@@ -2489,37 +3109,179 @@ export const calculateCheckout = async (req, res) => {
       }
     }
 
-    const subtotal = subtotalMrp - totalDiscount;
-    const cgst = Math.round(subtotal * 0.09);
-    const sgst = Math.round(subtotal * 0.09);
-    let deliveryCharge = typeof clientDeliveryCharge !== 'undefined' ? clientDeliveryCharge : (subtotal < 50000 ? (deliveryType === "Fast" ? 50 : 0) : 0);
-    let codCharge = typeof clientCodCharge !== 'undefined' ? clientCodCharge : 0;
-    const totalAmount = subtotal + cgst + sgst + deliveryCharge + codCharge;
+    let initialSubtotal = subtotalMrp - totalDiscount;
+    const now = new Date();
 
-    res.json({
+    // ── Helper: compute discount amount for a coupon doc ──────────────────
+    function calcCouponDiscount(coupon, subtotal) {
+      let d = coupon.discountType === 'percentage'
+        ? (subtotal * coupon.discountValue) / 100
+        : coupon.discountValue;
+      if (coupon.maxDiscountLimit && d > coupon.maxDiscountLimit) d = coupon.maxDiscountLimit;
+      if (d > subtotal) d = subtotal;
+      return Math.round(d);
+    }
+
+    // ── Helper: compute discount amount for an offer doc ──────────────────
+    function calcOfferDiscount(offer, subtotal) {
+      let d = offer.discountType === 'percentage'
+        ? (subtotal * offer.discountValue) / 100
+        : offer.discountValue;
+      if (offer.maxDiscountLimit && d > offer.maxDiscountLimit) d = offer.maxDiscountLimit;
+      if (d > subtotal) d = subtotal;
+      return Math.round(d);
+    }
+
+    // ── Helper: check payment method eligibility ──────────────────────────
+    function isPaymentMethodEligible(methods, selectedMethod) {
+      if (!methods || methods.length === 0 || methods.includes('All')) return true;
+      if (!selectedMethod) return true;
+      return methods.includes(selectedMethod);
+    }
+
+    // ── 1. Load active offers and coupons ────────────────────────────────
+    const [activeOffers, activeCoupons] = await Promise.all([
+      Offer.find({ isActive: true, startDate: { $lte: now }, endDate: { $gte: now } }).lean(),
+      Coupon.find({ isActive: true, isDeleted: { $ne: true }, startDate: { $lte: now }, endDate: { $gte: now } }).lean()
+    ]);
+
+    // ── 2. Filter eligible offers ─────────────────────────────────────────
+    const eligibleOffers = hasOutOfStock ? [] : activeOffers.filter(o => {
+      if (o.usageLimit && o.usedCount >= o.usageLimit) return false;
+      if (initialSubtotal < (o.minPurchaseAmount || 0)) return false;
+      if (!isPaymentMethodEligible(o.paymentMethods, paymentMethod)) return false;
+      return true;
+    }).map(o => ({
+      _id: o._id.toString(),
+      name: o.name,
+      discountType: o.discountType,
+      discountValue: o.discountValue,
+      offerType: o.offerType,
+      calculatedDiscount: calcOfferDiscount(o, initialSubtotal)
+    })).sort((a, b) => b.calculatedDiscount - a.calculatedDiscount);
+
+    // ── 3. Filter eligible coupons ────────────────────────────────────────
+    const eligibleCoupons = hasOutOfStock ? [] : activeCoupons.filter(c => {
+      const used = c.usedBy ? c.usedBy.filter(id => id.toString() === userId.toString()).length : 0;
+      if (used >= (c.perUserLimit || 1)) return false;
+      if (initialSubtotal < (c.minPurchase || 0)) return false;
+      if (!isPaymentMethodEligible(c.paymentMethods, paymentMethod)) return false;
+      return true;
+    }).map(c => ({
+      _id: c._id.toString(),
+      code: c.code,
+      title: c.title,
+      discountType: c.discountType,
+      discountValue: c.discountValue,
+      minPurchase: c.minPurchase,
+      calculatedDiscount: calcCouponDiscount(c, initialSubtotal)
+    })).sort((a, b) => b.calculatedDiscount - a.calculatedDiscount);
+
+    // ── 4. Best offer suggestion ──────────────────────────────────────────
+    const bestOfferSuggestion = eligibleOffers.length > 0 ? eligibleOffers[0] : null;
+    const bestCouponSuggestion = eligibleCoupons.length > 0 ? eligibleCoupons[0] : null;
+
+    // ── 5. Apply selected offer XOR coupon (no stacking) ─────────────────
+    let couponDiscount = 0;
+    let offerDiscount = 0;
+    let couponMessage = '';
+    let offerMessage = '';
+    let appliedCoupon = null;
+    let appliedOffer = null;
+
+    if (offerId && !hasOutOfStock) {
+      // User selected an offer — ignore any coupon
+      const offer = activeOffers.find(o => o._id.toString() === offerId);
+      if (!offer) {
+        offerMessage = 'Offer not found.';
+      } else if (!offer.isActive) {
+        offerMessage = 'This offer is no longer active.';
+      } else if (now < new Date(offer.startDate) || now > new Date(offer.endDate)) {
+        offerMessage = 'This offer has expired.';
+      } else if (offer.usageLimit && offer.usedCount >= offer.usageLimit) {
+        offerMessage = 'This offer has reached its usage limit.';
+      } else if (initialSubtotal < (offer.minPurchaseAmount || 0)) {
+        offerMessage = `Minimum order amount of ₹${offer.minPurchaseAmount} is required.`;
+      } else if (!isPaymentMethodEligible(offer.paymentMethods, paymentMethod)) {
+        offerMessage = `This offer is not valid for ${paymentMethod} payment.`;
+      } else {
+        offerDiscount = calcOfferDiscount(offer, initialSubtotal);
+        appliedOffer = { _id: offer._id.toString(), name: offer.name, offerType: offer.offerType, discount: offerDiscount };
+      }
+    } else if (couponCode && !hasOutOfStock) {
+      // User entered/selected a coupon — ignore any offer
+      const coupon = activeCoupons.find(c => c.code === couponCode.toUpperCase());
+      if (!coupon) {
+        couponMessage = 'Coupon code not found.';
+      } else if (!coupon.isActive) {
+        couponMessage = 'This coupon is no longer active.';
+      } else if (now > new Date(coupon.endDate)) {
+        couponMessage = 'This coupon has expired.';
+      } else if (now < new Date(coupon.startDate)) {
+        couponMessage = 'This coupon is not yet active.';
+      } else {
+        const used = coupon.usedBy ? coupon.usedBy.filter(id => id.toString() === userId.toString()).length : 0;
+        if (used >= (coupon.perUserLimit || 1)) {
+          couponMessage = 'You have already used this coupon the maximum number of times.';
+        } else if (initialSubtotal < (coupon.minPurchase || 0)) {
+          couponMessage = `Minimum order amount of ₹${coupon.minPurchase} is required for this coupon.`;
+        } else if (!isPaymentMethodEligible(coupon.paymentMethods, paymentMethod)) {
+          couponMessage = `This coupon is not valid for ${paymentMethod} payment.`;
+        } else {
+          couponDiscount = calcCouponDiscount(coupon, initialSubtotal);
+          appliedCoupon = { code: coupon.code, title: coupon.title, discountType: coupon.discountType, discount: couponDiscount };
+        }
+      }
+    }
+
+    const totalPromotionDiscount = couponDiscount + offerDiscount;
+    const subtotalAfterDiscounts = initialSubtotal - totalPromotionDiscount;
+    const cgst = Math.round(subtotalAfterDiscounts * 0.09);
+    const sgst = Math.round(subtotalAfterDiscounts * 0.09);
+    let deliveryCharge = typeof clientDeliveryCharge !== 'undefined'
+      ? Number(clientDeliveryCharge)
+      : (subtotalAfterDiscounts < 50000 ? (deliveryType === 'Fast' ? 50 : 0) : 0);
+    let codCharge = typeof clientCodCharge !== 'undefined' ? Number(clientCodCharge) : 0;
+    const totalAmount = subtotalAfterDiscounts + cgst + sgst + deliveryCharge + codCharge;
+
+    return res.json({
       success: true,
       cartItems,
       totalMRP: subtotalMrp,
       discount: totalDiscount,
-      couponDiscount: 0,
+      couponDiscount,
+      offerDiscount,
+      couponMessage,
+      offerMessage,
+      appliedCoupon,
+      appliedOffer,
       deliveryCharge,
       codCharge,
       cgst,
       sgst,
       hasOutOfStock,
-      youSaved: totalDiscount,
+      eligibleOffers,
+      eligibleCoupons,
+      bestOfferSuggestion,
+      bestCouponSuggestion,
+      youSaved: totalDiscount + totalPromotionDiscount,
+      subtotal: initialSubtotal,
       finalTotal: totalAmount,
     });
   } catch (err) {
-    console.error("calculateCheckout error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('calculateCheckout error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
 export const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const { addressId, paymentMethod, deliveryType, paymentDetails } = req.body;
+    let { addressId, paymentMethod, deliveryType, paymentDetails, couponCode, offerId } = req.body;
+    
+    if (paymentMethod === 'Online') {
+      paymentMethod = 'Razorpay';
+    }
     // Validate buyNow product stock and activity
     if (req.session.buyNow) {
       const { productId, variantId, quantity } = req.session.buyNow;
@@ -2593,9 +3355,7 @@ export const placeOrder = async (req, res) => {
 
       subtotalMrp += originalPrice * q;
       totalDiscount += (originalPrice - salePrice) * q;
-
-      await Variant.findByIdAndUpdate(variantId, { $inc: { stock: -q } });
-      delete req.session.buyNow;
+      // NOTE: buyNow session is cleared only after verifyPayment succeeds
 
     } else {
       const cart = await Cart.findOne({ userId });
@@ -2636,31 +3396,129 @@ export const placeOrder = async (req, res) => {
 
         subtotalMrp += originalPrice * q;
         totalDiscount += (originalPrice - salePrice) * q;
-
-        variant.stock -= q;
-        await variant.save();
       }
-
-      cart.items = [];
-      await cart.save();
+      // NOTE: cart is cleared only after verifyPayment succeeds
     }
-
-    const subtotal = subtotalMrp - totalDiscount;
-    const cgst = Math.round(subtotal * 0.09);
-    const sgst = Math.round(subtotal * 0.09);
-    let deliveryCharge = 0;
-    if (subtotal < 50000) deliveryCharge = deliveryType === "Fast" ? 50 : 0;
-    
-    let codCharge = paymentMethod === "COD" ? 30 : 0;
-    const totalAmount = subtotal + cgst + sgst + deliveryCharge + codCharge;
 
     // Validate cart before proceeding
     if (products.length === 0) {
       return res.json({ success: false, message: 'Your cart is empty. Cannot place order.' });
     }
 
+    let initialSubtotal = subtotalMrp - totalDiscount;
+    const now = new Date();
+
+    // ── Shared discount helpers ───────────────────────────────────────────
+    function calcCouponDiscount(c, sub) {
+      let d = c.discountType === 'percentage' ? (sub * c.discountValue) / 100 : c.discountValue;
+      if (c.maxDiscountLimit && d > c.maxDiscountLimit) d = c.maxDiscountLimit;
+      return Math.min(Math.round(d), sub);
+    }
+    function calcOfferDiscount(o, sub) {
+      let d = o.discountType === 'percentage' ? (sub * o.discountValue) / 100 : o.discountValue;
+      if (o.maxDiscountLimit && d > o.maxDiscountLimit) d = o.maxDiscountLimit;
+      return Math.min(Math.round(d), sub);
+    }
+    function pmEligible(methods, pm) {
+      if (!methods || methods.length === 0 || methods.includes('All')) return true;
+      return methods.includes(pm);
+    }
+
+    let couponDiscount = 0;
+    let offerDiscount  = 0;
+    let finalCouponCode  = '';
+    let finalCouponType  = '';
+    let finalCouponTitle = '';
+    let finalOfferId    = '';
+    let finalOfferName  = '';
+    let finalOfferType  = '';
+
+    if (offerId && !couponCode) {
+      // ── Validate selected offer ───────────────────────────────────────
+      const offer = await Offer.findById(offerId).lean();
+      if (!offer) return res.json({ success: false, message: 'Offer not found.' });
+      if (!offer.isActive || now < new Date(offer.startDate) || now > new Date(offer.endDate))
+        return res.json({ success: false, message: 'This offer has expired or is no longer active.' });
+      if (offer.usageLimit && offer.usedCount >= offer.usageLimit)
+        return res.json({ success: false, message: 'This offer has reached its usage limit.' });
+      if (initialSubtotal < (offer.minPurchaseAmount || 0))
+        return res.json({ success: false, message: `Minimum order of ₹${offer.minPurchaseAmount} required for this offer.` });
+      if (!pmEligible(offer.paymentMethods, paymentMethod))
+        return res.json({ success: false, message: `This offer is not valid for ${paymentMethod} payment.` });
+
+      offerDiscount   = calcOfferDiscount(offer, initialSubtotal);
+      finalOfferId    = offer._id.toString();
+      finalOfferName  = offer.name;
+      finalOfferType  = offer.offerType;
+      req._offerId    = finalOfferId;
+      req._offerDiscount = offerDiscount;
+
+    } else if (couponCode) {
+      
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isDeleted: { $ne: true } }).lean();
+      if (!coupon) return res.json({ success: false, message: 'Coupon not found.' });
+      if (!coupon.isActive || now < new Date(coupon.startDate) || now > new Date(coupon.endDate))
+        return res.json({ success: false, message: 'This coupon has expired or is not yet active.' });
+
+      const usageCount = coupon.usedBy ? coupon.usedBy.filter(id => id.toString() === userId.toString()).length : 0;
+      if (usageCount >= (coupon.perUserLimit || 1))
+        return res.json({ success: false, message: 'You have already used this coupon the maximum number of times.' });
+      if (initialSubtotal < (coupon.minPurchase || 0))
+        return res.json({ success: false, message: `Minimum order of ₹${coupon.minPurchase} required for this coupon.` });
+      if (!pmEligible(coupon.paymentMethods, paymentMethod))
+        return res.json({ success: false, message: `This coupon is not valid for ${paymentMethod} payment.` });
+
+      couponDiscount   = calcCouponDiscount(coupon, initialSubtotal);
+      finalCouponCode  = coupon.code;
+      finalCouponType  = coupon.discountType;
+      finalCouponTitle = coupon.title;
+      req._couponId      = coupon._id.toString();
+      req._couponDiscount = couponDiscount;
+    }
+
+    const totalPromotionDiscount = couponDiscount + offerDiscount;
+
+    // ── Advanced Pricing Breakdown for Refund Recalculation ──
+    let remainingCoupon = couponDiscount;
+    let remainingOffer = offerDiscount;
+    
+    products.forEach((p, index) => {
+      p.productOriginalPrice = p.mrp;
+      
+      let itemRatio = p.itemTotal / initialSubtotal;
+      let pCouponShare = 0;
+      let pOfferShare = 0;
+      
+      if (index === products.length - 1) {
+         pCouponShare = remainingCoupon;
+         pOfferShare = remainingOffer;
+      } else {
+         pCouponShare = Math.round(couponDiscount * itemRatio);
+         pOfferShare = Math.round(offerDiscount * itemRatio);
+         remainingCoupon -= pCouponShare;
+         remainingOffer -= pOfferShare;
+      }
+      
+      p.couponDiscountShare = pCouponShare;
+      p.offerDiscountShare = pOfferShare;
+      p.productFinalPaidPrice = p.itemTotal - pCouponShare - pOfferShare;
+    });
+
+    const subtotalAfterDiscounts = initialSubtotal - totalPromotionDiscount;
+    const cgst = Math.round(subtotalAfterDiscounts * 0.09);
+    const sgst = Math.round(subtotalAfterDiscounts * 0.09);
+    let deliveryCharge = subtotalAfterDiscounts < 50000 ? (deliveryType === 'Fast' ? 50 : 0) : 0;
+    let codCharge = paymentMethod === 'COD' ? 30 : 0;
+    const totalAmount = subtotalAfterDiscounts + cgst + sgst + deliveryCharge + codCharge;
+
+    if (paymentMethod === 'Wallet') {
+      const u = await userSchema.findById(userId).lean();
+      if ((u.walletBalance || 0) < totalAmount)
+        return res.json({ success: false, message: 'Insufficient wallet balance.' });
+    }
+
     const estimatedDelivery = new Date();
-    estimatedDelivery.setDate(estimatedDelivery.getDate() + (deliveryType === "Fast" ? 2 : 5));
+    estimatedDelivery.setDate(estimatedDelivery.getDate() + (deliveryType === 'Fast' ? 2 : 5));
 
     const orderId = await Order.generateOrderId();
 
@@ -2679,29 +3537,280 @@ export const placeOrder = async (req, res) => {
       },
       paymentMethod,
       paymentDetails: paymentDetails || {},
-      orderStatus: "Pending",
+      orderStatus: 'Pending',
       deliveryType,
       subtotalMrp,
-      discount: totalDiscount,
-      couponDiscount: 0,
+      discount:      totalDiscount,
+      couponDiscount,
+      couponCode:    finalCouponCode,
+      couponType:    finalCouponType,
+      offerDiscount,
+      offerId:       finalOfferId,
+      offerName:     finalOfferName,
+      offerType:     finalOfferType,
       deliveryCharge,
       codCharge,
       cgst,
       sgst,
       totalAmount,
+      totalSaved: totalDiscount + totalPromotionDiscount,
       estimatedDelivery
     });
 
-    await order.save();
+    if (paymentMethod === 'Razorpay') {
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
 
-    res.json({ success: true, orderId });
+      const options = {
+        amount: Math.round(totalAmount * 100), // amount in smallest currency unit
+        currency: "INR",
+        receipt: orderId
+      };
+
+      const razorpayOrder = await instance.orders.create(options);
+      
+      order.razorpayOrderId = razorpayOrder.id;
+      // Store couponId/offerId for deferred marking after payment success
+      if (req._couponId) order.pendingCouponId = req._couponId;
+      if (req._offerId) order.pendingOfferId = req._offerId;
+      await order.save();
+
+      res.json({
+        success: true,
+        isRazorpay: true,
+        orderId,
+        razorpayOrder,
+        key: process.env.RAZORPAY_KEY_ID,
+        amount: totalAmount
+      });
+    } else if (paymentMethod === 'Wallet') {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        // Validate user wallet
+        const user = await userSchema.findById(userId).session(session);
+        if (!user || user.walletBalance < totalAmount) {
+          throw new Error("Insufficient wallet balance.");
+        }
+
+        // Deduct wallet
+        user.walletBalance -= totalAmount;
+        await user.save({ session });
+
+        // Record transaction
+        const newTxn = new WalletTransaction({
+          userId,
+          type: 'Debit',
+          amount: totalAmount,
+          description: 'Order Payment',
+          orderId: orderId,
+          status: 'Success'
+        });
+        await newTxn.save({ session });
+
+        // Update Order
+        order.paymentStatus = 'Paid';
+        await order.save({ session });
+
+        // Stock decrement with $gte check to prevent overselling
+        for (const p of products) {
+          const updated = await Variant.findOneAndUpdate(
+            { _id: p.variantId, stock: { $gte: p.quantity } },
+            { $inc: { stock: -p.quantity } },
+            { session, returnDocument: 'after' }
+          );
+          if (!updated) {
+            throw new Error(`Sorry, product ${p.productName} went out of stock just now.`);
+          }
+        }
+
+        // Process Coupon immediately since payment succeeded
+        if (req._couponId) {
+          await Coupon.findByIdAndUpdate(req._couponId, {
+            $push: { usedBy: userId },
+            $inc: { usedCount: 1, totalSavingsGenerated: couponDiscount || 0 }
+          }, { session });
+        }
+        // Process Offer usage tracking
+        if (req._offerId) {
+          await Offer.findByIdAndUpdate(req._offerId, {
+            $inc: { usedCount: 1 }
+          }, { session });
+        }
+
+        // Clear cart
+        await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        if (req.session.buyNow) delete req.session.buyNow;
+        res.json({ success: true, orderId });
+      } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        throw err;
+      }
+    } else {
+      // COD Flow
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        await order.save({ session });
+
+        for (const p of products) {
+          const updated = await Variant.findOneAndUpdate(
+            { _id: p.variantId, stock: { $gte: p.quantity } },
+            { $inc: { stock: -p.quantity } },
+            { session, returnDocument: 'after' }
+          );
+          if (!updated) {
+            throw new Error(`Sorry, product ${p.productName} went out of stock just now.`);
+          }
+        }
+
+        if (req._couponId) {
+          await Coupon.findByIdAndUpdate(req._couponId, {
+            $push: { usedBy: userId },
+            $inc: { usedCount: 1, totalSavingsGenerated: couponDiscount || 0 }
+          }, { session });
+        }
+        if (req._offerId) {
+          await Offer.findByIdAndUpdate(req._offerId, {
+            $inc: { usedCount: 1 }
+          }, { session });
+        }
+
+        await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        if (req.session.buyNow) delete req.session.buyNow;
+        res.json({ success: true, orderId });
+      } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        throw err;
+      }
+    }
   } catch (err) {
     console.error("placeOrder error:", err);
     res.json({ success: false, message: err.message || "Server error" });
   }
 };
 
+export const verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
+
+    // 1. Validate all fields present
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
+      return res.status(400).json({ success: false, message: 'Missing payment verification fields.' });
+    }
+
+    // 2. Verify Razorpay signature
+    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
+    const generated_signature = hmac.digest('hex');
+
+    if (generated_signature !== razorpay_signature) {
+      // Mark failed, do NOT modify stock or cart
+      await Order.findOneAndUpdate(
+        { orderId, paymentStatus: { $ne: 'Paid' } },
+        { paymentStatus: 'Failed' }
+      );
+      return res.json({ success: false, message: 'Payment verification failed. Invalid signature.' });
+    }
+
+    // 3. Idempotency: only process if not already paid
+    const order = await Order.findOneAndUpdate(
+      { orderId, paymentStatus: { $ne: 'Paid' } },
+      { paymentStatus: 'Paid', razorpayPaymentId: razorpay_payment_id },
+      { returnDocument: 'after' }
+    );
+
+    if (!order) {
+      // Already processed or not found — safe to return success (idempotent)
+      return res.json({ success: true, alreadyProcessed: true });
+    }
+
+    // 4. Atomic stock decrement with oversell protection
+    for (const p of order.products) {
+      const updated = await Variant.findOneAndUpdate(
+        { _id: p.variantId, stock: { $gte: p.quantity } },
+        { $inc: { stock: -p.quantity } },
+        { returnDocument: 'after' }
+      );
+      if (!updated) {
+        // Oversold — rollback payment status and alert
+        await Order.findOneAndUpdate({ orderId }, { paymentStatus: 'Failed', orderStatus: 'Cancelled', notes: 'Oversold — stock unavailable at time of payment' });
+        console.error(`[verifyPayment] Oversold product variantId=${p.variantId} orderId=${orderId}`);
+        return res.json({ success: false, message: `Sorry, ${p.productName} went out of stock just now. A refund will be initiated.` });
+      }
+    }
+
+    // 5. Mark coupon as used (deferred from placeOrder)
+    if (order.pendingCouponId) {
+      await Coupon.findByIdAndUpdate(order.pendingCouponId, {
+        $push: { usedBy: order.userId },
+        $inc: { usedCount: 1, totalSavingsGenerated: order.couponDiscount || 0 }
+      });
+      await Order.findByIdAndUpdate(order._id, { $unset: { pendingCouponId: '' } });
+    }
+
+    // 5b. Mark offer as used (deferred from placeOrder)
+    if (order.pendingOfferId) {
+      await Offer.findByIdAndUpdate(order.pendingOfferId, {
+        $inc: { usedCount: 1 }
+      });
+      await Order.findByIdAndUpdate(order._id, { $unset: { pendingOfferId: '' } });
+    }
+
+    // 6. Clear cart (deferred from placeOrder)
+    await Cart.findOneAndUpdate({ userId: order.userId }, { $set: { items: [] } });
+
+    // 7. Clear buyNow session if present
+    if (req.session.buyNow) delete req.session.buyNow;
+
+    res.json({ success: true, orderId });
+  } catch (err) {
+    console.error('verifyPayment error:', err);
+    res.status(500).json({ success: false, message: 'Error verifying payment' });
+  }
+};
+
+export const loadPaymentFailed = async (req, res) => {
+  try {
+    const { orderId, reason } = req.query;
+    const userId = req.session.user?.id;
+
+    if (!orderId || !userId) return res.redirect("/user/home");
+
+    const order = await Order.findOne({ orderId, userId }).lean();
+    if (!order) return res.redirect("/user/home");
+
+    const fmt = (date) => new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+    
+    res.render('user/paymentFailed', {
+      layout: 'main',
+      order: {
+        ...order,
+        orderDateFormatted: fmt(order.orderDate),
+        estimatedDeliveryFormatted: fmt(order.estimatedDelivery),
+      },
+      reason: reason || null
+    });
+  } catch (err) {
+    console.error('loadPaymentFailed error:', err);
+    res.redirect('/user/home');
+  }
+};
+
 export const loadOrderSuccess = async (req, res) => {
+
   try {
     const { orderId } = req.query;
     const userId = req.session.user?.id;
@@ -2714,6 +3823,7 @@ export const loadOrderSuccess = async (req, res) => {
     const fmt = (date) => new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
     const canCancel = ["Pending", "Confirmed", "Packed"].includes(order.orderStatus);
     const canReturn = order.orderStatus === "Delivered";
+    const canDownloadInvoice = order.orderStatus === "Delivered" || (['Razorpay', 'Wallet', 'Online', 'Card', 'UPI', 'Stripe'].includes(order.paymentMethod) && order.paymentStatus === 'Paid');
 
     res.render("user/orderSuccess", {
       layout: "main",
@@ -2722,11 +3832,256 @@ export const loadOrderSuccess = async (req, res) => {
         orderDateFormatted: fmt(order.orderDate),
         estimatedDeliveryFormatted: fmt(order.estimatedDelivery),
         canCancel,
-        canReturn
+        canReturn,
+        canDownloadInvoice
       }
     });
   } catch (err) {
     console.error("loadOrderSuccess error:", err);
     res.redirect("/user/home");
+  }
+};
+
+export const loadDeals = async (req, res) => {
+  try {
+    const user = req.session.user;
+    const now = new Date();
+
+    let coupons = await Coupon.find({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    }).lean();
+
+    coupons = coupons.map(c => ({
+      ...c,
+      discountStr: c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`,
+      endDateFormatted: new Date(c.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    }));
+
+    let offers = await Offer.find({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    })
+    .populate('applicableProducts', 'name')
+    .populate('applicableCategories', 'name')
+    .populate('applicableBrands', 'name')
+    .lean();
+
+    offers = offers.map(o => ({
+      ...o,
+      discountStr: o.discountType === 'percentage' ? `${o.discountValue}% OFF` : `₹${o.discountValue} OFF`,
+      endDateFormatted: new Date(o.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    }));
+
+    res.render('user/deals', {
+      layout: 'main',
+      user,
+      activePage: 'deals',
+      coupons,
+      offers,
+      couponCount: coupons.length,
+      offerCount: offers.length,
+      totalDealsCount: coupons.length + offers.length
+    });
+  } catch (err) {
+    console.error("loadDeals error:", err);
+    res.redirect("/user/home");
+  }
+};
+
+export const loadAboutUs = async (req, res) => {
+  try {
+    const user = req.session.user;
+
+    // Fetch top visible, featured reviews with user + product names
+    const reviews = await Review.find({ isVisible: true, rating: { $gte: 4 } })
+      .sort({ isFeatured: -1, rating: -1, createdAt: -1 })
+      .limit(6)
+      .populate('userId', 'name')
+      .populate('productId', 'name')
+      .lean();
+
+    const formattedReviews = reviews.map(r => ({
+      ...r,
+      customerName: r.userId?.name || 'Valued Customer',
+      productName:  r.productId?.name || '',
+      stars: '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating)
+    }));
+
+    res.render('user/aboutUs', {
+      layout: 'main',
+      user,
+      activePage: 'about',
+      reviews: formattedReviews,
+      hasReviews: formattedReviews.length > 0
+    });
+  } catch (err) {
+    console.error("loadAboutUs error:", err);
+    res.redirect("/user/home");
+  }
+};
+
+export const loadMyCoupons = async (req, res) => {
+  try {
+    const user = req.session.user;
+    if (!user) return res.redirect('/user/login');
+
+    const coupons = await Coupon.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
+    
+    const now = new Date();
+    const formattedCoupons = coupons.map(c => {
+      // Determine user usage
+      const usageCount = c.usedBy ? c.usedBy.filter(id => id.toString() === user.id.toString()).length : 0;
+      const hasUsed = usageCount >= (c.perUserLimit || 1);
+      
+      let statusBadge = 'Green';
+      let statusText = 'Available';
+      let canCopy = true;
+
+      if (!c.isActive) {
+        statusBadge = 'Gray';
+        statusText = 'Disabled';
+        canCopy = false;
+      } else if (new Date(c.endDate) < now) {
+        statusBadge = 'Red';
+        statusText = 'Expired';
+        canCopy = false;
+      } else if (hasUsed) {
+        statusBadge = 'Gold';
+        statusText = 'Used';
+        canCopy = false;
+      }
+
+      return {
+        ...c,
+        statusBadge,
+        statusText,
+        canCopy,
+        endDateFormatted: new Date(c.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+      };
+    });
+
+    // Filter out invalid ones if requested by user (Do not show deleted/inactive/invalid)
+    const displayCoupons = formattedCoupons.filter(c => c.statusText !== 'Disabled');
+
+    res.render('user/myCoupons', {
+      layout: 'main',
+      user,
+      coupons: displayCoupons,
+      hasCoupons: displayCoupons.length > 0
+    });
+  } catch (error) {
+    console.error("loadMyCoupons error:", error);
+    res.redirect("/user/profile");
+  }
+};
+
+export const loadMyWallet = async (req, res) => {
+  try {
+    const userSession = req.session.user;
+    if (!userSession) return res.redirect('/user/login');
+
+    const user = await userSchema.findById(userSession.id).lean();
+    
+    // Fetch real transactions
+    const rawTxns = await WalletTransaction.find({ userId: userSession.id })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const transactions = rawTxns.map(t => {
+      const dateStr = new Date(t.createdAt).toLocaleString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      return {
+        id: t._id.toString().substring(0, 8).toUpperCase(),
+        type: t.description,
+        amount: t.amount,
+        date: dateStr,
+        status: t.status,
+        isCredit: t.type === 'Credit',
+        orderId: t.orderId
+      };
+    });
+
+    res.render('user/myWallet', {
+      layout: 'main',
+      user,
+      walletBalance: user.walletBalance || 0,
+      transactions,
+      hasTransactions: transactions.length > 0
+    });
+  } catch (error) {
+    console.error("loadMyWallet error:", error);
+    res.redirect("/user/profile");
+  }
+};
+
+export const topUpWallet = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { amount } = req.body;
+
+    if (!amount || amount < 100) {
+      return res.json({ success: false, message: 'Minimum top-up amount is ₹100.' });
+    }
+
+    const instance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const options = {
+      amount: Math.round(amount * 100),
+      currency: 'INR',
+      receipt: `wt_${Date.now()}`
+    };
+
+    const razorpayOrder = await instance.orders.create(options);
+
+    res.json({
+      success: true,
+      razorpayOrder,
+      key: process.env.RAZORPAY_KEY_ID,
+      amount
+    });
+  } catch (err) {
+    console.error('topUpWallet error:', err);
+    res.status(500).json({ success: false, message: 'Failed to initiate top-up.' });
+  }
+};
+
+export const verifyWalletTopUp = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+    const userId = req.session.user.id;
+
+    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
+    const generated_signature = hmac.digest('hex');
+
+    if (generated_signature === razorpay_signature) {
+      await userSchema.findByIdAndUpdate(userId, {
+        $inc: { walletBalance: Number(amount) }
+      });
+      
+      const newTxn = new WalletTransaction({
+        userId,
+        type: 'Credit',
+        amount: Number(amount),
+        description: 'Wallet Top-Up',
+        status: 'Success'
+      });
+      await newTxn.save();
+
+      res.json({ success: true, message: `₹${amount} added to your wallet!` });
+    } else {
+      res.json({ success: false, message: 'Payment verification failed.' });
+    }
+  } catch (err) {
+    console.error('verifyWalletTopUp error:', err);
+    res.status(500).json({ success: false, message: 'Error verifying payment.' });
   }
 };

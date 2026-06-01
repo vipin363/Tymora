@@ -2,22 +2,29 @@ import bcrypt from "bcrypt";
 import userSchema from "../model/userModel.js";
 import { generateAndSaveOtp, verifyOtpFromDb } from "../services/otpService.js";
 import Otp from "../model/otpModel.js";
+import Referral from "../model/referralModel.js";
+import Settings from "../model/settingsModel.js";
+import { clearReferralCookie } from "../middleware/captureReferral.js";
+
+// Helper: generate a unique referral code like TYM + 6 chars
+async function generateUniqueReferralCode(name) {
+  const prefix = (name || "USER").replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 4);
+  let code, exists;
+  do {
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    code = `${prefix}${rand}`;
+    exists = await userSchema.findOne({ referralCode: code });
+  } while (exists);
+  return code;
+}
 
 export const loadOtpPage = async (req, res) => {
   if (!req.session.userData) {
-    return res.redirect(
-      "/user/register?message=Session expired. Please try again",
-    );
+    return res.redirect("/user/register?message=Session expired. Please try again");
   }
   const email = req.session.userData.email;
-  const record = await Otp.findOne({
-    email,
-    purpose: "register",
-    is_used: false,
-  }).sort({ created_at: -1 });
-  const remaining = record
-    ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000))
-    : 0;
+  const record = await Otp.findOne({ email, purpose: "register", is_used: false }).sort({ created_at: -1 });
+  const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
   res.render("user/otp", {
     layout: "auth",
     email,
@@ -30,73 +37,64 @@ export const loadOtpPage = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     if (!req.session.userData) {
-      return res.redirect(
-        "/user/register?message=Session expired. Please register again",
-      );
+      return res.redirect("/user/register?message=Session expired. Please register again");
     }
 
     const { otp } = req.body;
     const email = req.session.userData.email;
 
     if (!otp || otp.trim() === "") {
-      const record = await Otp.findOne({
-        email,
-        purpose: "register",
-        is_used: false,
-      }).sort({ created_at: -1 });
-      const remaining = record
-        ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000))
-        : 0;
-      return res.render("user/otp", {
-        layout: "auth",
-        email,
-        remaining,
-        formAction: "/user/verifyOtp",
-        message: "Please enter OTP",
-      });
+      const record = await Otp.findOne({ email, purpose: "register", is_used: false }).sort({ created_at: -1 });
+      const remaining = record ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000)) : 0;
+      return res.render("user/otp", { layout: "auth", email, remaining, formAction: "/user/verifyOtp", message: "Please enter OTP" });
     }
 
-    const result = await verifyOtpFromDb({
-      email,
-      otp_code: otp,
-      purpose: "register",
-    });
+    const result = await verifyOtpFromDb({ email, otp_code: otp, purpose: "register" });
 
     if (result.reason === "expired") {
-      return res.render("user/otp", {
-        layout: "auth",
-        email,
-        remaining: 0,
-        formAction: "/user/verifyOtp",
-        message: "OTP expired. Please resend.",
-      });
+      return res.render("user/otp", { layout: "auth", email, remaining: 0, formAction: "/user/verifyOtp", message: "OTP expired. Please resend." });
     }
 
     if (!result.success) {
-      return res.render("user/otp", {
-        layout: "auth",
-        email,
-        remaining: result.remaining,
-        formAction: "/user/verifyOtp",
-        message: "Invalid OTP",
-      });
+      return res.render("user/otp", { layout: "auth", email, remaining: result.remaining, formAction: "/user/verifyOtp", message: "Invalid OTP" });
     }
 
     const data = req.session.userData;
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    // Generate unique referral code
+    const referralCode = await generateUniqueReferralCode(data.name);
+
     const newUser = await userSchema.create({
       name: data.name,
       email: data.email,
       password: hashedPassword,
+      referralCode,
+      referredBy: data.referrerId || null,
     });
+
+    // Create Referral record if referred
+    if (data.referrerId && data.referralCodeUsed) {
+      const settings = await Settings.findOne();
+      await Referral.create({
+        referrer: data.referrerId,
+        referredUser: newUser._id,
+        referredEmail: data.email,
+        referralCodeUsed: data.referralCodeUsed,
+        referralSource: data.referralSource || 'Code',
+        rewardStatus: "PENDING",
+        referrerRewardAmount: settings?.referrerReward || 100,
+        referredRewardAmount: settings?.referredReward || 50,
+      });
+    }
 
     req.session.user = { id: newUser._id, name: newUser.name };
     req.session.userData = null;
-
+    clearReferralCookie(res); // Consume the referral cookie
+    console.log(`[OTP] ✅ Account created: ${data.email} | referralCode=${newUser.referralCode}`);
     return res.redirect("/user/?message=Registration successful");
   } catch (err) {
-    console.log(err);
+    console.error("verifyOtp error:", err);
     return res.render("user/otp", {
       layout: "auth",
       email: req.session.userData?.email,

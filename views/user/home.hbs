@@ -1,793 +1,800 @@
-<link href="/userHome.css" rel="stylesheet">
+<!-- userHome.css contains all the ultra-premium V2 styling -->
+<link rel="stylesheet" href="/userHome.css">
+<link
+  href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap"
+  rel="stylesheet">
 
-<!-- DYNAMIC BACKDROP LIGHTS -->
-<div class="luxury-spotlight"></div>
-<div class="luxury-spotlight-blue"></div>
+<!-- ══════════════════════════════════════════════════════════
+     1. CINEMATIC HERO EXPERIENCE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-hero" id="luxHero">
+  <video id="heroVideo" class="lux-hero__video" autoplay loop muted playsinline>
+    <source src="/video/5892f09ea8fb4067b2b8830382a66dc7.mp4" type="video/mp4">
+  </video>
+  <div class="lux-hero__overlay"></div>
+  <div class="lux-hero__particles" id="luxParticles"></div>
+  <div class="lux-hero__light-sweep"></div>
 
-<!-- HERO SECTION -->
-<section class="hero" id="home">
-  <div class="hero-overlay-dark"></div>
-  <div class="hero-container">
-
-    <!-- LEFT PANEL: ELEVATED TYPOGRAPHY -->
-    <div class="hero-content" id="heroContent">
-      <div class="hero-eyebrow">HOROLOGY OF DISTINCTION</div>
-      <h1 class="hero-title">
-        TIME BEYOND
-        <span>MEASURE</span>
-      </h1>
-      <p class="hero-sub">
-        Curating the world's most exceptional mechanical masterworks. Uncompromising craftsmanship, refined for the
-        modern connoisseur.
-      </p>
-      <div class="hero-btns">
-        <button class="btn-primary" onclick="window.location.href='/user/shop'">
-          <span>Explore Shop</span>
-        </button>
-        <button class="btn-outline" onclick="document.getElementById('deals').scrollIntoView({behavior: 'smooth'})">
-          View Offers
-        </button>
-      </div>
-    </div>
-
-    <!-- RIGHT PANEL: DYNAMIC WATCH SHOWCASE -->
-    <div class="hero-visual" id="heroVisual">
-      <div class="visual-glow"></div>
-      <div class="visual-rings"></div>
-      <img class="visual-watch-img" id="heroWatch" src="/image/tymora_hero_watch.png"
-        alt="Tymora Tourbillon Skeleton Watch">
-    </div>
-
+  <!-- INTRO TEXT (Fades out) -->
+  <div class="lux-hero__intro">
+    <div class="lux-hero__word lux-hero__word--time" id="introWord1">TYM</div>
+    <div class="lux-hero__word lux-hero__word--redefined" id="introWord2">OF REFINED AESTHETICS</div>
   </div>
 
-  <!-- SCROLL DOWN INDICATOR -->
-  <div class="scroll-indicator" onclick="document.getElementById('brandStrip').scrollIntoView({behavior: 'smooth'})">
-    <span class="scroll-text">Scroll to Discover</span>
-    <div class="scroll-mouse">
-      <div class="scroll-wheel"></div>
+  <!-- BOTTOM-LEFT TEXT (Fades in) -->
+  <div class="lux-hero__content-side">
+    <div class="lux-hero__side-title" id="sideTitle">TIME REDEFINED</div>
+    <p class="lux-hero__side-desc" id="sideDesc">Crafted for those who value elegance.</p>
+    <div class="lux-hero__actions" id="heroActions">
+      <a href="/user/shop" class="lux-btn lux-btn--primary magnetic-btn">
+        <span class="lux-btn__text">Explore Collection</span>
+        <span class="lux-btn__glow"></span>
+      </a>
+      <a href="#luxStory" class="lux-btn lux-btn--ghost magnetic-btn">
+        <span class="lux-btn__text">Watch Story</span>
+      </a>
     </div>
+  </div>
+
+  <div class="lux-hero__scroll-indicator">
+    <span>Discover</span>
+    <div class="lux-hero__scroll-line"></div>
   </div>
 </section>
 
-<!-- BRAND MARQUEE STRIP -->
-<div class="brand-strip" id="brandStrip">
-  <div class="brand-track">
-    <span class="brand-name">ROLEX</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">PATEK PHILIPPE</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">AUDEMARS PIGUET</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">TAG HEUER</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">OMEGA</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">VACHERON CONSTANTIN</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">BREGUET</span>
-    <div class="brand-divider"></div>
-
-    <!-- Duplicate for seamless scroll loop -->
-    <span class="brand-name">ROLEX</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">PATEK PHILIPPE</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">AUDEMARS PIGUET</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">TAG HEUER</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">OMEGA</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">VACHERON CONSTANTIN</span>
-    <div class="brand-divider"></div>
-    <span class="brand-name">BREGUET</span>
-    <div class="brand-divider"></div>
+<!-- ══════════════════════════════════════════════════════════
+     2. BRAND MARQUEE
+     ══════════════════════════════════════════════════════════ -->
+<div class="lux-marquee">
+  <div class="lux-marquee__track">
+    <span>ROLEX</span><span class="lux-marquee__dot">✦</span>
+    <span>PATEK PHILIPPE</span><span class="lux-marquee__dot">✦</span>
+    <span>AUDEMARS PIGUET</span><span class="lux-marquee__dot">✦</span>
+    <span>RICHARD MILLE</span><span class="lux-marquee__dot">✦</span>
+    <span>OMEGA</span><span class="lux-marquee__dot">✦</span>
+    <span>CARTIER</span><span class="lux-marquee__dot">✦</span>
+    <span>TAG HEUER</span><span class="lux-marquee__dot">✦</span>
+    <span>ROLEX</span><span class="lux-marquee__dot">✦</span>
+    <span>PATEK PHILIPPE</span><span class="lux-marquee__dot">✦</span>
+    <span>AUDEMARS PIGUET</span><span class="lux-marquee__dot">✦</span>
+    <span>RICHARD MILLE</span><span class="lux-marquee__dot">✦</span>
+    <span>OMEGA</span><span class="lux-marquee__dot">✦</span>
+    <span>CARTIER</span><span class="lux-marquee__dot">✦</span>
+    <span>TAG HEUER</span><span class="lux-marquee__dot">✦</span>
   </div>
 </div>
 
-<!-- COLLECTIONS SECTION -->
-<section class="collections-section" id="collections">
-  <div class="section-label">CURATED COLLECTIONS</div>
-  <div class="collections-grid">
-    {{#if categories.length}}
-    {{#each categories}}
-    <div class="coll-card" onclick="window.location.href='/user/shop?cat={{this.name}}'">
-      {{#if this.image}}
-      <img src="{{this.image}}" alt="{{this.name}}" loading="lazy" />
-      {{else}}
-      <img src="/image/WhatsApp Image 2026-05-11 at 10.56.46 AM.jpeg" alt="{{this.name}}" loading="lazy" />
-      {{/if}}
-      <div class="coll-overlay">
-        <div class="coll-title">{{this.name}}</div>
-        <div class="coll-explore">
-          Explore Collection
-          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
+<!-- ══════════════════════════════════════════════════════════
+     3. FEATURED COLLECTIONS — HORIZONTAL SCROLL
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-collections" id="luxCollections">
+  <div class="lux-collections__header lux-reveal">
+    <div class="lux-eyebrow">CURATED EXCELLENCE</div>
+    <h2 class="lux-heading">Featured <span class="lux-gold">Collections</span></h2>
+  </div>
+
+  <div class="lux-collections__viewport" id="collectionsViewport">
+    <div class="lux-collections__track" id="collectionsTrack">
+      {{#each categories}}
+      <div class="lux-collection-card glass-card lux-reveal"
+        onclick="window.location.href='/user/shop?category={{this._id}}'">
+        <div class="lux-collection-card__img-wrap">
+          {{#if this.image}}
+          <img src="{{this.image}}" alt="{{this.name}}" loading="lazy">
+          {{else}}
+          <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&q=80" alt="{{this.name}}"
+            loading="lazy">
+          {{/if}}
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>{{this.name}}</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
         </div>
       </div>
+      {{/each}}
+      {{#unless categories.length}}
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&q=80" alt="Luxury Collection"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Luxury Collection</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1611095973763-414019e72400?w=600&q=80" alt="Classic Collection"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Classic Collection</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1596901844697-7104b2075a22?w=600&q=80" alt="Modern Collection"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Modern Collection</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1622434641406-a158123450f9?w=600&q=80" alt="Limited Edition"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Limited Edition</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      {{/unless}}
     </div>
-    {{/each}}
-    {{else}}
-    <p
-      style="color:var(--text-muted); font-size:0.8rem; letter-spacing:0.15em; padding:40px 0; grid-column: 1 / -1; text-align: center;">
-      No collections available yet.
-    </p>
-    {{/if}}
   </div>
 </section>
 
-<!-- FEATURED PRODUCTS SECTION -->
-<section class="featured-section" id="shop">
-  <div class="feat-header">
-    <p>MASTERWORKS OF PRECISION</p>
-    <h2 id="featTitle">Featured Timepieces</h2>
-  </div>
-
-  <div id="productsGrid" class="products-grid-home">
-    {{#if products.length}}
-    {{#each products}}
-    <div class="prod-card" data-id="{{this.id}}" data-variant-id="{{this.variantId}}" data-avail="{{this.avail}}">
-      <div class="prod-img-wrap">
-        {{#if this.badgeLabel}}
-        <span class="prod-badge badge-{{this.badge}}">{{this.badgeLabel}}</span>
-        {{else if this.badge}}
-        <span class="prod-badge badge-{{this.badge}}">{{this.badge}}</span>
-        {{/if}}
-
-        <div class="card-wish {{#if this.wished}}wished{{/if}}" data-id="{{this.id}}"
-          title="{{#if this.wished}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </div>
-
-        <img src="{{this.img}}" alt="{{this.name}}" loading="lazy" style="cursor:pointer"
-          onclick="window.location.href='/user/product/{{this.id}}'">
-        <div class="prod-img-overlay"></div>
-
-        {{#ifEquals this.avail 'outofstock'}}
-        <button class="quick-add disabled" disabled title="Out of Stock">Out of Stock</button>
-        {{else}}
-        {{#if this.inCart}}
-        <button class="quick-add" style="background:transparent;color:var(--gold);border:1px solid var(--gold);"
-          data-id="{{this.id}}" data-variant-id="{{this.variantId}}" data-in-cart="true">View in Cart</button>
-        {{else}}
-        <button class="quick-add" data-id="{{this.id}}" data-variant-id="{{this.variantId}}" data-in-cart="">+ Add to
-          Bag</button>
-        {{/if}}
-        {{/ifEquals}}
-      </div>
-
-      <div class="prod-info">
-        <div class="prod-atelier">{{this.brand}}</div>
-        <div class="prod-rating">★ {{this.rating}} <span class="rating-count">({{this.reviews}})</span></div>
-        <div class="prod-name">{{this.name}}</div>
-        <div class="prod-price-wrap">
-          <span class="prod-price">₹{{this.price}}</span>
-          {{#if this.oldPrice}}
-          <span class="prod-price-old">₹{{this.oldPrice}}</span>
-          {{#if this.discountPct}}
-          <span class="prod-discount-pill">{{this.discountPct}}% OFF</span>
-          {{/if}}
-          {{/if}}
-        </div>
-        <button class="prod-btn" onclick="window.location.href='/user/product/{{this.id}}'">View Details</button>
-      </div>
+<!-- ══════════════════════════════════════════════════════════
+     4. MASTERPIECES OF TIME — PRODUCT SHOWCASE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-masterpieces">
+  <div class="lux-masterpieces__bg-glow"></div>
+  <div class="lux-container">
+    <div class="lux-masterpieces__header lux-reveal">
+      <div class="lux-eyebrow">THE MASTERPIECES</div>
+      <h2 class="lux-heading">Masterpieces of <span class="lux-gold">Time</span></h2>
     </div>
-    {{/each}}
-    {{else}}
-    <!-- EXTREMELY PREMIUM RESILIENT FALLBACK CARDS -->
-    <!-- Card 1 -->
-    <div class="prod-card" data-id="fallback-1" data-variant-id="fallback-v1" data-avail="instock">
-      <div class="prod-img-wrap">
-        <span class="prod-badge badge-deal">SIGNATURE</span>
-        <div class="card-wish" data-id="fallback-1" title="Add to Wishlist">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=400&q=80" alt="Elysian Gold" />
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add" data-id="fallback-1" data-variant-id="fallback-v1">+ Add to Bag</button>
+
+    <div class="lux-masterpieces__grid">
+      {{#each trendingProducts}}
+      <div class="lux-product-card tilt-card lux-reveal">
+        <a href="/user/product/{{this._id}}?variant={{this.variantId}}" class="lux-product-card__link">
+          <div class="lux-product-card__img-wrap">
+            {{#if this.hasBadge}}
+            <div class="lux-product-card__badge">{{this.badge}}</div>
+            {{/if}}
+            <img src="{{this.image}}" alt="{{this.name}}" loading="lazy">
+            <div class="lux-product-card__shadow"></div>
+            <div class="lux-product-card__quick-view">
+              <span>Quick View</span>
+            </div>
+          </div>
+          <div class="lux-product-card__info">
+            <div class="lux-product-card__brand">{{this.brand}}</div>
+            <h3 class="lux-product-card__name">{{this.name}}</h3>
+            <div class="lux-product-card__price-row">
+              <span class="lux-product-card__price">₹{{formatCurrency this.salePrice}}</span>
+              {{#if this.hasDiscount}}
+              <span class="lux-product-card__original">₹{{formatCurrency this.originalPrice}}</span>
+              {{/if}}
+            </div>
+            {{#if this.rating}}
+            <div class="lux-product-card__rating">
+              <i class="fas fa-star"></i> {{this.rating}}
+              {{#if this.reviewCount}}<span>({{this.reviewCount}})</span>{{/if}}
+            </div>
+            {{/if}}
+          </div>
+        </a>
       </div>
-      <div class="prod-info">
-        <div class="prod-atelier">18K Rose Gold</div>
-        <div class="prod-rating">★ 5.0 <span class="rating-count">(24)</span></div>
-        <div class="prod-name">Elysian Gold</div>
-        <div class="prod-price">₹8,12,000</div>
-        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
+      {{/each}}
+
+      {{#unless hasProducts}}
+      <div class="lux-masterpieces__empty lux-reveal">
+        <p>Our artisans are curating new masterpieces. <a href="/user/shop">Explore the full collection →</a></p>
       </div>
+      {{/unless}}
     </div>
-    <!-- Card 2 -->
-    <div class="prod-card" data-id="fallback-2" data-variant-id="fallback-v2" data-avail="instock">
-      <div class="prod-img-wrap">
-        <span class="prod-badge badge-new">NEW ARRIVAL</span>
-        <div class="card-wish" data-id="fallback-2" title="Add to Wishlist">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80" alt="Horizon GMT" />
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add" data-id="fallback-2" data-variant-id="fallback-v2">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.8 <span class="rating-count">(18)</span></div>
-        <div class="prod-name">Horizon GMT</div>
-        <div class="prod-price">₹3,85,000</div>
-        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
-      </div>
-    </div>
-    <!-- Card 3 -->
-    <div class="prod-card" data-id="fallback-3" data-variant-id="fallback-v3" data-avail="instock">
-      <div class="prod-img-wrap">
-        <span class="prod-badge badge-limited">LIMITED</span>
-        <div class="card-wish" data-id="fallback-3" title="Add to Wishlist">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&q=80" alt="Vanguard Skeleton" />
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add" data-id="fallback-3" data-variant-id="fallback-v3">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.9 <span class="rating-count">(32)</span></div>
-        <div class="prod-name">Vanguard Skeleton</div>
-        <div class="prod-price">₹4,20,000</div>
-        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
-      </div>
-    </div>
-    <!-- Card 4 -->
-    <div class="prod-card" data-id="fallback-4" data-variant-id="fallback-v4" data-avail="instock">
-      <div class="prod-img-wrap">
-        <span class="prod-badge badge-offer">5% OFF</span>
-        <div class="card-wish" data-id="fallback-4" title="Add to Wishlist">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </div>
-        <img src="https://images.unsplash.com/photo-1622434641406-a158123450f2?w=400&q=80" alt="Oceanic Deep" />
-        <div class="prod-img-overlay"></div>
-        <button class="quick-add" data-id="fallback-4" data-variant-id="fallback-v4">+ Add to Bag</button>
-      </div>
-      <div class="prod-info">
-        <div class="prod-atelier">Tymora Atelier</div>
-        <div class="prod-rating">★ 4.9 <span class="rating-count">(15)</span></div>
-        <div class="prod-name">Oceanic Deep</div>
-        <div class="prod-price">₹2,95,000</div>
-        <button class="prod-btn" onclick="window.location.href='/user/shop'">View Details</button>
-      </div>
+
+    {{#if hasProducts}}
+    <div class="lux-masterpieces__cta lux-reveal">
+      <a href="/user/shop" class="lux-btn lux-btn--outline magnetic-btn">
+        <span class="lux-btn__text">View All Timepieces</span>
+      </a>
     </div>
     {{/if}}
   </div>
 </section>
 
-<!-- BRAND STORY SECTION (CINEMATIC SCROLL REVEAL) -->
-<section class="brand-story" id="brandStory">
-  <div class="story-container">
-    <div class="story-eyebrow">OUR HERITAGE</div>
-    <p class="story-text" id="storyText">
-      "For over a century, <span class="gold">Tymora</span> has engineered masterpieces of high horology. We believe a
-      fine timepiece is not merely a tool of measurement, but a silent testament to character, an intricate dance of
-      <span class="gold">mechanical precision</span> and eternal luxury."
-    </p>
-    <div class="story-signature" id="storySignature">
-      Alistair Tymora
-      <span>FOUNDER & MASTER WATCHMAKER</span>
+<!-- ══════════════════════════════════════════════════════════
+     5. LUXURY NUMBERS SECTION
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-numbers">
+  <div class="lux-numbers__bg"></div>
+  <div class="lux-container">
+    <div class="lux-numbers__grid">
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="5000">0</span>+</div>
+        <div class="lux-number-card__label">Happy Customers</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="1500">0</span>+</div>
+        <div class="lux-number-card__label">Luxury Watches Sold</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="50">0</span>+</div>
+        <div class="lux-number-card__label">Premium Collections</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="99">0</span>%</div>
+        <div class="lux-number-card__label">Customer Satisfaction</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- SKELETON & WATERPROOF SHOWCASE -->
-<section class="showcase-split">
-
-  <!-- LEFT: WATERPROOF DURABILITY -->
-  <div class="showcase-panel">
-    <div class="panel-bg" style="background-image: url('/image/tymora_waterproof_watch.png');"></div>
-    <div class="panel-overlay-grad"></div>
-    <div class="panel-content">
-      <span class="panel-tag">DURABILITY</span>
-      <h3 class="panel-title">Engineering The Depths</h3>
-      <p class="panel-desc">
-        Crafted to withstand the harshest pressures. Our professional grade seals protect the delicate automatic
-        movements up to 300 meters beneath the surface, fusing absolute structural integrity with timeless design.
-      </p>
-      <button class="btn-outline" onclick="window.location.href='/user/shop?avail=instock'">View Marine
-        Chronographs</button>
+<!-- ══════════════════════════════════════════════════════════
+     6. PREMIUM BRAND STORY — SPLIT SCREEN PARALLAX
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-story" id="luxStory">
+  <div class="lux-story__layout">
+    <div class="lux-story__image-side lux-reveal">
+      <div class="lux-story__image-wrapper">
+        <img src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=1600&q=80" alt="Craftsmanship"
+          class="lux-story__img parallax-img" loading="lazy">
+        <div class="lux-story__image-overlay"></div>
+      </div>
     </div>
-  </div>
-
-  <div class="panel-divider"></div>
-
-  <!-- RIGHT: MECHANICAL PRECISION -->
-  <div class="showcase-panel">
-    <div class="panel-bg" style="background-image: url('/image/tymora_mechanical_precision.png');"></div>
-    <div class="panel-overlay-grad"></div>
-    <div class="panel-content">
-      <span class="panel-tag">HOROLOGY</span>
-      <h3 class="panel-title">Sovereign Precision</h3>
-      <p class="panel-desc">
-        Behold the intricate symphony of synthetic rubies, balance wheels, and gears operating at 28,800 vibrations per
-        hour. Exposed tourbillon details show the pure art form of mechanical movement.
-      </p>
-      <button class="btn-outline" onclick="window.location.href='/user/shop'">Discover Tourbillons</button>
-    </div>
-  </div>
-
-</section>
-
-<!-- PRIVÉ LOUNGE & DEALS SECTION -->
-<section class="deals-section" id="deals">
-  <div class="section-label">EXCLUSIVE OFFERS</div>
-  <div class="deals-grid">
-
-    <!-- Deal of Day -->
-    <div class="deal-day">
-      <div class="deal-day-label">Deal of the Day</div>
-      <div class="deal-timer">
-        <div class="timer-unit">
-          <div class="timer-num" id="th">12</div>
-          <div class="timer-lbl">HRS</div>
-        </div>
-        <div class="timer-sep">:</div>
-        <div class="timer-unit">
-          <div class="timer-num" id="tm">48</div>
-          <div class="timer-lbl">MIN</div>
-        </div>
-        <div class="timer-sep">:</div>
-        <div class="timer-unit">
-          <div class="timer-num" id="ts">14</div>
-          <div class="timer-lbl">SEC</div>
-        </div>
-      </div>
-      <img class="deal-watch-img" src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=300&q=80"
-        alt="Maestro GMT" />
-      <div class="deal-watch-name">MAESTRO GMT CLASSIC</div>
-      <div class="deal-watch-price">₹3,85,000</div>
-      <button class="deal-shop-btn" onclick="window.location.href='/user/shop'">Shop Now</button>
-    </div>
-
-    <!-- Limited Time Offer -->
-    <div class="deal-offer">
-      <div class="deal-offer-tag">Limited Time Offer</div>
-      <h3>Up to <span>40% OFF</span></h3>
-      <p>on Selected Heritage & Sports Pieces</p>
-      <button class="deal-offer-link" onclick="window.location.href='/user/shop'">Shop The Sale →</button>
-    </div>
-
-    <!-- Coupon -->
-    <div class="deal-coupon">
-      <span class="deal-coupon-tag">Today's Offer</span>
-      <h3>Extra 10% Off</h3>
-      <div class="coupon-box">
-        <span class="coupon-code">TYMORA10</span>
-      </div>
-      <button class="coupon-copy" id="copyBtn">Copy Code</button>
-      <button class="coupon-explore" onclick="window.location.href='/user/shop'">Explore Collections »</button>
-    </div>
-
-  </div>
-</section>
-
-<!-- CUSTOMER REVIEWS (INFINITE SLIDER) -->
-<section class="testimonials-section">
-  <div class="test-header">
-    <p>THE PATRON VOICE</p>
-    <h2>What Our Collectors Say</h2>
-  </div>
-
-  <div class="reviews-marquee-wrap">
-    <div class="reviews-track">
-      <!-- Card 1 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">J</div>
-            <div class="test-info">
-              <div class="test-name">Julian Vance</div>
-              <div class="test-title-desc">Vanguard Collector</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"The craftsmanship is unparalleled. My Tymora Chrono has become a heirloom piece I intend
-          to pass down. Exceptional service."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Maestro GMT
-        </div>
-      </div>
-      <!-- Card 2 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">E</div>
-            <div class="test-info">
-              <div class="test-name">Elena Thorne</div>
-              <div class="test-title-desc">Boutique Patron</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"Searching for a skeleton watch that feels both modern and classic is hard. Tymora
-          delivered beyond my expectations."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Aurelius Rose
-        </div>
-      </div>
-      <!-- Card 3 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">R</div>
-            <div class="test-info">
-              <div class="test-name">Richard Sterling</div>
-              <div class="test-title-desc">Connoisseur</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"Speed of delivery and the white-glove packaging made the experience truly luxury. The
-          watch itself is a mechanical marvel."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Viceroy Silver
-        </div>
-      </div>
-      <!-- Card 4 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">M</div>
-            <div class="test-info">
-              <div class="test-name">Marc Antoine</div>
-              <div class="test-title-desc">Watch Curator</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"A brand that understands that a watch is not just a tool, but a statement of character.
-          Proud to have added them to my vault."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Obsidian Gold
-        </div>
-      </div>
-
-      <!-- Duplicate cards for seamless loop -->
-      <!-- Card 1 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">J</div>
-            <div class="test-info">
-              <div class="test-name">Julian Vance</div>
-              <div class="test-title-desc">Vanguard Collector</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"The craftsmanship is unparalleled. My Tymora Chrono has become a heirloom piece I intend
-          to pass down. Exceptional service."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Maestro GMT
-        </div>
-      </div>
-      <!-- Card 2 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">E</div>
-            <div class="test-info">
-              <div class="test-name">Elena Thorne</div>
-              <div class="test-title-desc">Boutique Patron</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"Searching for a skeleton watch that feels both modern and classic is hard. Tymora
-          delivered beyond my expectations."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Aurelius Rose
-        </div>
-      </div>
-      <!-- Card 3 -->
-      <div class="test-card">
-        <div class="test-card-header">
-          <div class="test-reviewer">
-            <div class="test-avatar">R</div>
-            <div class="test-info">
-              <div class="test-name">Richard Sterling</div>
-              <div class="test-title-desc">Connoisseur</div>
-            </div>
-          </div>
-          <div class="test-stars">★★★★★</div>
-        </div>
-        <p class="test-text">"Speed of delivery and the white-glove packaging made the experience truly luxury. The
-          watch itself is a mechanical marvel."</p>
-        <div class="test-watch">
-          <div class="test-watch-dot"></div>Viceroy Silver
+    <div class="lux-story__text-side">
+      <div class="lux-story__content lux-reveal">
+        <div class="lux-eyebrow">OUR HERITAGE</div>
+        <h2 class="lux-heading lux-story__title">A Legacy of <br><span class="lux-gold">Excellence</span></h2>
+        <p class="lux-story__paragraph word-reveal">Since inception, we have curated only the finest masterworks of
+          horology and lifestyle. Every piece embodies hundreds of hours of uncompromising craftsmanship, born from a
+          passion for timeless elegance.</p>
+        <p class="lux-story__paragraph word-reveal">Our commitment to authenticity and precision has made us the trusted
+          destination for discerning collectors worldwide.</p>
+        <div class="lux-story__signature">
+          <div class="lux-story__sig-name">Tymora</div>
+          <div class="lux-story__sig-title">HOUSE OF LUXURY</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- TRUST STRIP -->
-<div class="trust-strip">
-  <div class="trust-item">
-    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
-      viewBox="0 0 24 24">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-    100% Certified Horology
+<!-- ══════════════════════════════════════════════════════════
+     7. TRUST & EXPERIENCE SECTION
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-trust">
+  <div class="lux-container">
+    <div class="lux-trust__header lux-reveal">
+      <div class="lux-eyebrow">WHY TYMORA</div>
+      <h2 class="lux-heading">The Tymora <span class="lux-gold">Experience</span></h2>
+    </div>
+    <div class="lux-trust__grid">
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-lock"></i></div>
+        <h4>Secure Payments</h4>
+        <p>End-to-end encrypted transactions with Razorpay.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-certificate"></i></div>
+        <h4>Authentic Products</h4>
+        <p>Every timepiece is verified and certified genuine.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-gift"></i></div>
+        <h4>Premium Packaging</h4>
+        <p>Luxury presentation worthy of the craft within.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-shipping-fast"></i></div>
+        <h4>Fast Delivery</h4>
+        <p>Insured express shipping across India.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-undo-alt"></i></div>
+        <h4>Easy Returns</h4>
+        <p>Hassle-free 30-day return and exchange policy.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-headset"></i></div>
+        <h4>Dedicated Support</h4>
+        <p>Personalized assistance from our concierge team.</p>
+      </div>
+    </div>
   </div>
-  <div class="trust-item">
-    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
-      viewBox="0 0 24 24">
-      <rect x="3" y="11" width="18" height="11" rx="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-    Secured Vault Shipping
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     8. TESTIMONIALS — REAL DB REVIEWS
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-testimonials">
+  <div class="lux-container">
+    <div class="lux-testimonials__header lux-reveal">
+      <div class="lux-eyebrow">CLIENT REVIEWS</div>
+      <h2 class="lux-heading">Words from the <span class="lux-gold">Elite</span></h2>
+    </div>
+
+    <div class="lux-testimonials__carousel" id="testimonialCarousel">
+      <div class="lux-testimonials__track" id="testimonialTrack">
+        {{#each testimonials}}
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">{{this.stars}}</div>
+          <p class="lux-testimonial-card__text">"{{this.text}}"</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              {{#if this.avatar}}
+              <img src="{{this.avatar}}" alt="{{this.userName}}" class="lux-testimonial-card__avatar-img">
+              {{else}}
+              <div class="lux-testimonial-card__avatar">{{this.initials}}</div>
+              {{/if}}
+              <div>
+                <div class="lux-testimonial-card__name">{{this.userName}}</div>
+                <div class="lux-testimonial-card__product">on {{this.productName}}</div>
+              </div>
+            </div>
+            <div class="lux-testimonial-card__date">{{this.date}}</div>
+          </div>
+        </div>
+        {{/each}}
+
+        {{#unless hasTestimonials}}
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">★★★★★</div>
+          <p class="lux-testimonial-card__text">"An absolute masterpiece. The buying experience was as flawless as the
+            timepiece itself."</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              <div class="lux-testimonial-card__avatar">AR</div>
+              <div>
+                <div class="lux-testimonial-card__name">Alexander R.</div>
+                <div class="lux-testimonial-card__product">Verified Buyer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">★★★★★</div>
+          <p class="lux-testimonial-card__text">"The curation of brands here is unmatched. My watch arrived in pristine
+            condition."</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              <div class="lux-testimonial-card__avatar">SW</div>
+              <div>
+                <div class="lux-testimonial-card__name">Sophia W.</div>
+                <div class="lux-testimonial-card__product">Verified Buyer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">★★★★★</div>
+          <p class="lux-testimonial-card__text">"Exquisite craftsmanship and unparalleled customer service. Highly
+            recommended."</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              <div class="lux-testimonial-card__avatar">JP</div>
+              <div>
+                <div class="lux-testimonial-card__name">James P.</div>
+                <div class="lux-testimonial-card__product">Verified Buyer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{/unless}}
+      </div>
+      <div class="lux-testimonials__controls">
+        <button class="lux-testimonials__arrow lux-testimonials__arrow--prev" id="testPrev"><i
+            class="fas fa-chevron-left"></i></button>
+        <button class="lux-testimonials__arrow lux-testimonials__arrow--next" id="testNext"><i
+            class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
   </div>
-  <div class="trust-item">
-    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
-      viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-    Historical Provenance
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     9. PREMIUM VIDEO SECTION — EVERY SECOND MATTERS
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-video-section">
+  <video class="lux-video-section__bg" autoplay loop muted playsinline>
+    <source src="https://videos.pexels.com/video-files/3205915/3205915-uhd_2560_1440_25fps.mp4" type="video/mp4">
+  </video>
+  <div class="lux-video-section__overlay"></div>
+  <div class="lux-video-section__content lux-reveal">
+    <h2 class="lux-video-section__title">Every Second <span class="lux-gold">Matters</span></h2>
+    <p class="lux-video-section__desc">Embrace the art of fine living with collections curated for those who command the
+      room.</p>
   </div>
-  <div class="trust-item">
-    <svg class="trust-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
-      viewBox="0 0 24 24">
-      <polygon
-        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-    Bespoke Concierge Care
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     10. LIMITED EDITION EXPERIENCE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-limited">
+  <div class="lux-limited__spotlight"></div>
+  <div class="lux-limited__overlay"></div>
+  <div class="lux-container lux-limited__layout">
+    <div class="lux-limited__text lux-reveal">
+      <div class="lux-eyebrow" style="justify-content:center;color:#fff;">EXCLUSIVE DROP</div>
+      <h2 class="lux-heading lux-limited__title"><span class="lux-gold">Midnight</span> Collection</h2>
+      <p class="lux-limited__desc">Strictly limited to 50 pieces worldwide. Secure yours before the vault closes.</p>
+      <div class="lux-limited__timer">
+        <div class="lux-limited__time-block">
+          <span id="lux-dh">12</span><small>HOURS</small>
+        </div>
+        <div class="lux-limited__time-sep">:</div>
+        <div class="lux-limited__time-block">
+          <span id="lux-dm">45</span><small>MINS</small>
+        </div>
+        <div class="lux-limited__time-sep">:</div>
+        <div class="lux-limited__time-block">
+          <span id="lux-ds">30</span><small>SECS</small>
+        </div>
+      </div>
+      <a href="/user/shop" class="lux-btn lux-btn--primary magnetic-btn">
+        <span class="lux-btn__text">Access Vault</span>
+        <span class="lux-btn__glow"></span>
+      </a>
+    </div>
   </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     11. INTERACTIVE TIMELINE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-timeline">
+  <div class="lux-container">
+    <div class="lux-timeline__header lux-reveal">
+      <div class="lux-eyebrow">OUR PROCESS</div>
+      <h2 class="lux-heading">From Vision to <span class="lux-gold">Wrist</span></h2>
+    </div>
+    <div class="lux-timeline__track">
+      <div class="lux-timeline__line" id="timelineLine"></div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">01</div>
+          <h4>Design</h4>
+          <p>Every masterpiece begins with a vision sketched by world-renowned artisans.</p>
+        </div>
+      </div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">02</div>
+          <h4>Craftsmanship</h4>
+          <p>Hundreds of hours of meticulous hand-assembly by master watchmakers.</p>
+        </div>
+      </div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">03</div>
+          <h4>Precision</h4>
+          <p>Each movement tested to Swiss chronometer standards for flawless accuracy.</p>
+        </div>
+      </div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">04</div>
+          <h4>Delivery</h4>
+          <p>Insured, premium packaging delivered to your doorstep with white-glove care.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     12. NEWSLETTER SECTION
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-newsletter">
+  <div class="lux-newsletter__glow"></div>
+  <div class="lux-newsletter__card glass-card lux-reveal">
+    <h2 class="lux-newsletter__title">Join the Inner <span class="lux-gold">Circle</span></h2>
+    <p class="lux-newsletter__desc">Subscribe to receive exclusive access to limited editions, private events, and the
+      world of timeless luxury.</p>
+    <form class="lux-newsletter__form"
+      onsubmit="event.preventDefault(); this.querySelector('button').textContent='Welcome!'; this.querySelector('input').value='';">
+      <div class="lux-newsletter__input-wrap">
+        <input type="email" placeholder="Enter your email address" required class="lux-newsletter__input">
+        <button type="submit" class="lux-newsletter__btn">Subscribe</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     13. TRUST STRIP
+     ══════════════════════════════════════════════════════════ -->
+<div class="lux-trust-strip">
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-shield-alt"></i><span>Authenticity Guaranteed</span>
+  </div>
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-shipping-fast"></i><span>Complimentary Shipping</span>
+  </div>
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-undo"></i><span>30-Day Returns</span></div>
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-lock"></i><span>Secure Payment</span></div>
 </div>
 
-<div class="bottom-strip"></div>
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPTS — GSAP + ScrollTrigger + Custom Animations
+     ══════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
-<!-- SEEDING DATA FOR SHOP ACTIONS -->
-<script>
-  window.SHOP_DATA = { featured: [] };
-  window.SHOP_USER_LOGGED_IN = {{#if user}}true{{else}}false{{/if}};
-</script>
-<script src="/js/shop.js"></script>
-
-<!-- GSAP LENIS INTERACTION SCRIPTS -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    // 1. Lenis Smooth Scrolling Initializer
-    let lenis;
-    if (typeof Lenis !== 'undefined') {
-      lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // smooth easeOutExpo
-        orientation: 'vertical',
-        gestureOrientation: 'vertical',
-        smoothWheel: true,
-        wheelMultiplier: 1.0,
-        infinite: false,
+    // ── GSAP SETUP ──
+    if (typeof gsap === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ── 1. HERO CINEMATIC ENTRANCE ──
+    const heroTl = gsap.timeline({ delay: 0.2 });
+    heroTl
+      // 1. Intro text blur in
+      .fromTo('#introWord1',
+        { opacity: 0, scale: 0.95, filter: 'blur(15px)', letterSpacing: '0.4em' },
+        { opacity: 1, scale: 1, filter: 'blur(0px)', letterSpacing: '0.3em', duration: 2, ease: 'power3.out' }
+      )
+      .fromTo('#introWord2',
+        { opacity: 0, y: 30, filter: 'blur(10px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.5, ease: 'power3.out' },
+        '-=1.2'
+      )
+      // 2. Intro text fades out after 2 seconds
+      .to(['#introWord1', '#introWord2'], {
+        opacity: 0,
+        filter: 'blur(10px)',
+        scale: 1.05,
+        duration: 1.5,
+        ease: 'power2.inOut',
+        stagger: 0.2
+      }, '+=2')
+      // 3. Bottom left side content animates in
+      .fromTo('.lux-hero__content-side',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.1 },
+        '-=0.5' // Ensure container is visible before children animate
+      )
+      .fromTo('#sideTitle',
+        { opacity: 0, x: -30, filter: 'blur(5px)' },
+        { opacity: 1, x: 0, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out' },
+        '-=0.5'
+      )
+      .fromTo('#sideDesc',
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 1, ease: 'power2.out' },
+        '-=0.8'
+      )
+      .fromTo('#heroActions',
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' },
+        '-=0.6'
+      )
+      .fromTo('.lux-hero__scroll-indicator',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.8 },
+        '-=0.2'
+      );
+
+    // ── 2. SCROLL REVEAL UTILITY ──
+    document.querySelectorAll('.lux-reveal').forEach((el, i) => {
+      gsap.fromTo(el, { opacity: 0, y: 50 }, {
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none none' },
+        opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: i % 4 * 0.1
       });
+    });
 
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-      requestAnimationFrame(raf);
+    // ── 3. PARALLAX EFFECTS ──
+    document.querySelectorAll('.parallax-img').forEach(img => {
+      gsap.to(img, {
+        scrollTrigger: { trigger: img.closest('section') || img, start: 'top bottom', end: 'bottom top', scrub: 1 },
+        yPercent: 20, ease: 'none'
+      });
+    });
 
-      // Bind GSAP ScrollTrigger to Lenis scroll
-      if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-        lenis.on('scroll', ScrollTrigger.update);
+    gsap.to('.lux-video-section__bg', {
+      scrollTrigger: { trigger: '.lux-video-section', start: 'top bottom', end: 'bottom top', scrub: 1 },
+      yPercent: 20, ease: 'none'
+    });
+
+    // ── 4. COUNTER ANIMATION ──
+    document.querySelectorAll('.lux-counter').forEach(counter => {
+      ScrollTrigger.create({
+        trigger: counter,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => {
+          const target = +counter.getAttribute('data-target');
+          gsap.to(counter, { innerHTML: target, duration: 2.5, snap: { innerHTML: 1 }, ease: 'power2.out' });
+        }
+      });
+    });
+
+    // ── 5. PARTICLES ──
+    const particlesContainer = document.getElementById('luxParticles');
+    if (particlesContainer) {
+      for (let i = 0; i < 40; i++) {
+        const p = document.createElement('div');
+        p.classList.add('lux-particle');
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.top = Math.random() * 100 + 'vh';
+        p.style.animationDuration = (Math.random() * 6 + 4) + 's';
+        p.style.animationDelay = (Math.random() * 6) + 's';
+        p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+        particlesContainer.appendChild(p);
       }
     }
 
-    // 2. GSAP Scroll Trigger Animations
-    if (typeof gsap !== 'undefined') {
-      gsap.registerPlugin(ScrollTrigger);
-
-      // Hero Fade & Slide In
-      gsap.to('#heroContent', {
-        opacity: 1,
-        y: 0,
-        duration: 1.4,
-        ease: 'power4.out',
-        delay: 0.2
-      });
-
-      gsap.to('#heroVisual', {
-        opacity: 1,
-        scale: 1,
-        rotation: 0,
-        duration: 1.6,
-        ease: 'power4.out',
-        delay: 0.3
-      });
-
-      // Categories Stagger In
-      gsap.to('.coll-card', {
-        scrollTrigger: {
-          trigger: '#collections',
-          start: 'top 80%',
-        },
-        opacity: 1,
-        y: 0,
-        duration: 1.0,
-        stagger: 0.15,
-        ease: 'power3.out'
-      });
-
-      // Featured Grid Reveal
-      gsap.to('#featTitle', {
-        scrollTrigger: {
-          trigger: '#shop',
-          start: 'top 85%',
-        },
-        opacity: 1,
-        y: 0,
-        duration: 1.0,
-        ease: 'power3.out'
-      });
-
-      gsap.to('.products-grid-home', {
-        scrollTrigger: {
-          trigger: '.products-grid-home',
-          start: 'top 85%',
-        },
-        opacity: 1,
-        y: 0,
-        duration: 1.2,
-        ease: 'power3.out'
-      });
-
-      // Brand Story Split Words Animation
-      const storyText = document.getElementById('storyText');
-      if (storyText) {
-        const text = storyText.textContent.trim();
-        const words = text.split(/\s+/);
-        storyText.innerHTML = words.map(word => {
-          let cleanWord = word.replace(/[",.]/g, '');
-          if (cleanWord.toLowerCase() === 'tymora' || cleanWord.toLowerCase() === 'precision' || cleanWord.toLowerCase() === 'luxury') {
-            return `<span class="gold">${word}</span>`;
-          }
-          return `<span>${word}</span>`;
-        }).join(' ');
-
-        gsap.to('#storyText span', {
-          scrollTrigger: {
-            trigger: '#brandStory',
-            start: 'top 75%',
-            end: 'bottom 50%',
-            scrub: true,
-          },
-          opacity: 1,
-          color: '#ffffff',
-          filter: 'blur(0px)',
-          stagger: 0.05,
-        });
-
-        gsap.to('#storySignature', {
-          scrollTrigger: {
-            trigger: '#brandStory',
-            start: 'top 55%',
-          },
-          opacity: 1,
-          y: 0,
-          duration: 1.0,
-          ease: 'power3.out'
-        });
-      }
-
-      // Split Showcase Parallax Fade
-      document.querySelectorAll('.showcase-panel').forEach(panel => {
-        const bg = panel.querySelector('.panel-bg');
-        const content = panel.querySelector('.panel-content');
-
-        gsap.to(bg, {
-          scrollTrigger: {
-            trigger: panel,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true
-          },
-          yPercent: 12,
-          ease: 'none'
-        });
-
-        gsap.to(content, {
-          scrollTrigger: {
-            trigger: panel,
-            start: 'top 75%',
-          },
-          opacity: 1,
-          y: 0,
-          duration: 1.2,
-          ease: 'power3.out'
-        });
-      });
-    }
-
-    // 3. Apple-Style Mouse Interactive Parallax for Hero Watch Showcase
-    const heroVisual = document.getElementById('heroVisual');
-    const heroWatch = document.getElementById('heroWatch');
-    if (heroVisual && heroWatch) {
-      heroVisual.addEventListener('mousemove', (e) => {
-        const rect = heroVisual.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-
-        // Calculate rotation and offset
-        const rotateX = (-y / rect.height) * 25; // max 25deg rotation
-        const rotateY = (x / rect.width) * 25;
-        const transX = (x / rect.width) * 20;   // max 20px translation
-        const transY = (y / rect.height) * 20;
-
-        gsap.to(heroWatch, {
-          rotationX: rotateX,
-          rotationY: rotateY,
-          x: transX,
-          y: transY,
-          duration: 0.5,
-          ease: 'power2.out'
-        });
-      });
-
-      heroVisual.addEventListener('mouseleave', () => {
-        gsap.to(heroWatch, {
-          rotationX: 0,
-          rotationY: 0,
-          x: 0,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out'
-        });
-      });
-    }
-
-    // 4. COUNTDOWN TIMER
-    let totalSeconds = 12 * 3600 + 48 * 60 + 14;
+    // ── 6. COUNTDOWN TIMER ──
+    let totalSeconds = 12 * 3600 + 45 * 60 + 30;
     function updateTimer() {
       if (totalSeconds <= 0) return;
       totalSeconds--;
       const h = Math.floor(totalSeconds / 3600);
       const m = Math.floor((totalSeconds % 3600) / 60);
       const s = totalSeconds % 60;
-
-      const th = document.getElementById('th');
-      const tm = document.getElementById('tm');
-      const ts = document.getElementById('ts');
-
-      if (th) th.textContent = String(h).padStart(2, '0');
-      if (tm) tm.textContent = String(m).padStart(2, '0');
-      if (ts) ts.textContent = String(s).padStart(2, '0');
+      const dh = document.getElementById('lux-dh');
+      const dm = document.getElementById('lux-dm');
+      const ds = document.getElementById('lux-ds');
+      if (dh) dh.textContent = String(h).padStart(2, '0');
+      if (dm) dm.textContent = String(m).padStart(2, '0');
+      if (ds) ds.textContent = String(s).padStart(2, '0');
     }
     setInterval(updateTimer, 1000);
 
-    // 5. COPY COUPON CODES
-    const copyBtn = document.getElementById('copyBtn');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', function () {
-        navigator.clipboard.writeText('TYMORA10').then(() => {
-          copyBtn.textContent = 'Copied!';
-          copyBtn.style.background = '#c9a84c';
-          copyBtn.style.color = '#000';
-          setTimeout(() => {
-            copyBtn.textContent = 'Copy Code';
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-        });
+    // ── 7. TESTIMONIAL CAROUSEL ──
+    const track = document.getElementById('testimonialTrack');
+    const prevBtn = document.getElementById('testPrev');
+    const nextBtn = document.getElementById('testNext');
+    if (track && prevBtn && nextBtn) {
+      let pos = 0;
+      const cards = track.querySelectorAll('.lux-testimonial-card');
+      const cardWidth = () => {
+        const card = cards[0];
+        if (!card) return 400;
+        return card.offsetWidth + parseInt(getComputedStyle(card).marginRight || 0) + 24;
+      };
+      const maxPos = () => Math.max(0, track.scrollWidth - track.parentElement.offsetWidth);
+
+      nextBtn.addEventListener('click', () => {
+        pos = Math.min(pos + cardWidth(), maxPos());
+        track.style.transform = `translateX(-${pos}px)`;
+      });
+      prevBtn.addEventListener('click', () => {
+        pos = Math.max(pos - cardWidth(), 0);
+        track.style.transform = `translateX(-${pos}px)`;
+      });
+
+      // Auto-slide
+      let autoSlide = setInterval(() => {
+        if (pos >= maxPos()) pos = 0;
+        else pos += cardWidth();
+        track.style.transform = `translateX(-${pos}px)`;
+      }, 5000);
+
+      track.parentElement.addEventListener('mouseenter', () => clearInterval(autoSlide));
+      track.parentElement.addEventListener('mouseleave', () => {
+        autoSlide = setInterval(() => {
+          if (pos >= maxPos()) pos = 0;
+          else pos += cardWidth();
+          track.style.transform = `translateX(-${pos}px)`;
+        }, 5000);
+      });
+    }
+
+    // ── 8. 3D TILT EFFECT ──
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / centerY * -8;
+        const rotateY = (x - centerX) / centerX * 8;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+      });
+    });
+
+    // ── 9. MAGNETIC BUTTONS ──
+    document.querySelectorAll('.magnetic-btn').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'translate(0, 0)';
+      });
+    });
+
+    // ── 10. TIMELINE SCROLL PROGRESS ──
+    const timelineLine = document.getElementById('timelineLine');
+    if (timelineLine) {
+      gsap.fromTo(timelineLine, { scaleY: 0 }, {
+        scaleY: 1,
+        scrollTrigger: {
+          trigger: '.lux-timeline__track',
+          start: 'top 80%',
+          end: 'bottom 50%',
+          scrub: 1
+        },
+        ease: 'none'
+      });
+    }
+
+    // ── 11. NAVBAR SCROLL EFFECT ──
+    window.addEventListener('scroll', () => {
+      const nav = document.querySelector('.navbar');
+      if (nav) {
+        if (window.scrollY > 50) {
+          nav.style.background = 'rgba(10, 10, 10, 0.85)';
+          nav.style.backdropFilter = 'blur(20px)';
+          nav.style.borderBottom = '1px solid rgba(201,168,76,0.1)';
+        } else {
+          nav.style.background = 'var(--nav-bg)';
+          nav.style.backdropFilter = 'none';
+          nav.style.borderBottom = '1px solid var(--border-color)';
+        }
+      }
+    });
+
+    // ── 12. WORD-BY-WORD REVEAL ──
+    document.querySelectorAll('.word-reveal').forEach(el => {
+      const words = el.textContent.trim().split(/\s+/);
+      el.innerHTML = words.map(w => `<span class="wr-word">${w}</span>`).join(' ');
+      gsap.fromTo(el.querySelectorAll('.wr-word'),
+        { opacity: 0.15 },
+        {
+          opacity: 1,
+          stagger: 0.04,
+          scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 40%', scrub: 1 },
+          ease: 'none'
+        }
+      );
+    });
+
+    // ── 13. HERO VIDEO AUDIO CONTROL ──
+    const heroVideo = document.getElementById('heroVideo');
+    if (heroVideo) {
+      let hasInteracted = false;
+
+      // Unmute on first scroll or interaction
+      const enableAudio = () => {
+        if (!hasInteracted) {
+          heroVideo.muted = false;
+          hasInteracted = true;
+        }
+      };
+
+      window.addEventListener('scroll', enableAudio, { once: true });
+      window.addEventListener('click', enableAudio, { once: true });
+
+      // Mute audio when hero section is out of view
+      ScrollTrigger.create({
+        trigger: '#luxHero',
+        start: 'top top',
+        end: 'bottom top',
+        onLeave: () => {
+          heroVideo.muted = true;
+        },
+        onEnterBack: () => {
+          if (hasInteracted) heroVideo.muted = false;
+        }
       });
     }
   });

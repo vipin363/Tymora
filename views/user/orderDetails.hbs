@@ -44,78 +44,6 @@
   color: var(--text-muted);
 }
 
-/* Tracking Map Styles */
-.track-map-wrapper {
-  margin: 15px 0 25px 75px;
-  max-width: 500px;
-}
-.track-map {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  width: 100%;
-}
-.track-map::before {
-  content: "";
-  position: absolute;
-  top: 14px;
-  left: 10px;
-  right: 10px;
-  height: 2px;
-  background: #333;
-  z-index: 1;
-}
-.track-bar {
-  position: absolute;
-  top: 14px;
-  left: 10px;
-  height: 2px;
-  background: var(--gold);
-  z-index: 2;
-  transition: width 0.4s ease;
-}
-.track-step {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 60px;
-}
-.track-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #1a1a1a;
-  border: 2px solid #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  color: #fff;
-  transition: all 0.3s;
-}
-.track-label {
-  font-size: 0.75rem;
-  color: #888;
-  text-align: center;
-  white-space: nowrap;
-}
-.track-step.active .track-icon {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #000;
-}
-.track-step.active .track-label {
-  color: #fff;
-}
-@media(max-width: 600px) {
-  .track-map-wrapper {
-    margin: 15px 0 25px 0;
-  }
-}
 </style>
 
 <div class="od-wrapper">
@@ -159,13 +87,29 @@
     <div class="od-card">
       <h3>Order Summary</h3>
       <div class="od-info-row">
-        <span class="od-info-label">Subtotal:</span>
+        <span class="od-info-label">Subtotal (MRP):</span>
         <span>₹{{formatCurrency order.subtotalMrp}}</span>
       </div>
       <div class="od-info-row">
-        <span class="od-info-label">Discount:</span>
+        <span class="od-info-label">Product Discount:</span>
         <span style="color:#10b981;">-₹{{formatCurrency order.discount}}</span>
       </div>
+      {{#if order.offerDiscount}}
+      <div class="od-info-row">
+        <span class="od-info-label">
+          Offer Applied{{#if order.offerName}} <span style="font-size:0.78rem; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid rgba(168,85,247,0.3); border-radius:4px; padding:1px 5px;">{{order.offerName}}</span>{{/if}}:
+        </span>
+        <span style="color:#10b981;">-₹{{formatCurrency order.offerDiscount}}</span>
+      </div>
+      {{/if}}
+      {{#if order.couponDiscount}}
+      <div class="od-info-row">
+        <span class="od-info-label">
+          Coupon Applied{{#if order.couponCode}} <span style="font-size:0.78rem; background:rgba(201,168,76,0.12); color:#c9a84c; border:1px solid rgba(201,168,76,0.3); border-radius:4px; padding:1px 5px;">{{order.couponCode}}</span>{{/if}}:
+        </span>
+        <span style="color:#10b981;">-₹{{formatCurrency order.couponDiscount}}</span>
+      </div>
+      {{/if}}
       <div class="od-info-row">
         <span class="od-info-label">Delivery Charge:</span>
         <span>₹{{formatCurrency order.deliveryCharge}}</span>
@@ -176,12 +120,27 @@
         <span>₹{{formatCurrency order.codCharge}}</span>
       </div>
       {{/if}}
+      <div class="od-info-row">
+        <span class="od-info-label">CGST (9%):</span>
+        <span>₹{{formatCurrency order.cgst}}</span>
+      </div>
+      <div class="od-info-row">
+        <span class="od-info-label">SGST (9%):</span>
+        <span>₹{{formatCurrency order.sgst}}</span>
+      </div>
+      {{#if order.totalSaved}}
+      <div class="od-info-row" style="background:rgba(16,185,129,0.06); border:1px dashed rgba(16,185,129,0.25); border-radius:6px; padding:6px 8px; margin-top:6px;">
+        <span style="color:#4ade80; font-size:0.88rem;">🎉 Total Savings</span>
+        <span style="color:#4ade80; font-weight:700;">-₹{{formatCurrency order.totalSaved}}</span>
+      </div>
+      {{/if}}
       <div class="od-info-row" style="margin-top:10px; padding-top:10px; border-top:1px solid #333; font-weight:bold;">
         <span>Total:</span>
         <span style="color:var(--gold); font-size:1.1rem;">₹{{formatCurrency order.totalAmount}}</span>
       </div>
     </div>
   </div>
+
 
   <h2 style="font-size:1.5rem; margin-bottom:15px; color:var(--white);">Ordered Products</h2>
   
@@ -200,35 +159,24 @@
               <div class="mo-prod-meta" style="margin-top: 6px;">
                 Status: <strong style="color:var(--gold); font-size:0.95rem;">{{this.orderStatus}}</strong>
               </div>
+              {{#if this.isReturned}}
+              <div class="mo-prod-meta" style="margin-top: 4px;">
+                Refund Method: <strong style="color:var(--text-light); font-size:0.90rem;">{{this.refundMethod}}</strong>
+              </div>
+              {{/if}}
             </div>
-            <div class="mo-prod-price" style="font-size:1.2rem;">₹{{formatCurrency this.itemTotal}}</div>
+            <div class="mo-prod-price-wrap" style="text-align:right;">
+              <div class="mo-prod-price" style="font-size:1.2rem;">₹{{formatCurrency this.salePrice}}</div>
+              {{#if this.mrp}}
+                <div style="font-size:0.85rem; color:#888; text-decoration:line-through;">₹{{formatCurrency this.mrp}}</div>
+              {{/if}}
+              {{#if this.discountPercent}}
+                <div style="font-size:0.78rem; font-weight:700; color:#e05252; letter-spacing:0.5px;">{{this.discountPercent}}% OFF</div>
+              {{/if}}
+            </div>
           </div>
 
-          {{#unless this.isCancelled}}
-          <!-- Tracking Map -->
-          <div class="track-map-wrapper">
-            <div class="track-map">
-              <div class="track-bar" style="width: {{this.trackBarWidth}};"></div>
-              
-              <div class="track-step {{#if this.step1}}active{{/if}}">
-                <div class="track-icon">✓</div>
-                <div class="track-label">Ordered</div>
-              </div>
-              <div class="track-step {{#if this.step2}}active{{/if}}">
-                <div class="track-icon">📦</div>
-                <div class="track-label">Packed</div>
-              </div>
-              <div class="track-step {{#if this.step3}}active{{/if}}">
-                <div class="track-icon">🚚</div>
-                <div class="track-label">Shipped</div>
-              </div>
-              <div class="track-step {{#if this.step4}}active{{/if}}">
-                <div class="track-icon">🏠</div>
-                <div class="track-label">Delivered</div>
-              </div>
-            </div>
-          </div>
-          {{/unless}}
+
 
           <div class="mo-prod-actions" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
             {{#if this.canTrack}}
@@ -244,7 +192,7 @@
             <button class="mo-btn" style="background:transparent; border:1px solid #fff; color:#fff; padding: 6px 20px; font-size: 0.9rem;" onclick="openReturnModal('{{../order.orderId}}', '{{this._id}}')">Return Product</button>
             {{/if}}
             {{#if this.showReview}}
-            <a href="/user/product/{{this.productId}}#reviews" class="mo-btn" style="background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding: 6px 20px; font-size: 0.9rem; text-decoration:none;">Add Review</a>
+            <button class="mo-btn" style="background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding: 6px 20px; font-size: 0.9rem;" onclick="openReviewModal('{{../order.orderId}}', '{{this.productId}}')">Add Review</button>
             {{/if}}
           </div>
         </div>
@@ -279,9 +227,36 @@
     <h3>Return Product</h3>
     <p>Please provide a reason for returning this product.</p>
     <textarea id="returnReasonInput" placeholder="Reason for return..."></textarea>
+    
     <div class="mo-modal-actions">
       <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeReturnModal()">Cancel</button>
       <button class="mo-btn mo-btn-primary" id="confirmReturnBtn">Submit Return Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review Product Modal -->
+<div class="mo-modal-overlay" id="reviewModalOverlay">
+  <div class="mo-modal">
+    <h3>Add Review</h3>
+    <p>Please rate and review this product.</p>
+    
+    <div style="margin: 15px 0; text-align: left;">
+      <label style="display: block; margin-bottom: 5px;">Rating (1-5):</label>
+      <select id="reviewRatingInput" style="width:100%; padding:8px; border-radius:4px; border:1px solid #333; background:#0f0f1e; color:#fff;">
+        <option value="5">5 ★★★★★</option>
+        <option value="4">4 ★★★★☆</option>
+        <option value="3">3 ★★★☆☆</option>
+        <option value="2">2 ★★☆☆☆</option>
+        <option value="1">1 ★☆☆☆☆</option>
+      </select>
+    </div>
+    
+    <textarea id="reviewTextInput" placeholder="Write your review here... (min 5 characters)"></textarea>
+    
+    <div class="mo-modal-actions">
+      <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeReviewModal()">Cancel</button>
+      <button class="mo-btn mo-btn-primary" style="background:#3b82f6; color:#fff;" id="confirmReviewBtn">Submit Review</button>
     </div>
   </div>
 </div>
@@ -291,6 +266,8 @@
   let targetCancelItemId = null;
   let targetReturnOrderId = null;
   let targetReturnItemId = null;
+  let targetReviewOrderId = null;
+  let targetReviewProductId = null;
 
   function openCancelModal(orderId, itemId) {
     targetCancelOrderId = orderId;
@@ -382,6 +359,58 @@
       alert('An error occurred. Please try again.');
       btn.disabled = false;
       btn.innerText = 'Submit Return Request';
+    }
+  });
+
+  function openReviewModal(orderId, productId) {
+    targetReviewOrderId = orderId;
+    targetReviewProductId = productId;
+    document.getElementById('reviewRatingInput').value = 5;
+    document.getElementById('reviewTextInput').value = '';
+    document.getElementById('reviewModalOverlay').classList.add('active');
+  }
+
+  function closeReviewModal() {
+    targetReviewOrderId = null;
+    targetReviewProductId = null;
+    document.getElementById('reviewModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmReviewBtn').addEventListener('click', async () => {
+    if (!targetReviewOrderId || !targetReviewProductId) return;
+    
+    const rating = document.getElementById('reviewRatingInput').value;
+    const reviewText = document.getElementById('reviewTextInput').value.trim();
+    
+    if (reviewText.length < 5) {
+      alert("Review must be at least 5 characters.");
+      return;
+    }
+
+    const btn = document.getElementById('confirmReviewBtn');
+    btn.disabled = true;
+    btn.innerText = 'Submitting...';
+
+    try {
+      const res = await fetch('/user/reviews/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetReviewOrderId, productId: targetReviewProductId, rating, reviewText })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message || 'Failed to submit review.');
+        btn.disabled = false;
+        btn.innerText = 'Submit Review';
+      }
+    } catch (err) {
+      alert('Error submitting review.');
+      btn.disabled = false;
+      btn.innerText = 'Submit Review';
     }
   });
 </script>

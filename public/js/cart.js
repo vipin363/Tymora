@@ -209,10 +209,9 @@ function updateSummaryTotal(subtotal) {
 }
 
 function updateNavCartCount(count) {
-  document.querySelectorAll('.cart-count-badge, #cartCount, [data-cart-count]').forEach(el => {
-    el.textContent   = count;
-    el.style.display = count > 0 ? '' : 'none';
-  });
+  if (typeof window.updateCartBadge === 'function') {
+    window.updateCartBadge(count);
+  }
 }
 
 function showToast(msg, type = 'gold') {

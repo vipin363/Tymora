@@ -208,10 +208,9 @@ async function handleQuickAdd(btn) {
 }
 
 function updateCartCountBadge(count) {
-  document.querySelectorAll('.cart-count-badge, #cartCount, [data-cart-count]').forEach(el => {
-    el.textContent   = count;
-    el.style.display = count > 0 ? '' : 'none';
-  });
+  if (typeof window.updateCartBadge === 'function') {
+    window.updateCartBadge(count);
+  }
 }
 
 
@@ -427,6 +426,7 @@ function updateSpecTable(v) {
 function updateCartBtn(v) {
   const label   = document.getElementById('pdCartBtnLabel');
   const cartBtn = document.getElementById('pdAddToCart');
+  const buyBtn  = document.getElementById('pdBuyNow');
   if (!label || !cartBtn) return;
 
   const inCart = !!window.__cartState[v.id];
@@ -436,16 +436,34 @@ function updateCartBtn(v) {
     cartBtn.disabled      = true;
     cartBtn.style.opacity = '0.5';
     cartBtn.style.cursor  = 'not-allowed';
+    
+    if (buyBtn) {
+      buyBtn.disabled      = true;
+      buyBtn.style.opacity = '0.5';
+      buyBtn.style.cursor  = 'not-allowed';
+    }
   } else if (inCart) {
     label.textContent     = 'View in Cart';
     cartBtn.disabled      = false;
     cartBtn.style.opacity = '';
     cartBtn.style.cursor  = '';
+    
+    if (buyBtn) {
+      buyBtn.disabled      = false;
+      buyBtn.style.opacity = '';
+      buyBtn.style.cursor  = '';
+    }
   } else {
     label.textContent     = 'Add to Cart';
     cartBtn.disabled      = false;
     cartBtn.style.opacity = '';
     cartBtn.style.cursor  = '';
+    
+    if (buyBtn) {
+      buyBtn.disabled      = false;
+      buyBtn.style.opacity = '';
+      buyBtn.style.cursor  = '';
+    }
   }
 }
 
@@ -501,20 +519,36 @@ function initAddToCart() {
   const cartBtn = document.getElementById('pdAddToCart');
   const buyBtn  = document.getElementById('pdBuyNow');
 
-  async function doAddToCart(redirectAfter) {
+  async function doAddToCart(isBuyNow) {
     const productId = window.PD_DATA?.productId;
     const variantId = window.PD_DATA?.variantId;
     if (!productId || !variantId) return showToast('Variant not found', 'muted');
 
+    const active = await checkProductActive();
+    if (!active) return;
+
+    if (isBuyNow) {
+      try {
+        const res = await fetch('/user/checkout/buy-now', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, variantId, quantity: 1 }),
+        });
+        const data = await res.json();
+        const dest = data.redirectUrl || data.redirect;
+        if (dest) { window.location.href = dest; return; }
+        if (!data.success) return showToast(data.message || 'Cannot process Buy Now', 'muted');
+      } catch (e) {
+        console.error(e);
+        showToast('Something went wrong', 'muted');
+      }
+      return;
+    }
     
-    if (window.__cartState[variantId] && !redirectAfter) {
+    if (window.__cartState[variantId]) {
       window.location.href = '/user/cart';
       return;
     }
-
-   
-    const active = await checkProductActive();
-    if (!active) return;
 
     try {
       const res  = await fetch('/user/cart/add', {
@@ -533,7 +567,6 @@ function initAddToCart() {
       updateCartCountBadge(data.cartCount);
 
       showToast('Added to cart!', 'gold');
-      if (redirectAfter) setTimeout(() => window.location.href = '/user/checkout', 500);
 
     } catch (e) {
       console.error(e);
@@ -592,7 +625,6 @@ function initWishlist() {
 async function toggleWish(pid) {
   const was = window.__wishlistState[pid] || false;
 
- 
   if (pid === PRODUCT_ID) {
     const active = await checkProductActive();
     if (!active) return;
@@ -613,9 +645,18 @@ async function toggleWish(pid) {
 
     const nowWished = data.status === 'added';
     syncAllHearts(pid, nowWished);
+
+    // ── Update wishlist badge immediately via AJAX ──
+    if (typeof window.updateWishlistBadge === 'function') {
+      fetch('/user/wishlist/ids')
+        .then(r => r.json())
+        .then(d => window.updateWishlistBadge(d.ids ? d.ids.length : 0))
+        .catch(() => {});
+    }
+
     showToast(nowWished ? 'Added to wishlist ♡' : 'Removed from wishlist', nowWished ? 'gold' : 'muted');
   } catch {
-    syncAllHearts(pid, was); 
+    syncAllHearts(pid, was);
   }
 }
 

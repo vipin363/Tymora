@@ -111,9 +111,15 @@
           <span>₹{{formatCurrency order.subtotalMrp}}</span>
         </div>
         <div class="os-fin-row" style="color: #4ade80;">
-          <span>Discount</span>
+          <span>Product Discount</span>
           <span>- ₹{{formatCurrency order.discount}}</span>
         </div>
+        {{#if order.couponCode}}
+        <div class="os-fin-row" style="color: #4ade80;">
+          <span>Offer Applied ({{order.couponCode}})</span>
+          <span>- ₹{{formatCurrency order.couponDiscount}}</span>
+        </div>
+        {{/if}}
         <div class="os-fin-row">
           <span>Delivery</span>
           <span>{{#if (eq order.deliveryCharge 0)}}Free{{else}}₹{{formatCurrency order.deliveryCharge}}{{/if}}</span>
@@ -153,15 +159,13 @@
     <div class="os-actions">
       <button class="btn-os-primary" onclick="window.location.href='/user/orders'">Track My Orders</button>
       <button class="btn-os-secondary" onclick="window.location.href='/user/home'">Continue Exploring</button>
-      {{#if order.canReturn}}
+      {{#if order.canDownloadInvoice}}
       <button class="btn-os-secondary" onclick="window.location.href='/user/orders/invoice/{{order.orderId}}'">Download Invoice</button>
       {{else}}
-      <button class="btn-os-secondary" style="opacity: 0.5; cursor: not-allowed;" title="Invoice available after delivery" disabled>Download Invoice</button>
+      <button class="btn-os-secondary" style="opacity: 0.5; cursor: not-allowed;" title="Invoice available after delivery or successful online payment" disabled>Download Invoice</button>
       {{/if}}
       
-      {{#if order.canCancel}}
-      <button class="btn-os-secondary" style="border-color: #ef4444; color: #ef4444;" onclick="openCancelModal('{{order.orderId}}')">Cancel Order</button>
-      {{/if}}
+
       
       {{#if order.canReturn}}
       <button class="btn-os-secondary" style="border-color: #f59e0b; color: #f59e0b;" onclick="openReturnModal('{{order.orderId}}')">Return Order</button>

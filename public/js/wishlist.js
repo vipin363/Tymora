@@ -67,10 +67,9 @@ function refreshAddAllBtn() {
 
 
 function updateNavCartCount(count) {
-  document.querySelectorAll('.cart-count-badge, #cartCount, [data-cart-count]').forEach(el => {
-    el.textContent   = count;
-    el.style.display = count > 0 ? '' : 'none';
-  });
+  if (typeof window.updateCartBadge === 'function') {
+    window.updateCartBadge(count);
+  }
 }
 
 
@@ -94,18 +93,25 @@ function initWishlistCards() {
           if (data.redirect) { window.location.href = data.redirect; return; }
           return;
         }
-        if (data.status === 'removed') {
-          card.style.transition = 'opacity 0.4s, transform 0.4s';
-          card.style.opacity    = '0';
-          card.style.transform  = 'scale(0.9)';
-          delete window.__wishlistState[pid];
-          setTimeout(() => {
-            card.remove();
-            const grid = document.getElementById('wishlistGrid');
-            if (grid && !grid.children.length) window.location.reload();
-            refreshAddAllBtn();
-          }, 400);
-        }
+ if (data.status === 'removed') {
+  card.style.transition = 'opacity 0.4s, transform 0.4s';
+  card.style.opacity    = '0';
+  card.style.transform  = 'scale(0.9)';
+  delete window.__wishlistState[pid];
+  setTimeout(() => {
+    card.remove();
+    // Fetch real count from server after card is removed
+    if (typeof window.updateWishlistBadge === 'function') {
+      fetch('/user/wishlist/ids')
+        .then(r => r.json())
+        .then(d => window.updateWishlistBadge(d.ids ? d.ids.length : 0))
+        .catch(() => {});
+    }
+    const grid = document.getElementById('wishlistGrid');
+    if (grid && !grid.children.length) window.location.reload();
+    refreshAddAllBtn();
+  }, 400);
+}
       } catch (err) {
         console.error(err);
       }

@@ -12,7 +12,11 @@ import Material from "../model/materialModel.js";
 import SavedColor from "../model/savedColorModel.js";
 import Order from "../model/orderModel.js";
 import Settings from "../model/settingsModel.js";
-
+import WalletTransaction from "../model/walletTransactionModel.js";
+import Referral from "../model/referralModel.js";
+import Notification from "../model/notificationModel.js";
+import mongoose from "mongoose";
+import { calculateRefundAmount } from "../utils/refundCalculator.js";
 // auth and user management
 
 function calcDiscount(originalPrice, salePrice) {
@@ -1742,7 +1746,6 @@ export const loadAdminOrders = async (req, res) => {
     const sort = req.query.sort || "latest";
     const statusFilter = req.query.status || "all";
     const paymentFilter = req.query.payment || "all";
-    const deliveryFilter = req.query.delivery || "all";
 
     let query = {};
     if (search) {
@@ -1751,9 +1754,8 @@ export const loadAdminOrders = async (req, res) => {
         { "products.productName": { $regex: search, $options: "i" } }
       ];
     }
-    if (statusFilter !== "all") query.orderStatus = statusFilter;
     if (paymentFilter !== "all") query.paymentMethod = paymentFilter;
-    if (deliveryFilter !== "all") query.deliveryType = deliveryFilter;
+    if (statusFilter !== "all") query["products.orderStatus"] = statusFilter;
 
     let sortQuery = { createdAt: -1 };
     if (sort === "oldest") sortQuery = { createdAt: 1 };
@@ -1767,30 +1769,51 @@ export const loadAdminOrders = async (req, res) => {
       .sort(sortQuery)
       .skip(skip)
       .limit(limit)
-      .populate("userId", "image email")
+      .populate("userId", "image email avatar")
       .lean();
 
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
 
-    const formatted = orders.map(o => ({
-      ...o,
-      orderDateFormatted: fmtDate(o.orderDate),
-      customerName: o.shippingAddress?.fullName || "-",
-      customerEmail: o.userId?.email || "-",
-      userImage: o.userId?.image || "/image/useravathar.png",
-      productCount: o.products?.length || 0,
-      firstProductImage: o.products?.[0]?.productImage || "",
-      firstProductName: o.products?.[0]?.productName || "-"
-    }));
+    const formatted = orders.map(o => {
+      const statuses = o.products.map(p => p.orderStatus);
+      const uniqueStatuses = [...new Set(statuses)];
+      let summaryStatus = o.orderStatus; // fallback
+      let hasMixedStatus = false;
+      let mixedStatuses = [];
+
+      if (uniqueStatuses.length > 1) {
+        hasMixedStatus = true;
+        const counts = {};
+        statuses.forEach(s => counts[s] = (counts[s] || 0) + 1);
+        mixedStatuses = Object.keys(counts).map(k => ({
+          status: k,
+          count: counts[k]
+        }));
+      } else if (uniqueStatuses.length === 1) {
+        summaryStatus = uniqueStatuses[0];
+      }
+
+      return {
+        ...o,
+        orderDateFormatted: fmtDate(o.orderDate),
+        customerName: o.shippingAddress?.fullName || "-",
+        customerEmail: o.userId?.email || "-",
+        userImage: o.userId?.avatar || o.userId?.image || "/image/useravathar.png",
+        productCount: o.products?.length || 0,
+        summaryStatus,
+        hasMixedStatus,
+        mixedStatuses
+      };
+    });
 
     const totalRevenue = await Order.aggregate([
       { $match: { orderStatus: { $nin: ["Cancelled"] } } },
       { $group: { _id: null, total: { $sum: "$totalAmount" } } }
     ]);
 
-    const pendingCount = await Order.countDocuments({ orderStatus: "Pending" });
-    const deliveredCount = await Order.countDocuments({ orderStatus: "Delivered" });
-    const cancelledCount = await Order.countDocuments({ orderStatus: "Cancelled" });
+    const pendingCount = await Order.countDocuments({ "products.orderStatus": "Pending" });
+    const deliveredCount = await Order.countDocuments({ "products.orderStatus": "Delivered" });
+    const cancelledCount = await Order.countDocuments({ "products.orderStatus": "Cancelled" });
 
     res.render("admin/orderManagement", {
       activePage: "orders",
@@ -1801,7 +1824,6 @@ export const loadAdminOrders = async (req, res) => {
       sort,
       status: statusFilter,
       payment: paymentFilter,
-      delivery: deliveryFilter,
       stats: {
         totalOrders: await Order.countDocuments(),
         pendingCount,
@@ -1827,36 +1849,37 @@ export const loadAdminOrderDetail = async (req, res) => {
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "-";
     const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
 
-    // For the admin timeline, we can aggregate the first product's timeline or a general timeline.
-    // Let's use the first product's timeline as representative for the order-level view, 
-    // since admin updates apply to all non-cancelled products.
-    const representativeTimeline = order.products && order.products.length > 0 
-      ? (order.products[0].trackingTimeline || [])
-      : [];
+    // Map per-item timelines and allowed next statuses
+    const formattedProducts = order.products.map(item => {
+      const allowedNextStatuses = [];
+      if (!FINALIZED_STATUSES.includes(item.orderStatus) && item.orderStatus !== "Cancelled") {
+        const nextStatus = getNextAllowedStatus(item.orderStatus);
+        if (nextStatus) allowedNextStatuses.push(nextStatus);
+      }
 
-    const timeline = representativeTimeline.map(t => ({
-      ...t,
-      dateFormatted: fmtDate(t.timestamp),
-      timeFormatted: fmtTime(t.timestamp)
-    })).reverse();
+      const tl = item.trackingTimeline || [];
+      const formattedTimeline = tl.map(t => ({
+        ...t,
+        dateFormatted: fmtDate(t.timestamp),
+        timeFormatted: fmtTime(t.timestamp)
+      })).reverse();
 
-    // Strict sequential: only the immediate next status is offered (no Cancelled option)
-    const allowedNextStatuses = [];
-    if (!FINALIZED_STATUSES.includes(order.orderStatus) && order.orderStatus !== "Cancelled") {
-      const nextStatus = getNextAllowedStatus(order.orderStatus);
-      if (nextStatus) allowedNextStatuses.push(nextStatus);
-    }
+      return {
+        ...item,
+        allowedNextStatuses,
+        formattedTimeline
+      };
+    });
 
     res.render("admin/adminOrderDetail", {
       activePage: "orders",
       order: {
         ...order,
+        products: formattedProducts,
         orderDateFormatted: fmtDate(order.orderDate),
         estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery)
       },
-      user: user ? { name: user.name, email: user.email, phone: user.phone || "-" } : null,
-      timeline,
-      allowedNextStatuses
+      user: user ? { name: user.name, email: user.email, phone: user.phone || "-" } : null
     });
   } catch (err) {
     console.error("loadAdminOrderDetail error:", err);
@@ -1907,6 +1930,11 @@ export const updateOrderStatus = async (req, res) => {
 
     order.orderStatus = newStatus;
     
+    // Automatic COD Payment Fix
+    if (newStatus === "Delivered" && order.paymentMethod === "COD") {
+      order.paymentStatus = "Paid";
+    }
+    
     // Sync the new status and tracking timeline to all active products
     const timelineEntry = {
       status: newStatus,
@@ -1929,10 +1957,238 @@ export const updateOrderStatus = async (req, res) => {
       }
     }
 
+    if (newStatus === "Delivered") {
+      // Referral Program Release Logic (First Delivered Order)
+      const userOrders = await Order.find({ userId: order.userId }).lean();
+      let hasPriorDelivery = false;
+      for (const uOrder of userOrders) {
+        if (uOrder._id.toString() !== order._id.toString()) {
+           if (uOrder.products.some(p => p.orderStatus === "Delivered")) {
+              hasPriorDelivery = true;
+              break;
+           }
+        }
+      }
+
+      if (!hasPriorDelivery) {
+        const session = await mongoose.startSession();
+        try {
+          session.startTransaction();
+          const pendingReferral = await Referral.findOne({ referredUser: order.userId, rewardStatus: "PENDING" }).session(session);
+          if (pendingReferral) {
+             pendingReferral.rewardStatus = "COMPLETED";
+             pendingReferral.rewardReleaseDate = new Date();
+             pendingReferral.firstDeliveredOrderId = order.orderId;
+             await pendingReferral.save({ session });
+
+             if (pendingReferral.referrerRewardAmount > 0) {
+               await User.findByIdAndUpdate(pendingReferral.referrer, { $inc: { walletBalance: pendingReferral.referrerRewardAmount } }, { session });
+               await WalletTransaction.create([{
+                 userId: pendingReferral.referrer,
+                 type: "Credit",
+                 amount: pendingReferral.referrerRewardAmount,
+                 description: "Referral reward received after referred user's first delivered order."
+               }], { session });
+               await Notification.create([{
+                 userId: pendingReferral.referrer,
+                 message: `You received ₹${pendingReferral.referrerRewardAmount} referral reward.`,
+                 type: 'Reward'
+               }], { session });
+             }
+
+             if (pendingReferral.referredRewardAmount > 0) {
+               await User.findByIdAndUpdate(order.userId, { $inc: { walletBalance: pendingReferral.referredRewardAmount } }, { session });
+               await WalletTransaction.create([{
+                 userId: order.userId,
+                 type: "Credit",
+                 amount: pendingReferral.referredRewardAmount,
+                 description: "Referral signup reward unlocked after first delivered order."
+               }], { session });
+               await Notification.create([{
+                 userId: order.userId,
+                 message: `You received ₹${pendingReferral.referredRewardAmount} referral reward.`,
+                 type: 'Reward'
+               }], { session });
+             }
+             await session.commitTransaction();
+          } else {
+             await session.abortTransaction();
+          }
+        } catch (error) {
+          console.error("Referral Transaction Error:", error);
+          await session.abortTransaction();
+        } finally {
+          session.endSession();
+        }
+      }
+    }
+
     await order.save();
     res.json({ success: true, message: `Order status updated to "${newStatus}" successfully.` });
   } catch (err) {
     console.error("updateOrderStatus error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updateItemStatus = async (req, res) => {
+  try {
+    const { newStatus } = req.body;
+    const { orderId, itemId } = req.params;
+    
+    const order = await Order.findOne({ orderId });
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    const item = order.products.id(itemId);
+    if (!item) return res.status(404).json({ success: false, message: "Item not found in order" });
+
+    const currentStatus = item.orderStatus;
+
+    if (FINALIZED_STATUSES.includes(currentStatus) || currentStatus === "Cancelled") {
+      return res.status(400).json({ success: false, message: "Cannot update a finalized item." });
+    }
+
+    if (!STATUS_FLOW.includes(newStatus)) {
+      return res.status(400).json({ success: false, message: "Invalid status." });
+    }
+
+    if (newStatus !== "Cancelled") {
+      const allowedNext = getNextAllowedStatus(currentStatus);
+      if (newStatus !== allowedNext) {
+        return res.status(400).json({ success: false, message: `Cannot skip steps. Next allowed is "${allowedNext}".` });
+      }
+    }
+
+    item.orderStatus = newStatus;
+
+    if (!item.trackingTimeline) item.trackingTimeline = [];
+    item.trackingTimeline.push({
+      status: newStatus,
+      message: `Status updated to ${newStatus} by admin`,
+      timestamp: new Date(),
+      completed: true
+    });
+
+    if (newStatus === "Cancelled") {
+      // 1. Restore Stock
+      await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+      
+      // 2. Refund to Wallet if Paid online
+      if (order.paymentStatus === "Paid" && order.paymentMethod !== "COD") {
+        const refundData = await calculateRefundAmount(order, item._id.toString(), item.quantity);
+        let refundAmount = refundData.refundAmount;
+        
+        const willBeAllCancelled = order.products.every(p => 
+          p._id.toString() === item._id.toString() || p.orderStatus === "Cancelled"
+        );
+
+        if (willBeAllCancelled && order.deliveryCharge > 0) {
+          refundAmount += order.deliveryCharge;
+        }
+
+        if (refundAmount > 0) {
+          item.refundAmountProcessed = refundAmount;
+          item.refundStatus = "Processed";
+          await User.findByIdAndUpdate(order.userId, { $inc: { walletBalance: refundAmount } });
+          await WalletTransaction.create({
+             userId: order.userId,
+             type: 'Credit',
+             amount: refundAmount,
+             description: `Refund for Cancelled Product (${item.productName})${willBeAllCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
+             orderId: order.orderId,
+             status: 'Success'
+          });
+        }
+      }
+    }
+
+    // Auto-complete COD payment if all non-cancelled items are Delivered
+    if (newStatus === "Delivered") {
+      if (order.paymentMethod === "COD") {
+        const allDone = order.products.every(p => p.orderStatus === "Delivered" || p.orderStatus === "Cancelled");
+        if (allDone) order.paymentStatus = "Paid";
+      }
+
+      // Referral Program Release Logic (First Delivered Order)
+      const userOrders = await Order.find({ userId: order.userId }).lean();
+      let hasPriorDelivery = false;
+      for (const uOrder of userOrders) {
+        if (uOrder._id.toString() === order._id.toString()) {
+           const previouslyDelivered = order.products.filter(p => p.orderStatus === "Delivered" && p._id.toString() !== itemId).length > 0;
+           if (previouslyDelivered) hasPriorDelivery = true;
+        } else {
+           if (uOrder.products.some(p => p.orderStatus === "Delivered")) {
+              hasPriorDelivery = true;
+              break;
+           }
+        }
+      }
+
+      if (!hasPriorDelivery) {
+        const session = await mongoose.startSession();
+        try {
+          session.startTransaction();
+          const pendingReferral = await Referral.findOne({ referredUser: order.userId, rewardStatus: "PENDING" }).session(session);
+          if (pendingReferral) {
+             pendingReferral.rewardStatus = "COMPLETED";
+             pendingReferral.rewardReleaseDate = new Date();
+             pendingReferral.firstDeliveredOrderId = order.orderId;
+             await pendingReferral.save({ session });
+
+             if (pendingReferral.referrerRewardAmount > 0) {
+               await User.findByIdAndUpdate(pendingReferral.referrer, { $inc: { walletBalance: pendingReferral.referrerRewardAmount } }, { session });
+               await WalletTransaction.create([{
+                 userId: pendingReferral.referrer,
+                 type: "Credit",
+                 amount: pendingReferral.referrerRewardAmount,
+                 description: "Referral reward received after referred user's first delivered order."
+               }], { session });
+               await Notification.create([{
+                 userId: pendingReferral.referrer,
+                 message: `You received ₹${pendingReferral.referrerRewardAmount} referral reward.`,
+                 type: 'Reward'
+               }], { session });
+             }
+
+             if (pendingReferral.referredRewardAmount > 0) {
+               await User.findByIdAndUpdate(order.userId, { $inc: { walletBalance: pendingReferral.referredRewardAmount } }, { session });
+               await WalletTransaction.create([{
+                 userId: order.userId,
+                 type: "Credit",
+                 amount: pendingReferral.referredRewardAmount,
+                 description: "Referral signup reward unlocked after first delivered order."
+               }], { session });
+               await Notification.create([{
+                 userId: order.userId,
+                 message: `You received ₹${pendingReferral.referredRewardAmount} referral reward.`,
+                 type: 'Reward'
+               }], { session });
+             }
+             await session.commitTransaction();
+          } else {
+             await session.abortTransaction();
+          }
+        } catch (error) {
+          console.error("Referral Transaction Error:", error);
+          await session.abortTransaction();
+        } finally {
+          session.endSession();
+        }
+      }
+    }
+
+    // Derive parent order status (e.g. if all items Cancelled, order is Cancelled)
+    const allCancelled = order.products.every(p => p.orderStatus === "Cancelled");
+    const allDeliveredOrCancelled = order.products.every(p => p.orderStatus === "Delivered" || p.orderStatus === "Cancelled");
+    
+    if (allCancelled) order.orderStatus = "Cancelled";
+    else if (allDeliveredOrCancelled) order.orderStatus = "Delivered";
+
+    await order.save();
+    res.json({ success: true, message: `Item status updated to "${newStatus}"` });
+
+  } catch (err) {
+    console.error("updateItemStatus error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -1956,16 +2212,23 @@ export const loadSettings = async (req, res) => {
 
 export const updateSettings = async (req, res) => {
   try {
-    const { standardShippingFee, fastShippingFee, returnPeriodDays } = req.body;
-    
+    const { action } = req.body;
     let settings = await Settings.findOne();
     if (!settings) {
       settings = new Settings({});
     }
     
-    settings.standardShippingFee = parseFloat(standardShippingFee) || 0;
-    settings.fastShippingFee = parseFloat(fastShippingFee) || 0;
-    settings.returnPeriodDays = parseInt(returnPeriodDays) || 7;
+    if (action === 'referral') {
+      const { referralProgramEnabled, referrerReward, referredReward } = req.body;
+      settings.referralProgramEnabled = referralProgramEnabled;
+      settings.referrerReward = parseFloat(referrerReward) || 0;
+      settings.referredReward = parseFloat(referredReward) || 0;
+    } else {
+      const { standardShippingFee, fastShippingFee, returnPeriodDays } = req.body;
+      settings.standardShippingFee = parseFloat(standardShippingFee) || 0;
+      settings.fastShippingFee = parseFloat(fastShippingFee) || 0;
+      settings.returnPeriodDays = parseInt(returnPeriodDays) || 7;
+    }
     
     await settings.save();
     res.json({ success: true, message: 'Settings updated successfully.' });
@@ -2021,6 +2284,7 @@ export const loadAdminReturns = async (req, res) => {
       firstProductName: o.products?.[0]?.productName || "-",
       // Return details
       returnReason: o.returnReason || "No reason provided",
+      refundMethod: o.products?.find(p => p.refundMethod)?.refundMethod || "Original Payment Method",
       returnRejectionReason: o.returnRejectionReason || "",
       returnPickupStatus: o.returnPickupStatus || "Pending",
       returnRefundStatus: o.returnRefundStatus || "Pending",
@@ -2327,21 +2591,43 @@ export const updateItemReturnAction = async (req, res) => {
         } else if (condition === 'Repair') {
           trackingMsg = 'Item returned and sent for repair.';
         }
+
+        // Automatic Refund Processing
+        const refundData = await calculateRefundAmount(order, item._id.toString(), item.quantity);
+        let refundAmount = refundData.refundAmount;
+
+        const willBeAllReturnedOrCancelled = order.products.every(p => 
+          p._id.toString() === item._id.toString() || p.orderStatus === "Returned" || p.orderStatus === "Cancelled"
+        );
+
+        if (willBeAllReturnedOrCancelled && order.deliveryCharge > 0) {
+          refundAmount += order.deliveryCharge;
+        }
+
+        if (order.paymentStatus === "Paid" && refundAmount > 0) {
+          item.refundAmountProcessed = refundAmount;
+          item.refundStatus = "Processed";
+          const user = await User.findById(order.userId);
+          if (user) {
+             user.walletBalance = (user.walletBalance || 0) + refundAmount;
+             await user.save();
+             const newTxn = new WalletTransaction({
+               userId: order.userId,
+               type: 'Credit',
+               amount: refundAmount,
+               description: `Refund for Returned Product (${item.productName})${willBeAllReturnedOrCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
+               orderId: order.orderId,
+               status: 'Success'
+             });
+             await newTxn.save();
+          }
+        }
       }
 
       item.orderStatus  = newStatus;
       item.returnStatus = meta.returnStatus;
       item.trackingTimeline.push({ status: newStatus, message: trackingMsg, timestamp: new Date(), completed: true });
       order.orderStatus = newStatus;
-
-      if (newStatus === 'Refund Processed') {
-        item.refundStatus = 'Processed';
-        const user = await User.findById(order.userId);
-        if (user) {
-          user.walletBalance = (user.walletBalance || 0) + (item.itemTotal || 0);
-          await user.save();
-        }
-      }
 
       await order.save();
       return res.json({ success: true, message: 'Status updated to ' + newStatus + '.' });

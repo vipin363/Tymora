@@ -17,6 +17,8 @@ const productSchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   featured: { type: Boolean, default: false },
   dealOfTheDay: { type: Boolean, default: false },
+  rating: { type: Number, default: 0 },
+  reviews: { type: Number, default: 0 },
   defaultVariant: { type: mongoose.Schema.Types.ObjectId, ref: 'Variant', default: null },
   deleted_at: { type: Date, default: null },
 }, { timestamps: true });

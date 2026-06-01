@@ -9,9 +9,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nocache from 'nocache';
 import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import { connectDB } from './db/connectDB.js';
 import passport from 'passport';
 import './config/passport.js';
+import { captureReferral } from './middleware/captureReferral.js';
 
 const app = express();
 
@@ -40,12 +42,38 @@ app.engine('hbs', engine({
         }, formatCurrency: (value) => {
             if (value == null) return '0';
             return Number(value).toLocaleString('en-IN');
+        }, toLowerCase: (str) => {
+            if (typeof str === 'string') return str.toLowerCase();
+            return '';
+        }, substr: (str, start, length) => {
+            if (typeof str === 'string') return str.substring(start, length);
+            return '';
         },
         times: function(n, block) {
             let accum = '';
             for(let i = 0; i < n; i++) accum += block.fn(i);
             return accum;
-        }
+        },
+        formatDate: (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB'); // DD/MM/YYYY
+        },
+        replace: (str, find, replaceWith) => {
+            if (typeof str !== 'string') return str;
+            return str.split(find).join(replaceWith);
+        },
+        sumByType: (arr, type) => {
+            if (!Array.isArray(arr)) return 0;
+            return arr.filter(t => t.type === type).reduce((sum, t) => sum + (t.amount || 0), 0);
+        },
+        addOne: (index) => index + 1,
+        formatDateTime: (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        },
+        todayDate: () => new Date().toISOString().split('T')[0]
     }
 }));
 
@@ -63,9 +91,11 @@ app.use(session({
     }
 }));
 
+app.use(cookieParser());
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(captureReferral); // Capture ?ref= from any page globally
 
 app.use(passport.initialize());
 app.use(passport.session());

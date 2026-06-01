@@ -1,6 +1,22 @@
 
 import Review from "../model/reviewModel.js";
 import Order from "../model/orderModel.js";
+import Product from "../model/productModel.js";
+
+export const updateProductRating = async (productId) => {
+  try {
+    const reviews = await Review.find({ productId, isVisible: true });
+    const numReviews = reviews.length;
+    let avgRating = 0;
+    if (numReviews > 0) {
+      const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+      avgRating = (sum / numReviews).toFixed(1);
+    }
+    await Product.findByIdAndUpdate(productId, { rating: avgRating, reviews: numReviews });
+  } catch (error) {
+    console.error("Error updating product rating:", error);
+  }
+};
 
 
 export const addReview = async (req, res) => {
@@ -14,13 +30,16 @@ export const addReview = async (req, res) => {
 
     
     const order = await Order.findOne({ orderId, userId });
-    if (!order || order.orderStatus !== "Delivered") {
-      return res.status(400).json({ success: false, message: "You can only review products after the order is delivered." });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found." });
     }
 
-   
-    const hasProduct = order.products.some(p => p.productId.toString() === productId);
-    if (!hasProduct) return res.status(400).json({ success: false, message: "Product not found in this order." });
+    const productItem = order.products.find(p => p.productId.toString() === productId);
+    if (!productItem) return res.status(400).json({ success: false, message: "Product not found in this order." });
+
+    if (productItem.orderStatus !== "Delivered") {
+      return res.status(400).json({ success: false, message: "You can only review products after they have been delivered." });
+    }
 
     const existingReview = await Review.findOne({ productId, userId, orderId });
     if (existingReview) {
@@ -30,13 +49,14 @@ export const addReview = async (req, res) => {
     const review = new Review({ productId, userId, orderId, rating: Number(rating), reviewText });
     await review.save();
 
+    await updateProductRating(productId);
+
     res.json({ success: true, message: "Review submitted successfully!" });
   } catch (err) {
     console.error("addReview error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 export const editReview = async (req, res) => {
   try {
@@ -58,13 +78,14 @@ export const editReview = async (req, res) => {
 
     if (!review) return res.status(404).json({ success: false, message: "Review not found" });
 
+    await updateProductRating(review.productId);
+
     res.json({ success: true, message: "Review updated successfully!" });
   } catch (err) {
     console.error("editReview error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 export const deleteReview = async (req, res) => {
   try {
@@ -76,13 +97,14 @@ export const deleteReview = async (req, res) => {
 
     if (!deleted) return res.status(404).json({ success: false, message: "Review not found" });
 
+    await updateProductRating(deleted.productId);
+
     res.json({ success: true, message: "Review deleted successfully!" });
   } catch (err) {
     console.error("deleteReview error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 export const getMyReviews = async (req, res) => {
   try {

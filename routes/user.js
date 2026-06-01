@@ -1,14 +1,16 @@
 import express from 'express';
 const router = express.Router()
 import { isLogin, isAuth, hasOtpSession, hasForgotSession, hasResetVerified } from '../middleware/userAuth.js';
+import { clearReferralCookie } from '../middleware/captureReferral.js';
 import {
   loadLogin, login, loadRegister, registerUser, homePage, logout, loadForgotPassword,
   forgotPassword, loadResetPassword, resetPassword, loadProfile, loadEditProfile, updateProfile,
   changeEmail, verifyChangeEmail, resendChangeEmailOtp, deleteAccount, changePassword,
   loadAddressPage, addAddress, updateAddress, getAddress, setDefaultAddress, deleteAddress,
-  loadshop, loadProductDetail, loadWishlist, toggleWishlist, getWishlistIds, addAllToCart,
+  loadshop, loadCollectionPage, loadProductDetail, loadWishlist, toggleWishlist, getWishlistIds, addAllToCart,
   loadCart, loadCheckout, calculateCheckout, addToCart, updateCartItem, removeCartItem, getCartCount, checkProductStatus,
-  placeOrder, loadOrderSuccess, getUserOrders, buyNow, cancelOrder, trackOrder, downloadInvoice, requestReturn, loadOrderDetails
+  placeOrder, verifyPayment, loadOrderSuccess, loadPaymentFailed, getUserOrders, buyNow, cancelOrder, trackOrder, downloadInvoice, requestReturn, loadOrderDetails, loadDeals, loadAboutUs, loadMyCoupons, loadMyWallet, topUpWallet, verifyWalletTopUp, loadReferrals,
+  googleLoginInit, googleRegisterInit, googleCallback
 } from '../controller/userController.js';
 import { addReview, editReview, deleteReview, getMyReviews } from '../controller/reviewController.js';
 import { loadOtpPage, verifyOtp, resendOtp, loadForgotOtpPage, verifyForgotOtp } from '../controller/otpController.js';
@@ -48,48 +50,24 @@ router.get('/home', (req, res) => {
   res.redirect('/user/');
 });
 
-router.get('/auth/google/login', (req, res, next) => {
-  req.session.googleAuthType = 'login';
-  next();
-}, passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/login', googleLoginInit, passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/register', googleRegisterInit, passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/callback', googleCallback);
 
-router.get('/auth/google/register', (req, res, next) => {
-  req.session.googleAuthType = 'register';
-  next();
-}, passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get('/auth/google/callback', (req, res, next) => {
-  passport.authenticate('google', (err, user, info) => {
-    if (err) return next(err);
-    const isRegister = req.session.googleAuthType === 'register';
-    if (!user) {
-      req.session.googleAuthType = null;
-      if (isRegister) {
-        return res.redirect(`/user/register?message=${info.message}`);
-      } else {
-        return res.redirect(`/user/login?message=${info.message}`);
-      }
-    }
-    req.session.user = {
-      id: user._id,
-      name: user.name
-    };
-    req.session.googleAuthType = null;
-    res.redirect('/user/home');
-  })(req, res, next);
-});
-
+// My Profile
 router.get('/profile', isAuth, loadProfile);
 router.get('/editProfile', isAuth, loadEditProfile);
-router.post('/updateProfile', isAuth, upload.single('avatar'), updateProfile);
-
-router.post('/changeEmail', isAuth, changeEmail);
+router.post('/updateProfile', isAuth, upload.single('profileImage'), updateProfile);
+router.post('/deleteAccount', isAuth, deleteAccount);
+router.get('/coupons', isAuth, loadMyCoupons);
+router.get('/wallet', isAuth, loadMyWallet);
+router.post('/wallet/topup', isAuth, topUpWallet);
+router.post('/wallet/verify-topup', isAuth, verifyWalletTopUp);
 router.post('/verifyEmailOtp', isAuth, verifyChangeEmail);
 router.post('/resendEmailOtp', isAuth, resendChangeEmailOtp);
 
 router.post('/changePassword', isAuth, changePassword);
 
-router.post('/deleteAccount', isAuth, deleteAccount);
 
 router.get('/address', isAuth, loadAddressPage);
 router.post("/addAddress", isAuth, addAddress);
@@ -99,6 +77,9 @@ router.get("/setDefault/:id", isAuth, setDefaultAddress);
 router.post("/deleteAddress/:id", isAuth, deleteAddress);
 
 router.get('/shop', loadshop);
+router.get('/deals', loadDeals);
+router.get('/about', loadAboutUs);
+router.get('/collection/:collectionId', loadCollectionPage);
 router.get('/product/:id', loadProductDetail);
 
 router.get('/wishlist', isAuth, loadWishlist);
@@ -116,14 +97,17 @@ router.post('/checkout/buy-now', isAuth, buyNow);
 router.get('/checkout', isAuth, loadCheckout);
 router.post('/checkout/calculate', isAuth, calculateCheckout);
 router.post('/checkout/place-order', isAuth, placeOrder);
+router.post('/checkout/verify-payment', isAuth, verifyPayment);
 
 router.get('/order-success', isAuth, loadOrderSuccess);
+router.get('/payment-failed', isAuth, loadPaymentFailed);
 router.get('/orders', isAuth, getUserOrders);
 router.get('/order-details/:orderId', isAuth, loadOrderDetails);
 router.get('/track-order/:orderId/:itemId', isAuth, trackOrder);
 router.get('/orders/invoice/:orderId', isAuth, downloadInvoice);
 router.post('/orders/cancel', isAuth, cancelOrder);
 router.post('/orders/return', isAuth, upload.array('evidenceImages', 3), requestReturn);
+router.get('/referrals', isAuth, loadReferrals);
 
 router.post('/reviews/add', isAuth, addReview);
 router.post('/reviews/edit/:reviewId', isAuth, editReview);
@@ -136,7 +120,7 @@ router.get('/api/product-status/:id', checkProductStatus);
 router.get('/api/related/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
-    const userId = req.session.user?.id;   // ← get logged-in user
+    const userId = req.session.user?.id;   
     const TARGET = 4;
 
     const current = await Product.findOne({

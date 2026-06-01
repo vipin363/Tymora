@@ -32,7 +32,7 @@
     });
   }
 
-  async function toggleWishlist(productId) {
+ async function toggleWishlist(productId) {
     if (!window.SHOP_USER_LOGGED_IN) {
       window.location.href = '/user/login';
       return;
@@ -56,6 +56,15 @@
       }
       const finalState = data.status === 'added';
       syncAllHearts(productId, finalState);
+
+      // ── Update wishlist badge instantly ──
+      if (typeof window.updateWishlistBadge === 'function') {
+        fetch('/user/wishlist/ids')
+          .then(r => r.json())
+          .then(d => window.updateWishlistBadge(d.ids ? d.ids.length : 0))
+          .catch(() => {});
+      }
+
       showShopToast(
         finalState ? 'Added to wishlist ♡' : 'Removed from wishlist',
         finalState ? 'gold' : 'muted'
@@ -65,7 +74,6 @@
       console.error('Wishlist error:', err);
     }
   }
-
 
 
   function applyQuickAddState(btn, inCart) {
@@ -96,11 +104,10 @@
     });
   }
 
-  function updateCartCountBadge(count) {
-    document.querySelectorAll('.cart-count-badge, #cartCount, [data-cart-count]').forEach(el => {
-      el.textContent   = count;
-      el.style.display = count > 0 ? '' : 'none';
-    });
+ function updateCartCountBadge(count) {
+    if (typeof window.updateCartBadge === 'function') {
+      window.updateCartBadge(count);
+    }
   }
 
 

@@ -90,6 +90,9 @@
                 {{#if this.oldPrice}}
                   <span class="prod-price-old">₹{{formatCurrency this.oldPrice}}</span>
                 {{/if}}
+                {{#if this.discountPct}}
+                  <span class="prod-discount-pill">{{this.discountPct}}% OFF</span>
+                {{/if}}
               </div>
               <button class="prod-btn"
                       onclick="window.location.href='/user/product/{{this.id}}'">

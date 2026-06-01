@@ -36,6 +36,16 @@ const userSchema = mongoose.Schema({
     walletBalance:{
         type:Number,
         default:0
+    },
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true 
+    },
+    referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        default: null
     }
  } , { timestamps: true })
     

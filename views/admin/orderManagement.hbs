@@ -19,11 +19,11 @@
       <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
       <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
       <div class="nav-label" style="margin-top:12px">Store</div>
-      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Returns</a>
-      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
-      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
+            <a class="nav-item {{#ifEquals activePage 'reviews'}}active{{/ifEquals}}" href="/admin/reviews"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
+      <a class="nav-item {{#ifEquals activePage 'offers'}}active{{/ifEquals}}" href="/admin/offers"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
       <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
-      <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
+      <a class="nav-item {{#ifEquals activePage 'reports'}}active{{/ifEquals}}" href="/admin/reports"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
+      
       <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
     </div>
     <div class="nav-footer">
@@ -48,6 +48,7 @@
     <option value="Delivered" {{#ifEquals status "Delivered"}}selected{{/ifEquals}}>Delivered</option>
     <option value="Cancelled" {{#ifEquals status "Cancelled"}}selected{{/ifEquals}}>Cancelled</option>
     <option value="Return Requested" {{#ifEquals status "Return Requested"}}selected{{/ifEquals}}>Return Requested</option>
+    <option value="Returned" {{#ifEquals status "Returned"}}selected{{/ifEquals}}>Returned</option>
   </select>
 
   <select name="sort" class="sort-select">
@@ -110,7 +111,6 @@
           <tr>
             <th>Order ID</th>
             <th>Customer</th>
-            <th>Items</th>
             <th>Amount</th>
             <th>Payment</th>
             <th>Status</th>
@@ -131,7 +131,7 @@
                 </div>
               </div>
             </td>
-            <td>{{this.productCount}}</td>
+
             <td style="font-weight:600">₹{{formatCurrency this.totalAmount}}</td>
             <td>
               {{#ifEquals this.paymentMethod "COD"}}
@@ -141,54 +141,101 @@
               {{/ifEquals}}
             </td>
             <td>
-              {{#ifEquals this.orderStatus "Pending"}}
-                <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">Pending</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Confirmed"}}
-                <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Confirmed</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Packed"}}
-                <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">Packed</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Shipped"}}
-                <span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)">Shipped</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Out for Delivery"}}
-                <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">Out for Delivery</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Delivered"}}
-                <span class="badge s-active">Delivered</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Cancelled"}}
-                <span class="badge s-blocked">Cancelled</span>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Return Requested"}}
-                <span class="badge" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3)">Return Req.</span>
-              {{/ifEquals}}
+              {{#if this.hasMixedStatus}}
+                <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                  {{#each this.mixedStatuses}}
+                    {{#ifEquals this.status "Pending"}}
+                      <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3); font-size:0.7rem; padding:3px 8px;">Pending • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Confirmed"}}
+                      <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3); font-size:0.7rem; padding:3px 8px;">Confirmed • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Packed"}}
+                      <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3); font-size:0.7rem; padding:3px 8px;">Packed • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Shipped"}}
+                      <span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3); font-size:0.7rem; padding:3px 8px;">Shipped • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Out for Delivery"}}
+                      <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3); font-size:0.7rem; padding:3px 8px;">Out for Delivery • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Delivered"}}
+                      <span class="badge s-active" style="font-size:0.7rem; padding:3px 8px;">Delivered • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Cancelled"}}
+                      <span class="badge s-blocked" style="font-size:0.7rem; padding:3px 8px;">Cancelled • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Requested"}}
+                      <span class="badge" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3); font-size:0.7rem; padding:3px 8px;">Return Req. • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Approved"}}
+                      <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3); font-size:0.7rem; padding:3px 8px;">Ret. Apprvd • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Pickup Scheduled"}}
+                      <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3); font-size:0.7rem; padding:3px 8px;">Pickup Sched. • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Picked"}}
+                      <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3); font-size:0.7rem; padding:3px 8px;">Ret. Picked • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Rejected"}}
+                      <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3); font-size:0.7rem; padding:3px 8px;">Ret. Rejected • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Returned"}}
+                      <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3); font-size:0.7rem; padding:3px 8px;">Returned • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Refund Processed"}}
+                      <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3); font-size:0.7rem; padding:3px 8px;">Refunded • {{this.count}}</span>
+                    {{/ifEquals}}
+                  {{/each}}
+                </div>
+              {{else}}
+                {{#ifEquals this.summaryStatus "Pending"}}
+                  <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">Pending</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Confirmed"}}
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Confirmed</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Packed"}}
+                  <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">Packed</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Shipped"}}
+                  <span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)">Shipped</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Out for Delivery"}}
+                  <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">Out for Delivery</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Delivered"}}
+                  <span class="badge s-active">Delivered</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Cancelled"}}
+                  <span class="badge s-blocked">Cancelled</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Requested"}}
+                  <span class="badge" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3)">Return Req.</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Approved"}}
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Ret. Apprvd</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Pickup Scheduled"}}
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Pickup Sched.</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Picked"}}
+                  <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">Ret. Picked</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Rejected"}}
+                  <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">Ret. Rejected</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Returned"}}
+                  <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">Returned</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Refund Processed"}}
+                  <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">Refunded</span>
+                {{/ifEquals}}
+              {{/if}}
             </td>
             <td>{{this.orderDateFormatted}}</td>
             <td>
-              <button class="act-btn" onclick="window.location.href='/admin/orders/{{this.orderId}}'">View</button>
-              {{#ifEquals this.orderStatus "Pending"}}
-                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Confirmed')">Confirm</button>
-                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Confirmed"}}
-                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Packed')">Pack</button>
-                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Packed"}}
-                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Shipped')">Ship</button>
-                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Shipped"}}
-                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Out for Delivery')">Out for Delivery</button>
-                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
-              {{/ifEquals}}
-              {{#ifEquals this.orderStatus "Out for Delivery"}}
-                <button class="act-btn" onclick="updateStatus('{{this.orderId}}', 'Delivered')">Deliver</button>
-                <button class="act-btn" style="color:#ef4444; border-color:#ef4444" onclick="updateStatus('{{this.orderId}}', 'Cancelled')">Cancel</button>
-              {{/ifEquals}}
+              <button class="act-btn" onclick="window.location.href='/admin/orders/{{this.orderId}}'">View Order</button>
             </td>
           </tr>
           {{/each}}

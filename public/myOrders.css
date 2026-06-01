@@ -149,10 +149,33 @@
   letter-spacing: 1px;
 }
 .mo-prod-price {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--gold);
   white-space: nowrap;
+}
+.mo-prod-price-wrap {
+  text-align: right;
+  line-height: 1.4;
+}
+.mo-prod-price-old {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: line-through;
+  display: block;
+  margin-top: 2px;
+}
+.mo-prod-discount-pill {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #e05252;
+  background: rgba(224,82,82,0.1);
+  border: 1px solid rgba(224,82,82,0.25);
+  padding: 2px 7px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 3px;
 }
 
 /* Footer */

@@ -60,32 +60,6 @@
   <!-- RIGHT COLUMN -->
   <div class="right-col">
 
-    <!-- STATS -->
-    <div class="stats-row">
-
-      <div class="stat-card">
-        <div class="stat-value">
-          {{stats.watchesOwned}}
-        </div>
-        <div class="stat-label">Watches Owned</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value gold">
-          {{stats.totalSpent}}
-        </div>
-        <div class="stat-label">Total Spent</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value">
-          {{stats.activeReturns}}
-        </div>
-        <div class="stat-label">Active Returns</div>
-      </div>
-
-    </div>
-
     <!-- QUICK LINKS -->
     <div class="quick-links">
 
@@ -159,36 +133,39 @@
 
       </div>
 
-      <!-- RECENT ACTIVITY -->
+      <!-- REFERRAL PROGRAMME SNIPPET -->
       <div class="panel">
+        <div class="panel-title">Referral Programme</div>
 
-        <div class="panel-title">Recent Activity</div>
+        <div style="margin-bottom: 12px;">
+          <div class="info-label" style="font-size:0.75rem; margin-bottom:6px;">Your Referral Code</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-family:monospace; font-size:1rem; font-weight:700; color:var(--gold); letter-spacing:2px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); padding:6px 12px; border-radius:6px;">{{user.referralCode}}</span>
+            <button onclick="copyReferralCode()" style="background:transparent; border:1px solid rgba(201,168,76,0.3); color:var(--gold); padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.75rem;" id="copyCodeBtn">Copy</button>
+          </div>
+        </div>
 
-        {{#if recentActivity.length}}
+        <div style="margin-bottom: 16px;">
+          <div class="info-label" style="font-size:0.75rem; margin-bottom:6px;">Total Referral Earnings</div>
+          <div style="font-size:1.4rem; font-weight:700; color:var(--gold);">₹{{referralStats.totalEarned}}</div>
+          <div style="font-size:0.75rem; color:#888; margin-top:2px;">{{referralStats.total}} referral(s) · {{referralStats.released}} reward(s) released</div>
+        </div>
 
-          {{#each recentActivity}}
-            <div class="activity-item">
-
-              <div class="act-dot"></div>
-
-              <div>
-                <div class="act-text">{{this.text}}</div>
-                <div class="act-time">{{this.time}}</div>
-              </div>
-
-            </div>
-          {{/each}}
-
-        {{else}}
-
-          <div class="activity-item">
+        {{#if referralStats.recent.length}}
+        <div style="margin-bottom:14px;">
+          {{#each referralStats.recent}}
+          <div class="activity-item" style="margin-bottom:6px;">
+            <div class="act-dot" style="background:{{#ifEquals this.rewardStatus 'Released'}}var(--gold){{else}}#555{{/ifEquals}};"></div>
             <div>
-              <div class="act-text">No recent activity</div>
+              <div class="act-text">{{this.referredUser.name}}</div>
+              <div class="act-time">{{this.rewardStatus}} · ₹{{this.referrerRewardAmount}}</div>
             </div>
           </div>
-
+          {{/each}}
+        </div>
         {{/if}}
 
+        <a href="/user/referrals" style="display:block; text-align:center; padding:8px; border:1px solid rgba(201,168,76,0.25); border-radius:6px; color:var(--gold); font-size:0.8rem; text-decoration:none; transition: background 0.2s;" onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background='transparent'">View All Referrals →</a>
       </div>
 
     </div>
@@ -427,4 +404,16 @@
 </div>
 
 <script src="/js/profile.js"></script>
+<script>
+function copyReferralCode() {
+  const code = '{{user.referralCode}}';
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyCodeBtn');
+    btn.textContent = 'Copied!';
+    btn.style.color = '#4ade80';
+    btn.style.borderColor = '#4ade80';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  });
+}
+</script>
 

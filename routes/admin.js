@@ -8,10 +8,15 @@ import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,
        getProductJson, softDeleteProduct, loadProductTrash,restoreProduct, permanentDeleteProduct, 
        getProductDetail, getVariants, addVariant, editVariant, getVariantJson,softDeleteVariant, 
        getVariantTrash, restoreVariant, permanentDeleteVariant,getMaterials, addMaterial, 
-       getSavedColors, saveColor,generateProductSku, generateVariantSku,setDefaultVariant,
-       loadAdminOrders, loadAdminOrderDetail, updateOrderStatus, loadSettings, updateSettings,
+       getSavedColors, saveColor, generateProductSku, generateVariantSku,setDefaultVariant,
+       loadAdminOrders, loadAdminOrderDetail, updateOrderStatus, updateItemStatus, loadSettings, updateSettings,
        loadAdminReturns, approveReturn, rejectReturn, updatePickupStatus, inspectReturn, updateRefundStatus, updateItemReturnAction } from '../controller/adminController.js';
+import { loadAdminReviews, toggleReviewStatus, deleteReview } from '../controller/adminReviewController.js';
+import { loadAdminOffers, createOffer, updateOffer, toggleOfferStatus, deleteOffer } from '../controller/offerController.js';
+import { loadAdminCoupons, createCoupon, updateCoupon, toggleCouponStatus, deleteCoupon } from '../controller/couponController.js';
+import { loadSalesReport, exportPdfReport, exportExcelReport, getDashboardData } from '../controller/adminReportController.js';
 import { loadAdminOtpPage, verifyAdminForgotOtp,resendAdminOtp } from '../controller/otpController.js';
+import { loadLedgerBook, exportLedgerExcel, exportLedgerPdf } from '../controller/adminLedgerController.js';
 import upload from '../middleware/uploard.js';
 import Category from '../model/categoryModel.js';
 import uploadProduct from '../middleware/productUpload.js'
@@ -19,6 +24,7 @@ import uploadProduct from '../middleware/productUpload.js'
 router.get('/login',isAdminLogin,loadLogin)
 router.post("/login", login);
 router.get("/dashboard", isAdminAuth, loadDashboard);
+router.get("/dashboard/data", isAdminAuth, getDashboardData);
 
 router.get('/forgotPassword',isAdminLogin,loadForgotPassword)
 router.post('/forgotPassword',forgotPassword)
@@ -104,11 +110,12 @@ router.get('/logout', logout);
 router.get('/orders', isAdminAuth, loadAdminOrders);
 router.get('/orders/:orderId', isAdminAuth, loadAdminOrderDetail);
 router.post('/orders/:orderId/status', isAdminAuth, updateOrderStatus);
+router.post('/orders/:orderId/items/:itemId/status', isAdminAuth, updateItemStatus);
 
 router.get('/settings', isAdminAuth, loadSettings);
 router.post('/settings', isAdminAuth, updateSettings);
 
-// ── Return Management ─────────────────────────────────────────
+
 router.get('/returns', isAdminAuth, loadAdminReturns);
 router.post('/returns/:orderId/approve', isAdminAuth, approveReturn);
 router.post('/returns/:orderId/reject', isAdminAuth, rejectReturn);
@@ -116,12 +123,40 @@ router.post('/returns/:orderId/pickup-status', isAdminAuth, updatePickupStatus);
 router.post('/returns/:orderId/inspect', isAdminAuth, inspectReturn);
 router.post('/returns/:orderId/refund-status', isAdminAuth, updateRefundStatus);
 
-// ── Per-item return action ────────────────────────────────────────────
+
 router.post('/orders/:orderId/items/:itemId/return-action', isAdminAuth, updateItemReturnAction);
+
+
+router.get('/reviews', isAdminAuth, loadAdminReviews);
+router.patch('/reviews/:id/status', isAdminAuth, toggleReviewStatus);
+router.delete('/reviews/:id', isAdminAuth, deleteReview);
+
+
+router.get('/offers', isAdminAuth, loadAdminOffers);
+router.post('/offers', isAdminAuth, createOffer);
+router.put('/offers/:id', isAdminAuth, updateOffer);
+router.patch('/offers/:id/status', isAdminAuth, toggleOfferStatus);
+router.delete('/offers/:id', isAdminAuth, deleteOffer);
+
+
+router.get('/coupons', isAdminAuth, loadAdminCoupons);
+router.post('/coupons', isAdminAuth, createCoupon);
+router.put('/coupons/:id', isAdminAuth, updateCoupon);
+router.patch('/coupons/:id/status', isAdminAuth, toggleCouponStatus);
+router.delete('/coupons/:id', isAdminAuth, deleteCoupon);
+
+
+router.get('/reports', isAdminAuth, loadSalesReport);
+router.get('/reports/export/pdf', isAdminAuth, exportPdfReport);
+router.get('/reports/export/excel', isAdminAuth, exportExcelReport);
+
+
+router.get('/ledger', isAdminAuth, loadLedgerBook);
+router.get('/ledger/export/excel', isAdminAuth, exportLedgerExcel);
+router.get('/ledger/export/pdf', isAdminAuth, exportLedgerPdf);
 
 router.use((req,res)=>{
    res.redirect('/admin/login');
 });
 
 export default router;
-

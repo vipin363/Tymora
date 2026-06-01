@@ -7,7 +7,7 @@ const trackingEntrySchema = new mongoose.Schema({
   completed:  { type: Boolean, default: false },
 }, { _id: false });
 
-// ── Product snapshot (frozen at purchase time) 
+
 const orderItemSchema = new mongoose.Schema({
   productId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
   variantId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Variant' },
@@ -20,7 +20,17 @@ const orderItemSchema = new mongoose.Schema({
   itemTotal:      { type: Number, required: true },
   discountPercent:{ type: Number, default: 0 },
   
-  // ── Product-Level Order Management 
+  
+  productOriginalPrice:  { type: Number, default: 0 },
+  productOfferDiscount:  { type: Number, default: 0 },
+  categoryOfferDiscount: { type: Number, default: 0 },
+  referralDiscountShare: { type: Number, default: 0 },
+  couponDiscountShare:   { type: Number, default: 0 },
+  offerDiscountShare:    { type: Number, default: 0 },
+  productFinalPaidPrice: { type: Number, default: 0 },
+  refundAmountProcessed: { type: Number, default: 0 },
+  
+ 
   orderStatus: {
     type: String,
     enum: [
@@ -48,6 +58,7 @@ const orderItemSchema = new mongoose.Schema({
   trackingTimeline: [trackingEntrySchema],
   cancellationReason: { type: String, default: '' },
   returnReason:       { type: String, default: '' },
+  refundMethod:       { type: String, enum: ['Wallet', 'Original Payment Method'], default: 'Original Payment Method' },
   returnEvidenceImages: [{ type: String }],
   returnRejectionReason: { type: String, default: '' },
   returnPickupStatus: { type: String, default: 'Pending' }, // 'Pending', 'Scheduled', 'Picked'
@@ -113,6 +124,12 @@ const orderSchema = new mongoose.Schema({
   subtotalMrp:    { type: Number, default: 0 },
   discount:       { type: Number, default: 0 },
   couponDiscount: { type: Number, default: 0 },
+  couponCode:     { type: String, default: '' },
+  couponType:     { type: String, default: '' },
+  offerDiscount:  { type: Number, default: 0 },
+  offerName:      { type: String, default: '' },
+  offerType:      { type: String, default: '' },
+  offerId:        { type: String, default: '' },
   deliveryCharge: { type: Number, default: 0 },
   codCharge:      { type: Number, default: 0 },
   cgst:           { type: Number, default: 0 },
@@ -124,9 +141,12 @@ const orderSchema = new mongoose.Schema({
   orderDate:         { type: Date, default: Date.now },
   estimatedDelivery: { type: Date },
 
-  razorpayOrderId:    { type: String, default: '' },
-  razorpayOrderId:    { type: String, default: '' },
-  invoiceUrl:         { type: String, default: '' },
+  razorpayOrderId:   { type: String, default: '' },
+  razorpayPaymentId: { type: String, default: '' },
+  pendingCouponId:   { type: String, default: '' }, // Cleared after payment verified
+  pendingOfferId:    { type: String, default: '' }, // Cleared after payment verified
+  invoiceUrl:        { type: String, default: '' },
+  notes:             { type: String, default: '' },
 
 }, { timestamps: true });
 

@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Account icon highlight for all profile-related sub-pages
     const accountBtn = document.querySelector('a.nav-icon-btn[href="/user/profile"]');
     if (accountBtn) {
-      const profilePaths = ['/profile', '/editProfile', '/address', '/orders', '/wishlist', '/wallet', '/coupons'];
+      const profilePaths = ['/profile', '/editProfile', '/address', '/orders', '/wallet', '/coupons'];
       const isProfilePage = profilePaths.some(p => path.includes(p));
       
       const svg = accountBtn.querySelector('svg');

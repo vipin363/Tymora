@@ -7,6 +7,9 @@ const reviewSchema = new mongoose.Schema({
   orderId: { type: String, required: true }, // To enforce 1 review per product per order
   rating: { type: Number, required: true, min: 1, max: 5 },
   reviewText: { type: String, required: true, minlength: 5, maxlength: 500 },
+  isVisible: { type: Boolean, default: true },
+  isFeatured: { type: Boolean, default: false },
+  images: { type: [String], default: [] },
 }, { timestamps: true });
 
 // Prevent multiple reviews for the same product in the same order
