@@ -83,7 +83,7 @@ export const loadAdminOffers = async (req, res) => {
     const categories = await Category.find({ deleted_at: null }, 'name _id').lean();
     const brands     = await Brand.find({}, 'name _id').lean(); // Assuming standard setup
 
-    res.render('admin/offerManagement', {
+    res.render('admin/offerManagement', { layout: 'admin', 
       activePage: 'offers',
       offers: formattedOffers,
       stats,

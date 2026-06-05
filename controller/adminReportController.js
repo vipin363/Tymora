@@ -347,7 +347,7 @@ export const loadSalesReport = async (req, res) => {
         const data = await getReportData(req.query, false);
 
 
-        res.render('admin/salesReport', {
+        res.render('admin/salesReport', { layout: 'admin', 
             activePage: 'reports',
             query: req.query,
             metrics: data.metrics,

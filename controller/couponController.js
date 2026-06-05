@@ -96,7 +96,7 @@ export const loadAdminCoupons = async (req, res) => {
     const categories = await Category.find({ deleted_at: null }, 'name _id').lean();
     const brands     = await Brand.find({}, 'name _id').lean();
 
-    res.render('admin/couponManagement', {
+    res.render('admin/couponManagement', { layout: 'admin', 
       activePage: 'coupons',
       coupons: formattedCoupons,
       currentPage: page, totalPages,

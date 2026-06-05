@@ -1,616 +1,584 @@
-
 <link href="/adminUserManagement.css" rel="stylesheet">
 
 <div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="brand">
-        <div class="logo-icon">T</div>
-        <div class="logo-text">
-          <div class="name">Tymora</div>
-          <div class="tagline">Tym of Refined Aesthetics</div>
-        </div>
-      </div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Main</div>
-     <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}" href="/admin/dashboard">Dashboard</a>
-      <a class="nav-item" href="/admin/categoryManagement">Category management</a>
-      <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}" href="/admin/products">Products</a>
-     <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
-      <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
-      <div class="nav-label" style="margin-top:12px">Store</div>
-      
-      <a class="nav-item {{#ifEquals activePage 'reviews'}}active{{/ifEquals}}" href="/admin/reviews"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
-      <a class="nav-item {{#ifEquals activePage 'offers'}}active{{/ifEquals}}" href="/admin/offers"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
-      <a class="nav-item {{#ifEquals activePage 'coupons'}}active{{/ifEquals}}" href="/admin/coupons"><svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
-      <a class="nav-item {{#ifEquals activePage 'reports'}}active{{/ifEquals}}" href="/admin/reports"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
-      
-      <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
-    </div>
-    <div class="nav-footer">
-      <a class="nav-item logout" href="#" onclick="openLogoutModal()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
-    </div>
-  </aside>
-  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
-  <div class="main">
-    <header class="topbar">
-      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <span class="topbar-title">Dashboard</span>
-    
-<form method="GET" action="/admin/users" class="search-bar">
+    {{> admin/sidebar}}
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="main">
+        <header class="topbar">
+            <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg></button>
+            <span class="topbar-title">Dashboard</span>
 
-  <input 
-    type="text" 
-    name="search" 
-    placeholder="Search users..."
-    value="{{search}}"
-  >
+            <form method="GET" action="/admin/users" class="search-bar">
 
-  <!-- SORT DROPDOWN -->
-  <select name="sort" class="sort-select">
-    <option value="latest" {{#if (eq sort "latest")}}selected{{/if}}>Latest</option>
-    <option value="oldest" {{#if (eq sort "oldest")}}selected{{/if}}>Oldest</option>
-  </select>
+                <input type="text" name="search" placeholder="Search users..." value="{{search}}">
 
-  <select name="status" class="sort-select">
-  <option value="all" {{#if (eq status "all")}}selected{{/if}}>All</option>
-  <option value="blocked" {{#if (eq status "blocked")}}selected{{/if}}>Blocked</option>
-  <option value="active" {{#if (eq status "active")}}selected{{/if}}>Active</option>
-</select>
+                <!-- SORT DROPDOWN -->
+                <select name="sort" class="sort-select">
+                    <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
+                    <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
+                </select>
 
-  <button type="submit" class="btn-search">Search</button>
+                <select name="status" class="sort-select">
+                    <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All</option>
+                    <option value="blocked" {{#if (eq status "blocked" )}}selected{{/if}}>Blocked</option>
+                    <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
+                </select>
 
-  {{#if search}}
-    <a href="/admin/users" class="btn-clear">Clear</a>
-  {{/if}}
+                <button type="submit" class="btn-search">Search</button>
 
-</form>
-      <div class="admin-info">
-        <div class="admin-avatar">AU</div>
-        <div class="admin-meta">
-          <div class="admin-name">Admin User</div>
-        </div>
-      </div>
-    </header>
+                {{#if search}}
+                <a href="/admin/users" class="btn-clear">Clear</a>
+                {{/if}}
 
-
-
-
-    <!-- ══ PAGE 1: USER LIST ══ -->
-    <main class="content">
-
-
-  <!-- PAGE 1: USER LIST -->
-  <div class="page {{#unless selectedUser}}active{{/unless}}" id="page-list">
-
-    <div class="page-header">
-      <div>
-        <h2>User Management</h2>
-        <p>Manage customer accounts and activity from a centralized hub.</p>
-      </div>
-      <a href="/admin/export-users" class="btn-primary">Export Users</a>
-    </div>
-
-       <!-- Mobile-only search bar (hidden on desktop via CSS) -->
-  <form method="GET" action="/admin/users" class="mobile-search-bar" style="display:none">
-    <input type="text" name="search" placeholder="Search users..." value="{{search}}">
-    <select name="sort" class="sort-select">
-      <option value="latest" {{#if (eq sort "latest")}}selected{{/if}}>Latest</option>
-      <option value="oldest" {{#if (eq sort "oldest")}}selected{{/if}}>Oldest</option>
-    </select>
-    <select name="status" class="sort-select">
-      <option value="all" {{#if (eq status "all")}}selected{{/if}}>All</option>
-      <option value="blocked" {{#if (eq status "blocked")}}selected{{/if}}>Blocked</option>
-      <option value="active" {{#if (eq status "active")}}selected{{/if}}>Active</option>
-    </select>
-    <button type="submit" class="btn-search">Search</button>
-    {{#if search}}<a href="/admin/users" class="btn-clear">Clear</a>{{/if}}
-  </form>
-
-    <!-- STATS (dynamic optional) -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="slabel">Total Users</div>
-        <div class="svalue">{{stats.totalUsers}}</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="slabel">Active Users</div>
-        <div class="svalue">{{stats.activeUsers}}</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="slabel">Blocked Users</div>
-        <div class="svalue">{{stats.blockedUsers}}</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="slabel">Total Revenue</div>
-        <div class="svalue">₹{{stats.totalRevenue}}</div>
-      </div>
-    </div>
-
-
-    <!-- TABLE -->
-    <div class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Phone</th>
-            <th>Orders</th>
-            <th>Spending</th>
-            <th>Status</th>
-            <th>Joined</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          {{#each users}}
-          <tr id="user-row-{{this._id}}">
-
-            <td>
-              <div class="user-cell">
-                <div class="user-av">
-  {{#if this.avatar}}
-    <img src="{{this.avatar}}" alt="user">
-  {{else}}
-    {{this.initials}}
-  {{/if}}
-</div>
-                <div>
-                  <div class="uname">{{this.name}}</div>
-                  <div class="uemail">{{this.email}}</div>
+            </form>
+            <div class="admin-info">
+                <div class="admin-avatar">AU</div>
+                <div class="admin-meta">
+                    <div class="admin-name">Admin User</div>
                 </div>
-              </div>
-            </td>
-
-            <td>{{this.phone}}</td>
-            <td>{{this.orders}}</td>
-            <td>{{this.spending}}</td>
-
-            <td>
-              {{#if (eq this.status "active")}}
-                <span class="badge s-active">ACTIVE</span>
-              {{else}}
-                <span class="badge s-blocked">BLOCKED</span>
-              {{/if}}
-            </td>
-
-            <td>{{this.joined}}</td>
-
-            <td>
-
-              <button class="act-btn" onclick="window.location.href='/admin/users/{{this._id}}'"> View </button>
-              {{#if (eq this.status "active")}}
-                <button class="act-btn" onclick="openModalForUser('{{this._id}}','block')">Block</button>
-              {{else}}
-               <button class="act-btn" onclick="openModalForUser('{{this._id}}','unblock')">Unblock</button>
-              {{/if}}
-                <button class="act-btn danger" onclick="openModalForUser('{{this._id}}','delete')">Delete</button>
-            </td>
-
-          </tr>
-          {{/each}}
-
-        </tbody>
-      </table>
-      <div class="pagination">
-
-  {{#if (gt currentPage 1)}}
-    <a href="/admin/users?page={{subtract currentPage 1}}&search={{search}}">Prev</a>
-  {{/if}}
-
-  <span>Page {{currentPage}} of {{totalPages}}</span>
-
-  {{#if (lt currentPage totalPages)}}
-    <a href="/admin/users?page={{add currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Next</a>
-  {{/if}}
-
-</div>
-    </div>
-
-  </div>
+            </div>
+        </header>
 
 
 
-  <!-- PAGE 2: USER PROFILE -->
-  {{#if selectedUser}}
-  <div class="page {{#if selectedUser}}active{{/if}}" id="page-profile">
 
-    <a href="/admin/users" class="back-link">← Back to Users</a>
+        <!-- ══ PAGE 1: USER LIST ══ -->
+        <main class="content">
 
-    <div class="profile-header">
 
-      <div>
-        <div class="profile-img">
-  {{#if selectedUser.avatar}}
-    <img src="{{selectedUser.avatar}}" alt="user">
-  {{else}}
-    <div class="avatar-fallback">
-      {{selectedUser.initials}}
-    </div>
-  {{/if}}
-</div>
+            <!-- PAGE 1: USER LIST -->
+            <div class="page {{#unless selectedUser}}active{{/unless}}" id="page-list">
 
-        <div class="profile-name">
-          {{selectedUser.name}}
+                <div class="page-header">
+                    <div>
+                        <h2>User Management</h2>
+                        <p>Manage customer accounts and activity from a centralized hub.</p>
+                    </div>
+                    <a href="/admin/export-users" class="btn-primary">Export Users</a>
+                </div>
 
-          {{#if (eq selectedUser.status "active")}}
-            <span class="badge s-active">ACTIVE</span>
-          {{else}}
-            <span class="badge s-blocked">BLOCKED</span>
-          {{/if}}
+                <!-- Mobile-only search bar (hidden on desktop via CSS) -->
+                <form method="GET" action="/admin/users" class="mobile-search-bar" style="display:none">
+                    <input type="text" name="search" placeholder="Search users..." value="{{search}}">
+                    <select name="sort" class="sort-select">
+                        <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
+                        <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
+                    </select>
+                    <select name="status" class="sort-select">
+                        <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All</option>
+                        <option value="blocked" {{#if (eq status "blocked" )}}selected{{/if}}>Blocked</option>
+                        <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
+                    </select>
+                    <button type="submit" class="btn-search">Search</button>
+                    {{#if search}}<a href="/admin/users" class="btn-clear">Clear</a>{{/if}}
+                </form>
+
+                <!-- STATS (dynamic optional) -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="slabel">Total Users</div>
+                        <div class="svalue">{{stats.totalUsers}}</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="slabel">Active Users</div>
+                        <div class="svalue">{{stats.activeUsers}}</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="slabel">Blocked Users</div>
+                        <div class="svalue">{{stats.blockedUsers}}</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="slabel">Total Revenue</div>
+                        <div class="svalue">₹{{stats.totalRevenue}}</div>
+                    </div>
+                </div>
+
+
+                <!-- TABLE -->
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Phone</th>
+                                <th>Orders</th>
+                                <th>Spending</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {{#each users}}
+                            <tr id="user-row-{{this._id}}">
+
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-av">
+                                            {{#if this.avatar}}
+                                            <img src="{{this.avatar}}" alt="user">
+                                            {{else}}
+                                            {{this.initials}}
+                                            {{/if}}
+                                        </div>
+                                        <div>
+                                            <div class="uname">{{this.name}}</div>
+                                            <div class="uemail">{{this.email}}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>{{this.phone}}</td>
+                                <td>{{this.totalOrders}}</td>
+                                <td>{{#if this.totalSpending}}₹{{this.totalSpending}}{{else}}₹0{{/if}}</td>
+
+                                <td>
+                                    {{#if (eq this.status "active")}}
+                                    <span class="badge s-active">ACTIVE</span>
+                                    {{else}}
+                                    <span class="badge s-blocked">BLOCKED</span>
+                                    {{/if}}
+                                </td>
+
+                                <td>{{this.joined}}</td>
+
+                                <td>
+
+                                    <button class="act-btn" onclick="window.location.href='/admin/users/{{this._id}}'">
+                                        View </button>
+                                    {{#if (eq this.status "active")}}
+                                    <button class="act-btn"
+                                        onclick="openModalForUser('{{this._id}}','block')">Block</button>
+                                    {{else}}
+                                    <button class="act-btn"
+                                        onclick="openModalForUser('{{this._id}}','unblock')">Unblock</button>
+                                    {{/if}}
+                                    <button class="act-btn danger"
+                                        onclick="openModalForUser('{{this._id}}','delete')">Delete</button>
+                                </td>
+
+                            </tr>
+                            {{/each}}
+
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+
+                        {{#if (gt currentPage 1)}}
+                        <a href="/admin/users?page={{subtract currentPage 1}}&search={{search}}">Prev</a>
+                        {{/if}}
+
+                        <span>Page {{currentPage}} of {{totalPages}}</span>
+
+                        {{#if (lt currentPage totalPages)}}
+                        <a
+                            href="/admin/users?page={{add currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Next</a>
+                        {{/if}}
+
+                    </div>
+                </div>
+
+            </div>
+
+
+
+            <!-- PAGE 2: USER PROFILE -->
+            {{#if selectedUser}}
+            <div class="page {{#if selectedUser}}active{{/if}}" id="page-profile">
+
+                <a href="/admin/users" class="back-link">← Back to Users</a>
+
+                <div class="profile-header">
+
+                    <div>
+                        <div class="profile-img">
+                            {{#if selectedUser.avatar}}
+                            <img src="{{selectedUser.avatar}}" alt="user">
+                            {{else}}
+                            <div class="avatar-fallback">
+                                {{selectedUser.initials}}
+                            </div>
+                            {{/if}}
+                        </div>
+
+                        <div class="profile-name">
+                            {{selectedUser.name}}
+
+                            {{#if (eq selectedUser.status "active")}}
+                            <span class="badge s-active">ACTIVE</span>
+                            {{else}}
+                            <span class="badge s-blocked">BLOCKED</span>
+                            {{/if}}
+                        </div>
+
+                        <div class="profile-email">{{selectedUser.email}}</div>
+                    </div>
+
+                    <div>
+
+                        {{#if (eq selectedUser.status "active")}}
+                        <button class="btn-warning"
+                            onclick="openModalForUser('{{selectedUser._id}}','block','profile')">Block</button>
+                        {{else}}
+                        <button class="btn-success"
+                            onclick="openModalForUser('{{selectedUser._id}}','unblock','profile')">Unblock</button>
+                        {{/if}}
+                        <button class="btn-danger"
+                            onclick="openModalForUser('{{selectedUser._id}}','delete','profile')">Delete</button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DETAILS -->
+                <div class="profile-grid">
+
+                    <div class="details-card">
+                        <div class="section-title">Personal Details</div>
+
+                        <p><b>Phone:</b> {{selectedUser.phone}}</p>
+                        <p><b>Address:</b> {{selectedUser.address}}</p>
+                        <p><b>Joined:</b> {{selectedUser.joined}}</p>
+
+                    </div>
+
+
+                    <!-- SPENDING -->
+                    <div class="spending-card">
+                        <div class="section-title">Spending</div>
+
+                        <p>Total Orders: {{selectedUser.totalOrders}}</p>
+                        <p>Total Spending: ₹{{selectedUser.totalSpending}}</p>
+                        <p>Avg Order: ₹{{selectedUser.avgOrder}}</p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ORDER HISTORY -->
+                <div class="order-history-card">
+
+                    <h3>Order History</h3>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {{#each selectedUser.orders}}
+                            <tr>
+                                <td>{{this.orderId}}</td>
+                                <td>{{this.orderDate}}</td>
+                                <td>₹{{this.amount}}</td>
+                                <td>{{this.status}}</td>
+                            </tr>
+                            {{else}}
+                            <tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">No orders found</td></tr>
+                            {{/each}}
+
+                        </tbody>
+                    </table>
+
+                </div>
+
+            </div>
+            {{/if}}
+
+        </main>
+
+        
+        <!-- ══ MODAL ══ -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal" id="modalBox">
+                <div class="modal-icon" id="modalIcon">
+                    <svg id="modalIconSvg" viewBox="0 0 24 24"></svg>
+                </div>
+                <h3 id="modalTitle">Confirm Action</h3>
+                <p id="modalDesc">Are you sure?</p>
+                <div class="modal-user-card" id="modalUserCard" style="display:none">
+                    <div class="modal-user-av" id="modalUserAv">AM</div>
+                    <div>
+                        <div class="modal-user-name" id="modalUserName">—</div>
+                        <div class="modal-user-email" id="modalUserEmail">—</div>
+                    </div>
+                </div>
+                <div class="modal-stats" id="modalStats" style="display:none">
+                    <div class="modal-stat">
+                        <div class="mslabel">Total Orders</div>
+                        <div class="msvalue"><span id="mStatOrders">—</span> <span class="msunit">Units</span></div>
+                    </div>
+                    <div class="modal-stat">
+                        <div class="mslabel">Total Spending</div>
+                        <div class="msvalue" id="mStatSpending">—</div>
+                    </div>
+                </div>
+                <div class="modal-note" id="modalNote" style="display:none">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span id="modalNoteText"></span>
+                </div>
+                <div id="modalInputWrap" style="display:none">
+                    <div class="confirm-label">Confirmation</div>
+                    <input class="confirm-input" id="confirmInput" placeholder="Type 'DELETE' to confirm" />
+                </div>
+                <div class="modal-btns">
+                    <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmAction()">Confirm</button>
+
+                </div>
+            </div>
         </div>
-
-        <div class="profile-email">{{selectedUser.email}}</div>
-      </div>
-
-      <div>
-
-        {{#if (eq selectedUser.status "active")}}
-          <button class="btn-warning" onclick="openModalForUser('{{selectedUser._id}}','block','profile')">Block</button>
-        {{else}}
-          <button class="btn-success" onclick="openModalForUser('{{selectedUser._id}}','unblock','profile')">Unblock</button>
-        {{/if}}
-        <button class="btn-danger" onclick="openModalForUser('{{selectedUser._id}}','delete','profile')">Delete</button>
-
-      </div>
-
     </div>
 
+    <!-- TOAST CONTAINER -->
+    <div class="toast-wrap" id="toastWrap"></div>
 
-    <!-- DETAILS -->
-    <div class="profile-grid">
+    <script>
 
-      <div class="details-card">
-        <div class="section-title">Personal Details</div>
+        
 
-        <p><b>Phone:</b> {{selectedUser.phone}}</p>
-        <p><b>Address:</b> {{selectedUser.address}}</p>
-        <p><b>Joined:</b> {{selectedUser.joined}}</p>
+        
 
-      </div>
+        
 
 
-      <!-- SPENDING -->
-      <div class="spending-card">
-        <div class="section-title">Spending</div>
+        // ── PROFILE RENDER ───────────────────────────────────────────────
+        function buildMiniChart() {
+            const vals = [30, 45, 28, 60, 50, 75, 90];
+            const max = Math.max(...vals);
+            const chart = document.getElementById('miniChart');
+            chart.innerHTML = vals.map((v, i) => `<div class="bar ${i === vals.length - 1 ? 'active' : ''}" style="height:${Math.round(v / max * 100)}%"></div>`).join('');
+        }
 
-        <p>Total Orders: {{selectedUser.orders}}</p>
-        <p>Total Spending: ₹{{selectedUser.spending}}</p>
-        <p>Avg Order: ₹{{selectedUser.avgOrder}}</p>
-
-      </div>
-
-    </div>
-
-
-    <!-- ORDER HISTORY -->
-    <div class="order-history-card">
-
-      <h3>Order History</h3>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Date</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          {{#each orders}}
-          <tr>
-            <td>{{this.id}}</td>
-            <td>{{this.date}}</td>
-            <td>{{this.amount}}</td>
-            <td>{{this.status}}</td>
-          </tr>
-          {{/each}}
-
-        </tbody>
-      </table>
-
-    </div>
-
-  </div>
-  {{/if}}
-
-</main>
-
-{{!-- logout model --}}
-<div class="modal-overlay" id="logoutModal">
-  <div class="modal">
-    <h3>Confirm Logout</h3>
-    <p>Are you sure you want to logout?</p>
-
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
-      <button class="btn-confirm red" onclick="confirmLogout()">Logout</button>
-    </div>
-  </div>
-</div>
-<!-- ══ MODAL ══ -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal" id="modalBox">
-    <div class="modal-icon" id="modalIcon">
-      <svg id="modalIconSvg" viewBox="0 0 24 24"></svg>
-    </div>
-    <h3 id="modalTitle">Confirm Action</h3>
-    <p id="modalDesc">Are you sure?</p>
-    <div class="modal-user-card" id="modalUserCard" style="display:none">
-      <div class="modal-user-av" id="modalUserAv">AM</div>
-      <div><div class="modal-user-name" id="modalUserName">—</div><div class="modal-user-email" id="modalUserEmail">—</div></div>
-    </div>
-    <div class="modal-stats" id="modalStats" style="display:none">
-      <div class="modal-stat"><div class="mslabel">Total Orders</div><div class="msvalue"><span id="mStatOrders">—</span> <span class="msunit">Units</span></div></div>
-      <div class="modal-stat"><div class="mslabel">Total Spending</div><div class="msvalue" id="mStatSpending">—</div></div>
-    </div>
-    <div class="modal-note" id="modalNote" style="display:none">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span id="modalNoteText"></span>
-    </div>
-    <div id="modalInputWrap" style="display:none">
-      <div class="confirm-label">Confirmation</div>
-      <input class="confirm-input" id="confirmInput" placeholder="Type 'DELETE' to confirm"/>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmAction()">Confirm</button>
- 
-    </div>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST CONTAINER -->
-<div class="toast-wrap" id="toastWrap"></div>
-
-<script>
-
-function openLogoutModal() {
-  document.getElementById("logoutModal").classList.add("open");
-}
-
-function closeLogoutModal() {
-  document.getElementById("logoutModal").classList.remove("open");
-}
-
-function confirmLogout() {
-  window.location.href = "/admin/logout";
-}
-
-
-// ── PROFILE RENDER ───────────────────────────────────────────────
-function buildMiniChart() {
-  const vals = [30,45,28,60,50,75,90];
-  const max = Math.max(...vals);
-  const chart = document.getElementById('miniChart');
-  chart.innerHTML = vals.map((v,i) => `<div class="bar ${i===vals.length-1?'active':''}" style="height:${Math.round(v/max*100)}%"></div>`).join('');
-}
-
-function renderOrderHistory() {
-  document.getElementById('orderHistoryBody').innerHTML = ORDER_HISTORY.map(o => `
+        function renderOrderHistory() {
+            document.getElementById('orderHistoryBody').innerHTML = ORDER_HISTORY.map(o => `
     <tr>
       <td class="order-id-link">${o.id}</td>
       <td>${o.date}</td>
       <td class="spending">${o.amount}</td>
-      <td><span class="badge s-${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span></td>
+      <td><span class="badge s-${o.status}">${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</span></td>
     </tr>
   `).join('');
-}
-
-
-// ── BLOCK TOGGLE
-function handleBlockToggle(el) {
-  const action = el.checked ? 'block' : 'unblock';
-  el.checked = !el.checked; // revert — let modal confirm
-  openModal(action);
-}
-
-// ── MODAL 
-let currentAction = null;   
-let currentUser   = null;
-let currentContext = "list";
-
-function openModalForUser(id, action, context = "list") {
-  currentUser = { _id: id };
-  currentContext = context;
-  openModal(action);
-}
-
-function openModal(action) {
-  currentAction = action;
-
-  const overlay = document.getElementById('modalOverlay');
-  const icon = document.getElementById('modalIcon');
-  const iconSvg = document.getElementById('modalIconSvg');
-  const title = document.getElementById('modalTitle');
-  const desc = document.getElementById('modalDesc');
-  const note = document.getElementById('modalNote');
-  const inputWrap = document.getElementById('modalInputWrap');
-  const confirmBtn = document.getElementById('modalConfirmBtn');
-
-  // hide unwanted sections
-  document.getElementById('modalUserCard').style.display = 'none';
-  document.getElementById('modalStats').style.display = 'none';
-
-  note.style.display = 'none';
-  inputWrap.style.display = 'none';
-  document.getElementById('confirmInput').value = '';
-
-  if (action === 'delete') {
-    icon.className = 'modal-icon danger';
-    iconSvg.innerHTML = '<path d="M3 6h18"/><path d="M8 6v14h8V6"/>';
-    title.textContent = 'Delete User';
-    desc.textContent = 'Are you sure you want to delete this user? This action cannot be undone.';
-
-    inputWrap.style.display = 'block';
-    confirmBtn.textContent = 'Delete';
-    confirmBtn.className = 'btn-confirm red';
-
-  } else if (action === 'block') {
-    icon.className = 'modal-icon warning';
-    iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="4" y1="4" x2="20" y2="20"/>';
-    title.textContent = 'Block User';
-    desc.textContent = 'This user will not be able to login.';
-
-    confirmBtn.textContent = 'Block';
-    confirmBtn.className = 'btn-confirm orange';
-
-  } else if (action === 'unblock') {
-    icon.className = 'modal-icon success';
-    iconSvg.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
-    title.textContent = 'Unblock User';
-    desc.textContent = 'This user will regain access to their account.';
-
-    confirmBtn.textContent = 'Unblock';
-    confirmBtn.className = 'btn-confirm green';
-  }
-
-  overlay.classList.add('open');
-}
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
-  currentAction = null;
-}
-
-
-function confirmAction() {
-  if (!currentUser || !currentAction) return;
-
-  if (currentAction === 'delete') {
-    const val = document.getElementById('confirmInput').value.trim();
-    if (val !== 'DELETE') {
-      showToast('Type DELETE to confirm', 'blue');
-      return;
-    }
-  }
-
-  const urlMap = {
-    block:   `/admin/block-user/${currentUser._id}`,
-    unblock: `/admin/unblock-user/${currentUser._id}`,
-    delete:  `/admin/delete-user/${currentUser._id}`,
-  };
-
-  const messages = {
-    block:   'User blocked successfully',
-    unblock: 'User unblocked successfully',
-    delete:  'User deleted successfully',
-  };
-
-  // ✅ save these BEFORE fetch — closeModal() sets currentAction to null
-  const action  = currentAction;
-  const userId  = currentUser._id;
-  const context = currentContext;
-
-  fetch(urlMap[action], {
-    method: 'POST',
-    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (!data.success) {
-      showToast(data.message || 'Something went wrong', 'red');
-      return;
-    }
-
-    closeModal(); // now safe — we already saved action/userId/context above
-
-    showToast(messages[action], action === 'delete' ? 'red' : 'green');
-
-    if (action === 'delete') {
-      // ✅ using saved userId — not currentUser._id which may be null now
-      const row = document.getElementById(`user-row-${userId}`);
-      if (row) row.remove();
-
-      if (context === 'profile') {
-        window.location.href = '/admin/users';
-      }
-
-    } else {
-      const isNowBlocked = action === 'block';
-
-      if (context === 'list') {
-        const row = document.getElementById(`user-row-${userId}`);
-        if (row) {
-          const badge = row.querySelector('.badge');
-          if (badge) {
-            badge.textContent = isNowBlocked ? 'BLOCKED' : 'ACTIVE';
-            badge.className   = isNowBlocked ? 'badge s-blocked' : 'badge s-active';
-          }
-          const blockBtn = row.querySelector('.act-btn:nth-child(2)');
-          if (blockBtn) {
-            blockBtn.textContent = isNowBlocked ? 'Unblock' : 'Block';
-            blockBtn.onclick = () => openModalForUser(userId, isNowBlocked ? 'unblock' : 'block');
-          }
         }
 
-      } else if (context === 'profile') {
-        const badge = document.querySelector('.profile-name .badge');
-        if (badge) {
-          badge.textContent = isNowBlocked ? 'BLOCKED' : 'ACTIVE';
-          badge.className   = isNowBlocked ? 'badge s-blocked' : 'badge s-active';
+
+        // ── BLOCK TOGGLE
+        function handleBlockToggle(el) {
+            const action = el.checked ? 'block' : 'unblock';
+            el.checked = !el.checked; // revert — let modal confirm
+            openModal(action);
         }
 
-        const profileActions = document.querySelector('.profile-header > div:last-child');
-        if (profileActions) {
-          const blockBtn = profileActions.querySelector('.btn-warning, .btn-success');
-          if (blockBtn) {
-            blockBtn.textContent = isNowBlocked ? 'Unblock' : 'Block';
-            blockBtn.className   = isNowBlocked ? 'btn-success' : 'btn-warning';
-            blockBtn.onclick = () => openModalForUser(userId, isNowBlocked ? 'unblock' : 'block', 'profile');
-          }
+        // ── MODAL 
+        let currentAction = null;
+        let currentUser = null;
+        let currentContext = "list";
+
+        function openModalForUser(id, action, context = "list") {
+            currentUser = { _id: id };
+            currentContext = context;
+            openModal(action);
         }
-      }
-    }
-  })
-  .catch(() => showToast('Network error', 'red'));
-}
-// close modal on overlay click
-document.getElementById('modalOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
 
-// ── TOAST ────
-function showToast(msg, type='green') {
-  const icons = {
-    green:'<polyline points="20 6 9 17 4 12"/>',
-    red:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
-    blue:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
-  };
-  const wrap = document.getElementById('toastWrap');
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
-  wrap.appendChild(t);
-  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
-}
+        function openModal(action) {
+            currentAction = action;
 
-// ── SIDEBAR ──
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('overlay').classList.remove('open');
-}
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('modalOverlay').classList.remove('open');
-});
+            const overlay = document.getElementById('modalOverlay');
+            const icon = document.getElementById('modalIcon');
+            const iconSvg = document.getElementById('modalIconSvg');
+            const title = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const note = document.getElementById('modalNote');
+            const inputWrap = document.getElementById('modalInputWrap');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+
+            // hide unwanted sections
+            document.getElementById('modalUserCard').style.display = 'none';
+            document.getElementById('modalStats').style.display = 'none';
+
+            note.style.display = 'none';
+            inputWrap.style.display = 'none';
+            document.getElementById('confirmInput').value = '';
+
+            if (action === 'delete') {
+                icon.className = 'modal-icon danger';
+                iconSvg.innerHTML = '<path d="M3 6h18"/><path d="M8 6v14h8V6"/>';
+                title.textContent = 'Delete User';
+                desc.textContent = 'Are you sure you want to delete this user? This action cannot be undone.';
+
+                inputWrap.style.display = 'block';
+                confirmBtn.textContent = 'Delete';
+                confirmBtn.className = 'btn-confirm red';
+
+            } else if (action === 'block') {
+                icon.className = 'modal-icon warning';
+                iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="4" y1="4" x2="20" y2="20"/>';
+                title.textContent = 'Block User';
+                desc.textContent = 'This user will not be able to login.';
+
+                confirmBtn.textContent = 'Block';
+                confirmBtn.className = 'btn-confirm orange';
+
+            } else if (action === 'unblock') {
+                icon.className = 'modal-icon success';
+                iconSvg.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+                title.textContent = 'Unblock User';
+                desc.textContent = 'This user will regain access to their account.';
+
+                confirmBtn.textContent = 'Unblock';
+                confirmBtn.className = 'btn-confirm green';
+            }
+
+            overlay.classList.add('open');
+        }
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+            currentAction = null;
+        }
+
+
+        function confirmAction() {
+            if (!currentUser || !currentAction) return;
+
+            if (currentAction === 'delete') {
+                const val = document.getElementById('confirmInput').value.trim();
+                if (val !== 'DELETE') {
+                    showToast('Type DELETE to confirm', 'blue');
+                    return;
+                }
+            }
+
+            const urlMap = {
+                block: `/admin/block-user/${currentUser._id}`,
+                unblock: `/admin/unblock-user/${currentUser._id}`,
+                delete: `/admin/delete-user/${currentUser._id}`,
+            };
+
+            const messages = {
+                block: 'User blocked successfully',
+                unblock: 'User unblocked successfully',
+                delete: 'User deleted successfully',
+            };
+
+            // ✅ save these BEFORE fetch — closeModal() sets currentAction to null
+            const action = currentAction;
+            const userId = currentUser._id;
+            const context = currentContext;
+
+            fetch(urlMap[action], {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        showToast(data.message || 'Something went wrong', 'red');
+                        return;
+                    }
+
+                    closeModal(); // now safe — we already saved action/userId/context above
+
+                    showToast(messages[action], action === 'delete' ? 'red' : 'green');
+
+                    if (action === 'delete') {
+                        // ✅ using saved userId — not currentUser._id which may be null now
+                        const row = document.getElementById(`user-row-${userId}`);
+                        if (row) row.remove();
+
+                        if (context === 'profile') {
+                            window.location.href = '/admin/users';
+                        }
+
+                    } else {
+                        const isNowBlocked = action === 'block';
+
+                        if (context === 'list') {
+                            const row = document.getElementById(`user-row-${userId}`);
+                            if (row) {
+                                const badge = row.querySelector('.badge');
+                                if (badge) {
+                                    badge.textContent = isNowBlocked ? 'BLOCKED' : 'ACTIVE';
+                                    badge.className = isNowBlocked ? 'badge s-blocked' : 'badge s-active';
+                                }
+                                const blockBtn = row.querySelector('.act-btn:nth-child(2)');
+                                if (blockBtn) {
+                                    blockBtn.textContent = isNowBlocked ? 'Unblock' : 'Block';
+                                    blockBtn.onclick = () => openModalForUser(userId, isNowBlocked ? 'unblock' : 'block');
+                                }
+                            }
+
+                        } else if (context === 'profile') {
+                            const badge = document.querySelector('.profile-name .badge');
+                            if (badge) {
+                                badge.textContent = isNowBlocked ? 'BLOCKED' : 'ACTIVE';
+                                badge.className = isNowBlocked ? 'badge s-blocked' : 'badge s-active';
+                            }
+
+                            const profileActions = document.querySelector('.profile-header > div:last-child');
+                            if (profileActions) {
+                                const blockBtn = profileActions.querySelector('.btn-warning, .btn-success');
+                                if (blockBtn) {
+                                    blockBtn.textContent = isNowBlocked ? 'Unblock' : 'Block';
+                                    blockBtn.className = isNowBlocked ? 'btn-success' : 'btn-warning';
+                                    blockBtn.onclick = () => openModalForUser(userId, isNowBlocked ? 'unblock' : 'block', 'profile');
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(() => showToast('Network error', 'red'));
+        }
+        // close modal on overlay click
+        document.getElementById('modalOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ── TOAST ────
+        function showToast(msg, type = 'green') {
+            const icons = {
+                green: '<polyline points="20 6 9 17 4 12"/>',
+                red: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+                blue: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+            };
+            const wrap = document.getElementById('toastWrap');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type] || icons.green}</svg></div><span>${msg}</span>`;
+            wrap.appendChild(t);
+            requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+        }
+
+        // ── SIDEBAR ──
+        
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('open');
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('modalOverlay').classList.remove('open');
+        });
 
 
 
-</script>
-
-
-
-
+    </script>

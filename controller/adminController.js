@@ -27,7 +27,7 @@ function calcDiscount(originalPrice, salePrice) {
 }
 
 export const loadLogin = (req, res) => {
-  res.render("admin/login");
+  res.render("admin/login", { layout: "auth",  layout: "auth" });
 };
 
 export const login = async (req, res) => {
@@ -37,7 +37,7 @@ export const login = async (req, res) => {
     const admin = await Admin.findOne({ email, isAdmin: true });
 
     if (!admin) {
-      return res.render("admin/login", {
+      return res.render("admin/login", { layout: "auth", 
         error: "Invalid email or password",
         email: "",
       });
@@ -45,7 +45,7 @@ export const login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return res.render("admin/login", {
+      return res.render("admin/login", { layout: "auth", 
         error: "Invalid email or password",
         email: "",
       });
@@ -55,12 +55,12 @@ export const login = async (req, res) => {
     res.redirect("/admin/dashBoard");
   } catch (err) {
     console.log(err);
-    res.render("admin/login", { error: "Something went wrong" });
+    res.render("admin/login", { layout: "auth",  error: "Something went wrong" });
   }
 };
 
 export const loadDashboard = (req, res) => {
-  res.render("admin/dashBoard", {
+  res.render("admin/dashBoard", { layout: "admin", 
     activePage: "dashboard",
   });
 };
@@ -71,7 +71,7 @@ export const logout = (req, res) => {
 };
 
 export const loadForgotPassword = (req, res) => {
-  res.render("admin/forgotPassword");
+  res.render("admin/forgotPassword", { layout: "auth",  layout: "auth" });
 };
 
 export const forgotPassword = async (req, res) => {
@@ -79,13 +79,13 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.render("admin/forgotPassword", { error: "Email required" });
+      return res.render("admin/forgotPassword", { layout: "auth",  error: "Email required" });
     }
 
     const admin = await Admin.findOne({ email, isAdmin: true });
 
     if (!admin) {
-      return res.render("admin/forgotPassword", {
+      return res.render("admin/forgotPassword", { layout: "auth", 
         error: "Email not registered",
       });
     }
@@ -99,7 +99,7 @@ export const forgotPassword = async (req, res) => {
     res.redirect("/admin/otp");
   } catch (err) {
     console.log(err);
-    res.render("admin/forgotPassword", { error: "Something went wrong" });
+    res.render("admin/forgotPassword", { layout: "auth",  error: "Something went wrong" });
   }
 };
 
@@ -120,13 +120,13 @@ export const resetAdminPassword = async (req, res) => {
     }
 
     if (!newPassword || !confirmPassword) {
-      return res.render("admin/resetPassword", {
+      return res.render("admin/resetPassword", { layout: "auth", 
         error: "All fields required",
       });
     }
 
     if (newPassword !== confirmPassword) {
-      return res.render("admin/resetPassword", {
+      return res.render("admin/resetPassword", { layout: "auth", 
         error: "Passwords do not match",
       });
     }
@@ -134,7 +134,7 @@ export const resetAdminPassword = async (req, res) => {
     const isSame = await bcrypt.compare(newPassword, admin.password);
 
     if (isSame) {
-      return res.render("admin/resetPassword", {
+      return res.render("admin/resetPassword", { layout: "auth", 
         error: "New password must be different from old password",
       });
     }
@@ -151,7 +151,7 @@ export const resetAdminPassword = async (req, res) => {
     res.redirect("/admin/login");
   } catch (err) {
     console.log(err);
-    res.render("admin/resetPassword", { error: "Something went wrong" });
+    res.render("admin/resetPassword", { layout: "auth",  error: "Something went wrong" });
   }
 };
 
@@ -196,18 +196,39 @@ export const loadUsers = async (req, res) => {
 
     const totalPages = Math.ceil(totalUsers / limit);
 
-    const formattedUsers = users.map((u) => ({
-      _id: u._id,
-      name: u.name,
-      email: u.email,
-      phone: u.phone || "-",
-      avatar: u.avatar || null,
-      initials: u.name?.charAt(0).toUpperCase() || "U",
-      status: u.isBlocked ? "blocked" : "active",
-      joined: u.createdAt?.toDateString(),
-    }));
+    // Fetch order stats per user
+    const userIds = users.map((u) => u._id);
+    const orderStats = await Order.aggregate([
+      { $match: { userId: { $in: userIds } } },
+      { $unwind: "$products" },
+      {
+        $group: {
+          _id: "$userId",
+          totalOrders: { $sum: 1 },
+          totalSpending: { $sum: "$products.itemTotal" },
+        },
+      },
+    ]);
+    const statsMap = {};
+    orderStats.forEach((s) => { statsMap[s._id.toString()] = s; });
 
-    res.render("admin/userManagement", {
+    const formattedUsers = users.map((u) => {
+      const os = statsMap[u._id.toString()] || { totalOrders: 0, totalSpending: 0 };
+      return {
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone || "-",
+        avatar: u.avatar || null,
+        initials: u.name?.charAt(0).toUpperCase() || "U",
+        status: u.isBlocked ? "blocked" : "active",
+        joined: u.createdAt?.toDateString(),
+        totalOrders: os.totalOrders,
+        totalSpending: os.totalSpending,
+      };
+    });
+
+    res.render("admin/userManagement", { layout: "admin", 
       users: formattedUsers,
       currentPage: page,
       totalPages,
@@ -272,11 +293,43 @@ export const loadUserProfile = async (req, res) => {
     }));
 
     const user = await User.findById(userId);
+    if (!user) return res.redirect("/admin/users");
 
-    const defaultAddress = await Address.findOne({
-      userId,
-      isDefault: true,
-    });
+    const defaultAddress = await Address.findOne({ userId, isDefault: true });
+
+    // Fetch order history for this user
+    const orderHistory = await Order.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Aggregate spending stats
+    const spendingAgg = await Order.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $unwind: "$products" },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalSpending: { $sum: "$products.itemTotal" },
+        },
+      },
+    ]);
+    const spending = spendingAgg[0] || { totalOrders: 0, totalSpending: 0 };
+    const avgOrder = spending.totalOrders > 0
+      ? (spending.totalSpending / spending.totalOrders)
+      : 0;
+
+    // Format order history for the view
+    const formattedOrders = orderHistory.flatMap((order) =>
+      order.products.map((item) => ({
+        orderId: order.orderId || order._id.toString().slice(-8).toUpperCase(),
+        orderDate: order.orderDate?.toDateString?.() || order.createdAt?.toDateString(),
+        productName: item.productName || "Product",
+        quantity: item.quantity,
+        amount: item.itemTotal || 0,
+        status: item.orderStatus || order.orderStatus || "Pending",
+      }))
+    );
 
     const selectedUser = {
       _id: user._id,
@@ -290,9 +343,13 @@ export const loadUserProfile = async (req, res) => {
       initials: user.name?.charAt(0).toUpperCase(),
       status: user.isBlocked ? "blocked" : "active",
       joined: user.createdAt?.toDateString(),
+      totalOrders: spending.totalOrders,
+      totalSpending: spending.totalSpending,
+      avgOrder: Math.round(avgOrder),
+      orders: formattedOrders,
     };
 
-    res.render("admin/userManagement", {
+    res.render("admin/userManagement", { layout: "admin", 
       users: formattedUsers,
       selectedUser,
       activePage: "users",
@@ -358,7 +415,7 @@ export const loadCategoryManagement = async (req, res) => {
       deletedAt: c.deleted_at?.toDateString() || "",
     }));
 
-    res.render("admin/categoryManagement", {
+    res.render("admin/categoryManagement", { layout: "admin", 
       activePage: "categoryManagement",
       categories: formatted,
       currentPage: page,
@@ -682,7 +739,7 @@ export const loadProductManagement = async (req, res) => {
       };
     });
 
-    res.render("admin/productManagement", {
+    res.render("admin/productManagement", { layout: "admin", 
       products: formatted,
       categories,
       brands,
@@ -1172,7 +1229,7 @@ export const getProductDetail = async (req, res) => {
       deleted_at: { $ne: null },
     });
 
-    res.render("admin/productManagement", {
+    res.render("admin/productManagement", { layout: "admin", 
       products: formatted,
       selectedProduct,
       categories,
@@ -1815,7 +1872,7 @@ export const loadAdminOrders = async (req, res) => {
     const deliveredCount = await Order.countDocuments({ "products.orderStatus": "Delivered" });
     const cancelledCount = await Order.countDocuments({ "products.orderStatus": "Cancelled" });
 
-    res.render("admin/orderManagement", {
+    res.render("admin/orderManagement", { layout: "admin", 
       activePage: "orders",
       orders: formatted,
       currentPage: page,
@@ -1871,7 +1928,7 @@ export const loadAdminOrderDetail = async (req, res) => {
       };
     });
 
-    res.render("admin/adminOrderDetail", {
+    res.render("admin/adminOrderDetail", { layout: "admin", 
       activePage: "orders",
       order: {
         ...order,
@@ -2203,7 +2260,7 @@ export const loadSettings = async (req, res) => {
         returnPeriodDays: 7
       };
     }
-    res.render('admin/settings', { activePage: 'settings', settings });
+    res.render('admin/settings', { layout: 'admin',  activePage: 'settings', settings });
   } catch (err) {
     console.log(err);
     res.redirect('/admin/dashboard');
@@ -2292,7 +2349,7 @@ export const loadAdminReturns = async (req, res) => {
       returnInspectionDecision: o.returnInspectionDecision || ""
     }));
 
-    res.render("admin/returnManagement", {
+    res.render("admin/returnManagement", { layout: "admin", 
       activePage: "returns",
       returns: formatted,
       currentPage: page,

@@ -118,7 +118,7 @@ export const loadAdminReviews = async (req, res) => {
       stars: Array.from({ length: 5 }, (_, i) => i < r.rating)
     }));
 
-    res.render("admin/reviewManagement", {
+    res.render("admin/reviewManagement", { layout: "admin", 
       activePage: "reviews",
       reviews: formattedReviews,
       stats,
@@ -176,4 +176,4 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-// End of file
+

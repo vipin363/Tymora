@@ -84,7 +84,7 @@ export const loadLedgerBook = async (req, res) => {
         // Sort descending for UI presentation
         transactions.sort((a, b) => b.timestamp - a.timestamp);
 
-        res.render('admin/ledgerBook', {
+        res.render('admin/ledgerBook', { layout: 'admin', 
             activePage: 'ledger',
             transactions,
             query: req.query,

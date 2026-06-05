@@ -6,38 +6,48 @@
 <style>
 /* ── Premium Button ──────────────────────────────── */
 .btn-primary {
-  padding: 10px 22px; background: linear-gradient(135deg,#1e40af,#3b82f6);
+  padding: 8px 16px; background: linear-gradient(135deg,#1e40af,#3b82f6);
   color:#fff; font-weight:600; border:none; border-radius:9px;
   cursor:pointer; display:inline-flex; align-items:center; gap:8px;
-  font-size:0.88rem; transition:all 0.2s; white-space:nowrap;
+  font-size:0.82rem; transition:all 0.2s; white-space:nowrap;
   width: max-content; height: max-content;
 }
 .btn-primary:hover { opacity:.88; transform:translateY(-1px); box-shadow:0 4px 14px rgba(59,130,246,.35); }
 
+/* ── Compact Overrides (SaaS Style) ─────────────── */
+.content { padding: 16px 24px; }
+.page-header { margin-bottom: 16px; gap: 10px; }
+.stats-grid { margin-bottom: 16px !important; gap: 12px; }
+.stat-card { padding: 12px 16px !important; }
+.stat-card .slabel { margin-top: 6px !important; font-size: 0.7rem !important; }
+.stat-card .svalue { font-size: 1.3rem !important; margin-top: 2px !important; }
+.table-card { padding: 0 !important; border-radius: 10px; margin-top: 10px; }
+
 /* ── Table ───────────────────────────────────────── */
-.table-card { margin-top:12px; overflow-x:auto; max-width:100%; border-radius:12px; background:#fff; padding:10px 0; }
+.table-card { margin-top:12px; overflow-x:auto; max-width:100%; border-radius:10px; background:#fff; padding:0; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .tbl { width:100%; border-collapse:collapse; }
 .tbl th {
-  color:#475569; font-weight:700; font-size:0.75rem; text-transform:uppercase;
-  letter-spacing:.6px; padding:14px 16px; text-align:left;
-  border-bottom:1px solid #e2e8f0; white-space:nowrap;
+  color:#475569; font-weight:700; font-size:0.7rem; text-transform:uppercase;
+  letter-spacing:.6px; padding:10px 14px; text-align:left;
+  border-bottom:1px solid #e2e8f0; white-space:nowrap; background: #f8fafc;
 }
-.tbl td { padding:14px 16px; vertical-align:middle; border-bottom:1px solid #f1f5f9; }
+.tbl td { padding:10px 14px; vertical-align:middle; border-bottom:1px solid #f1f5f9; font-size:0.8rem; }
+.tbl tbody tr:last-child td { border-bottom: none; }
 .tbl tbody tr:hover { background:#f8fafc; }
 
 /* coupon code pill */
 .code-pill {
-  font-family:monospace; font-size:0.92rem; font-weight:700; letter-spacing:1.5px;
+  font-family:monospace; font-size:0.85rem; font-weight:700; letter-spacing:1px;
   color:#b45309; background:#fef3c7; border:1px solid #fde68a;
-  border-radius:6px; padding:4px 10px; display:inline-block;
+  border-radius:6px; padding:3px 8px; display:inline-block;
 }
 
 /* ── Status Badges ───────────────────────────────── */
 .badge {
-  display:inline-flex; align-items:center; gap:5px;
-  padding:4px 11px; border-radius:20px; font-size:0.73rem; font-weight:600;
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 8px; border-radius:20px; font-size:0.7rem; font-weight:600;
 }
-.badge::before { content:''; width:6px; height:6px; border-radius:50%; display:inline-block; }
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; display:inline-block; }
 .badge.active   { background:rgba(34,197,94,.12);  color:#22c55e; border:1px solid rgba(34,197,94,.3);  }
 .badge.active::before   { background:#22c55e; }
 .badge.scheduled{ background:rgba(59,130,246,.12); color:#3b82f6; border:1px solid rgba(59,130,246,.3); }
@@ -49,13 +59,13 @@
 
 .type-pill {
   background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;
-  padding:4px 10px; border-radius:6px; font-size:0.7rem; text-transform:capitalize; font-weight:600;
+  padding:2px 8px; border-radius:6px; font-size:0.68rem; text-transform:capitalize; font-weight:600;
 }
 
 /* ── Action Buttons ──────────────────────────────── */
 .act-btn {
   background:#fff; border:1px solid #e2e8f0;
-  border-radius:6px; padding:6px 12px; cursor:pointer; color:#475569; font-weight:600; font-size:0.75rem;
+  border-radius:6px; padding:4px 10px; cursor:pointer; color:#475569; font-weight:600; font-size:0.72rem;
   transition:all .2s; display:inline-flex; align-items:center; justify-content:center; gap:6px; width:100%;
 }
 .act-btn:hover      { background:#f8fafc; }
@@ -199,40 +209,7 @@ textarea.finput { resize:vertical; min-height:72px; }
 <div class="shell">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="brand">
-        <div class="logo-icon">T</div>
-        <div class="logo-text">
-          <div class="name">Tymora</div>
-          <div class="tagline">Tym of Refined Aesthetics</div>
-        </div>
-      </div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Main</div>
-      <a class="nav-item {{#ifEquals activePage 'dashboard'}}active{{/ifEquals}}"          href="/admin/dashboard">Dashboard</a>
-      <a class="nav-item {{#ifEquals activePage 'categoryManagement'}}active{{/ifEquals}}" href="/admin/categoryManagement">Category Management</a>
-      <a class="nav-item {{#ifEquals activePage 'products'}}active{{/ifEquals}}"           href="/admin/products">Products</a>
-      <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}"              href="/admin/users">Users</a>
-      <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}"             href="/admin/orders">Orders</a>
-      <div class="nav-label" style="margin-top:12px">Store</div>
-            <a class="nav-item {{#ifEquals activePage 'reviews'}}active{{/ifEquals}}"  href="/admin/reviews">
-        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
-      <a class="nav-item {{#ifEquals activePage 'offers'}}active{{/ifEquals}}"   href="/admin/offers">
-        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
-      <a class="nav-item {{#ifEquals activePage 'coupons'}}active{{/ifEquals}}"  href="/admin/coupons">
-        <svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
-      <a class="nav-item" href="#">
-        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</a>
-      <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
-    </div>
-    <div class="nav-footer">
-      <a class="nav-item logout" href="#" onclick="openLogoutModal()">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
-    </div>
-  </aside>
+  {{> admin/sidebar}}
 
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -626,17 +603,7 @@ textarea.finput { resize:vertical; min-height:72px; }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- LOGOUT MODAL                                               -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<div class="mo-overlay" id="logoutModal">
-  <div class="lo-box">
-    <h3>Confirm Logout</h3>
-    <p>Are you sure you want to log out of the admin panel?</p>
-    <div class="del-btns">
-      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
-      <button class="btn-danger" onclick="confirmLogout()">Logout</button>
-    </div>
-  </div>
+
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -664,13 +631,10 @@ $(document).ready(function () {
 });
 
 // ── Sidebar / Nav ─────────────────────────────────────────────
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
-}
-function openLogoutModal()  { document.getElementById('logoutModal').classList.add('open'); }
-function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
-function confirmLogout()    { window.location.href = '/admin/logout'; }
+
+
+
+
 
 // ── Code Generator ────────────────────────────────────────────
 function generateCode() {

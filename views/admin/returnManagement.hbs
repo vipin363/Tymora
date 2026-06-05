@@ -56,30 +56,7 @@
 </style>
 
 <div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="brand">
-        <div class="logo-icon">T</div>
-        <div class="logo-text">
-          <div class="name">Tymora</div>
-          <div class="tagline">Tym of Refined Aesthetics</div>
-        </div>
-      </div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label" style="margin-top:12px">Store</div>
-            <a class="nav-item {{#ifEquals activePage 'reviews'}}active{{/ifEquals}}" href="/admin/reviews"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</a>
-      <a class="nav-item {{#ifEquals activePage 'offers'}}active{{/ifEquals}}" href="/admin/offers"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>Offers</a>
-      <a class="nav-item {{#ifEquals activePage 'coupons'}}active{{/ifEquals}}" href="/admin/coupons"><svg viewBox="0 0 24 24"><path d="M9 14l6-6M9.5 8.5a.5.5 0 110-1 .5.5 0 010 1zM14.5 13.5a.5.5 0 110-1 .5.5 0 010 1z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Coupons</a>
-      <a class="nav-item {{#ifEquals activePage 'users'}}active{{/ifEquals}}" href="/admin/users">Users</a>
-      <a class="nav-item {{#ifEquals activePage 'orders'}}active{{/ifEquals}}" href="/admin/orders">Orders</a>
-      <a class="nav-item {{#ifEquals activePage 'returns'}}active{{/ifEquals}}" href="/admin/returns">Returns</a>
-      <a class="nav-item {{#ifEquals activePage 'settings'}}active{{/ifEquals}}" href="/admin/settings">Settings</a>
-    </div>
-    <div class="nav-footer">
-      <a class="nav-item logout" href="#" onclick="openLogoutModal()">Logout</a>
-    </div>
-  </aside>
+  {{> admin/sidebar}}
 
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -210,15 +187,7 @@
 </div>
 
 {{!-- Logout Modal --}}
-<div class="modal-overlay" id="logoutModal">
-  <div class="modal">
-    <h3>Confirm Logout</h3>
-    <p>Are you sure you want to logout?</p>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
-      <button class="btn-confirm red" onclick="confirmLogout()">Logout</button>
-    </div>
-  </div>
+
 </div>
 
 {{!-- Reject Reason Modal --}}
@@ -255,15 +224,12 @@ let _inspectOrderId  = null;
 let _inspectDecision = null;
 
 // ── Logout
-function openLogoutModal()  { document.getElementById('logoutModal').classList.add('open'); }
-function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
-function confirmLogout()    { window.location.href = '/admin/logout'; }
+
+
+
 
 // ── Sidebar
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
-}
+
 
 // ── Approve
 async function approveReturn(orderId) {

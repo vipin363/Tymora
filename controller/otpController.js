@@ -232,7 +232,7 @@ export const loadAdminOtpPage = async (req, res) => {
   const remaining = record
     ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000))
     : 0;
-  res.render("admin/otp", { email, remaining, formAction: "/admin/otp" });
+  res.render("admin/otp", { layout: "auth",  email, remaining, formAction: "/admin/otp" });
 };
 
 export const verifyAdminForgotOtp = async (req, res) => {
@@ -251,7 +251,7 @@ export const verifyAdminForgotOtp = async (req, res) => {
       const remaining = record
         ? Math.max(0, Math.floor((record.expires_at - new Date()) / 1000))
         : 0;
-      return res.render("admin/otp", {
+      return res.render("admin/otp", { layout: "auth", 
         email,
         remaining,
         formAction: "/admin/otp",
@@ -266,7 +266,7 @@ export const verifyAdminForgotOtp = async (req, res) => {
     });
 
     if (result.reason === "expired") {
-      return res.render("admin/otp", {
+      return res.render("admin/otp", { layout: "auth", 
         email,
         remaining: 0,
         formAction: "/admin/otp",
@@ -275,7 +275,7 @@ export const verifyAdminForgotOtp = async (req, res) => {
     }
 
     if (!result.success) {
-      return res.render("admin/otp", {
+      return res.render("admin/otp", { layout: "auth", 
         email,
         remaining: result.remaining,
         formAction: "/admin/otp",
@@ -287,7 +287,7 @@ export const verifyAdminForgotOtp = async (req, res) => {
     return res.redirect("/admin/resetPassword");
   } catch (err) {
     console.log(err);
-    return res.render("admin/otp", {
+    return res.render("admin/otp", { layout: "auth", 
       email: req.session.resetEmail,
       remaining: 0,
       formAction: "/admin/otp",

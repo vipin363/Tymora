@@ -344,9 +344,7 @@
           </div>
         </div>
 
-{{#if hasOutOfStock}}
-<p id="outOfStockMsg" style="color:#ff4d4d; margin-top:8px; font-weight:500;">This product is currently out of stock</p>
-{{/if}}
+<div id="place-order-error-msg" style="color:#ff4d4d; margin-top:8px; margin-bottom:12px; font-weight:600; font-size:12px; text-align:center; display:none;"></div>
 <button class="btn-place-order" id="placeOrderBtn" data-address-id="{{address._id}}" disabled style="opacity: 0.5; cursor: not-allowed;">PLACE ORDER &gt;</button>
       </div>
 
@@ -497,6 +495,48 @@
       if (couponZero) couponZero.style.display = 'inline';
     }
 
+    let oosItem = null;
+    if (data.cartItems && data.cartItems.length > 0) {
+      data.cartItems.forEach(item => {
+        const card = document.querySelector(`.product-summary-card[data-variant="${item.variantId}"]`);
+        if (card) {
+          const controls = card.querySelector('.ps-controls');
+          if (item.isOutOfStock) {
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+            if (controls && !controls.querySelector('.co-oos-badge')) {
+              const badge = document.createElement('div');
+              badge.className = 'co-oos-badge';
+              badge.style.marginTop = '8px';
+              badge.style.fontSize = '10px';
+              badge.style.fontWeight = '700';
+              badge.style.color = '#ff4d4d';
+              badge.style.border = '1px solid #ff4d4d';
+              badge.style.padding = '2px 10px';
+              badge.style.borderRadius = '20px';
+              badge.style.display = 'inline-block';
+              badge.textContent = 'UNAVAILABLE';
+              controls.appendChild(badge);
+            }
+            if (!oosItem) oosItem = item;
+          } else {
+            card.style.opacity = '1';
+            card.style.pointerEvents = 'auto';
+            const badge = controls ? controls.querySelector('.co-oos-badge') : null;
+            if (badge) badge.remove();
+          }
+        }
+      });
+    }
+
+    const placeOrderError = document.getElementById('place-order-error-msg');
+    if (oosItem && placeOrderError) {
+      placeOrderError.textContent = `Product "${oosItem.name}" is no longer available. Return to cart and remove the product to continue.`;
+      placeOrderError.style.display = 'block';
+    } else if (placeOrderError) {
+      placeOrderError.style.display = 'none';
+    }
+
     window.checkoutDataState = { hasOutOfStock: data.hasOutOfStock, finalTotal: data.finalTotal };
     validatePlaceOrderButton();
   }
@@ -514,7 +554,16 @@
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (!data.success) { console.error(data.message); return; }
+      if (!data.success) { 
+        const errObj = document.getElementById('place-order-error-msg');
+        if (errObj) {
+          errObj.textContent = data.message || 'Some products are unavailable. Return to cart.';
+          errObj.style.display = 'block';
+        }
+        window.checkoutDataState = { hasOutOfStock: true, finalTotal: 0 };
+        validatePlaceOrderButton();
+        return; 
+      }
 
       // Refresh eligible offers list
       populateOffersDropdown(data.eligibleOffers || []);
@@ -803,10 +852,23 @@
           window.location.href = `/user/order-success?orderId=${data.orderId}`;
         }
       } else {
-        paymentErrorContainer.textContent = data.message || 'Failed to place order. Please try again.';
-        paymentErrorContainer.style.display = 'block';
-        placeOrderBtn.disabled = false;
-        placeOrderBtn.textContent = 'PLACE ORDER >';
+        const placeOrderError = document.getElementById('place-order-error-msg');
+        if (data.message && (data.message.includes('unavailable') || data.message.includes('out of stock'))) {
+           if (placeOrderError) {
+             placeOrderError.textContent = data.message + ' Return to cart and remove the product to continue.';
+             placeOrderError.style.display = 'block';
+           }
+           placeOrderBtn.disabled = true;
+           placeOrderBtn.style.opacity = '0.5';
+           placeOrderBtn.style.cursor = 'not-allowed';
+           placeOrderBtn.textContent = 'PLACE ORDER >';
+           fetchUpdatedTotals();
+        } else {
+           paymentErrorContainer.textContent = data.message || 'Failed to place order. Please try again.';
+           paymentErrorContainer.style.display = 'block';
+           placeOrderBtn.disabled = false;
+           placeOrderBtn.textContent = 'PLACE ORDER >';
+        }
       }
     } catch (err) {
       console.error(err);

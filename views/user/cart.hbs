@@ -135,7 +135,9 @@
                   {{/if}}
                 {{/if}}
               </div>
-           {{#if this.isOutOfStock}}
+           {{#if this.isInactive}}
+                <span class="ci-oos-badge">UNAVAILABLE</span>
+              {{else if this.isOutOfStock}}
                 <span class="ci-oos-badge">OUT OF STOCK</span>
               {{else}}
                 {{#if (lt this.stock 5)}}
@@ -170,10 +172,12 @@
           
          <div class="summary-items">
             {{#each cartItems}}
+              {{#unless this.isOutOfStock}}
               <div class="summary-item-row" data-summary-id="{{this.id}}">
                 <div class="summary-item-name">{{this.name}} <span class="summary-item-qty">×{{this.qty}}</span></div>
                 <div class="summary-item-price">₹{{formatCurrency this.total}}</div>
               </div>
+              {{/unless}}
             {{/each}}
           </div>
           

@@ -77,6 +77,8 @@ export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+  
+
     // Form field is the explicit choice; cookie is the fallback
     const formCode = (req.body.referralCode || "").trim().toUpperCase();
     const cookieCode = getReferralCode(req) || "";
@@ -85,6 +87,7 @@ export const registerUser = async (req, res) => {
 
     console.log(`[Register] Attempt: email=${email} | referralCode=${referralCode || 'none'} | source=${referralSource}`);
 
+    
     const user = await userSchema.findOne({ email });
     if (user) {
       return res.render("user/login", { layout: "auth", message: "user already exists" });
@@ -1232,6 +1235,7 @@ export const loadshop = async (req, res) => {
       priceMin = "",
       priceMax = "",
       page = "1",
+      msg = "",
     } = req.query;
 
     const currentPage = Math.max(1, parseInt(page, 10) || 1);
@@ -1511,6 +1515,7 @@ export const loadshop = async (req, res) => {
       featured,
       searchPlaceholder: "Search watches…",
       shopData: { featured },
+      noticeMsg: msg === 'unavailable' ? 'This product is currently unavailable.' : null,
     });
   } catch (err) {
     console.error("loadshop error:", err);
@@ -1648,7 +1653,7 @@ export const loadProductDetail = async (req, res) => {
       product.category.is_visible === false ||
       product.category.deleted_at
     ) {
-      return res.redirect("/user/shop");
+      return res.redirect("/user/shop?msg=unavailable");
     }
 
     const variants = await Variant.find({
@@ -1657,7 +1662,7 @@ export const loadProductDetail = async (req, res) => {
       deleted_at: null,
     }).lean();
 
-    if (!variants.length) return res.redirect("/user/shop");
+    if (!variants.length) return res.redirect("/user/shop?msg=unavailable");
 
     const displayVariant = variants.find((v) => v.isDefault) || variants[0];
     const finalPrice = displayVariant.salePrice ?? displayVariant.price ?? 0;
@@ -1962,11 +1967,41 @@ export const getWishlistIds = async (req, res) => {
   try {
     const userId = req.session.user?.id;
     if (!userId) return res.json({ ids: [] });
+
     const wishlist = await Wishlist.findOne({ userId }).lean();
-    const ids = wishlist
-      ? wishlist.products.map((p) => p.productId.toString())
-      : [];
-    return res.json({ ids });
+    if (!wishlist || !wishlist.products.length) return res.json({ ids: [] });
+
+    const rawIds = wishlist.products.map((p) => p.productId);
+
+    // Only count products that are active, not deleted, and whose category is visible
+    const activeProducts = await Product.find({
+      _id: { $in: rawIds },
+      status: 'active',
+      deleted_at: null,
+    })
+      .populate('category', 'is_visible deleted_at')
+      .select('_id category')
+      .lean();
+
+    // Filter out products whose category is hidden or trashed
+    const visibleProductIds = activeProducts
+      .filter((p) => {
+        if (!p.category) return false;
+        if (p.category.is_visible === false) return false;
+        if (p.category.deleted_at) return false;
+        return true;
+      })
+      .map((p) => p._id.toString());
+
+    // Also ensure at least one active variant exists for each product
+    const variantProductIds = await Variant.distinct('product', {
+      product: { $in: visibleProductIds },
+      status: 'active',
+      deleted_at: null,
+    });
+
+    const finalIds = variantProductIds.map((id) => id.toString());
+    return res.json({ ids: finalIds });
   } catch {
     return res.json({ ids: [] });
   }
@@ -2061,10 +2096,9 @@ async function buildCartView(cart) {
     const product = item.productId;
     const variant = item.variantId;
 
-    if (!product || product.status !== "active" || product.deleted_at) continue;
-    if (!variant || variant.status !== "active" || variant.deleted_at) continue;
-
-    const isOutOfStock = (variant.stock ?? 0) <= 0;
+    if (!product || !variant) continue;
+    const isInactive = product.status !== "active" || !!product.deleted_at || variant.status !== "active" || !!variant.deleted_at;
+    const isOutOfStock = isInactive ? true : (variant.stock ?? 0) <= 0;
 
     let qty = item.quantity;
     if (!isOutOfStock) {
@@ -2095,9 +2129,10 @@ async function buildCartView(cart) {
       oldPrice,
       discountPct,
       qty,
-      total: isOutOfStock ? 0 : total,
+      total,
       stock: variant.stock ?? 0,
       isOutOfStock,
+      isInactive,
     });
   }
 
@@ -2153,24 +2188,17 @@ export const addToCart = async (req, res) => {
         message: "Missing product or variant",
       });
 
-    const variant = await Variant.findOne({
-      _id: variantId,
-      product: productId,
-      status: "active",
-      deleted_at: null,
-    });
-    if (!variant)
-      return res.json({ success: false, message: "Variant not found" });
-    if (variant.stock <= 0)
-      return res.json({ success: false, message: "Out of stock" });
+    const variant = await Variant.findOne({ _id: variantId, product: productId });
+    const product = await Product.findOne({ _id: productId });
 
-    const product = await Product.findOne({
-      _id: productId,
-      status: "active",
-      deleted_at: null,
-    });
-    if (!product)
-      return res.json({ success: false, message: "Product not available" });
+    if (!product || !variant)
+      return res.json({ success: false, message: "Product or variant not found" });
+
+    if (product.status !== "active" || !!product.deleted_at || variant.status !== "active" || !!variant.deleted_at)
+      return res.json({ success: false, message: "This product is no longer available." });
+
+    if (variant.stock <= 0)
+      return res.json({ success: false, message: "This product is out of stock." });
 
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = new Cart({ userId, items: [] });
@@ -2860,6 +2888,18 @@ export const buyNow = async (req, res) => {
       return res.status(401).json({ success: false, message: "Please login to buy products." });
     }
 
+    const product = await Product.findOne({ _id: productId });
+    const variant = await Variant.findOne({ _id: variantId, product: productId });
+    
+    if (!product || !variant)
+      return res.json({ success: false, message: "Product or variant not found" });
+
+    if (product.status !== "active" || !!product.deleted_at || variant.status !== "active" || !!variant.deleted_at)
+      return res.json({ success: false, message: "This product is no longer available." });
+
+    if (variant.stock <= 0)
+      return res.json({ success: false, message: "This product is out of stock." });
+
     req.session.buyNow = {
       productId,
       variantId,
@@ -2888,7 +2928,7 @@ export const loadCheckout = async (req, res) => {
       const product = await Product.findById(productId).lean();
       const variant = await Variant.findById(variantId).lean();
       
-      if (!product || !variant || variant.stock <= 0) {
+      if (!product || !variant || variant.stock <= 0 || product.status !== "active" || product.deleted_at || variant.status !== "active" || variant.deleted_at) {
         delete req.session.buyNow;
         return res.redirect("/user/cart");
       }
@@ -2921,12 +2961,11 @@ export const loadCheckout = async (req, res) => {
         const variant = await Variant.findById(item.variantId).lean();
 
         if (!product || !variant) continue;
-        // Treat inactive products as out of stock
-        if (product.isActive === false) {
-          hasOutOfStock = true;
+        const isInactive = product.status !== "active" || !!product.deleted_at || variant.status !== "active" || !!variant.deleted_at;
+        const isOutOfStock = isInactive || variant.stock <= 0;
+        if (isOutOfStock) {
+          return res.redirect("/user/cart");
         }
-        const isOutOfStock = variant.stock <= 0;
-        if (isOutOfStock) hasOutOfStock = true;
 
         const q = Math.min(item.quantity, variant.stock > 0 ? variant.stock : item.quantity, 7);
         const originalPrice = variant.originalPrice || variant.price || 0;
@@ -3041,8 +3080,8 @@ export const calculateCheckout = async (req, res) => {
       const { productId, variantId, quantity } = req.session.buyNow;
       const product = await Product.findById(productId).lean();
       const variant = await Variant.findById(variantId).lean();
-      if (!product || !variant || variant.stock <= 0) {
-        return res.json({ success: false, message: 'Product out of stock' });
+      if (!product || !variant || variant.stock <= 0 || product.status !== "active" || product.deleted_at || variant.status !== "active" || variant.deleted_at) {
+        return res.json({ success: false, message: 'Product unavailable' });
       }
       const q = Math.min(quantity, variant.stock, 7);
       const originalPrice = variant.originalPrice || variant.price || 0;
@@ -3076,10 +3115,8 @@ export const calculateCheckout = async (req, res) => {
         const product = await Product.findById(item.productId).lean();
         const variant = await Variant.findById(item.variantId).lean();
         if (!product || !variant) continue;
-        if (product.isActive === false) {
-          hasOutOfStock = true; // treat inactive as out of stock
-        }
-        const isOutOfStock = variant.stock <= 0;
+        const isInactive = product.status !== "active" || !!product.deleted_at || variant.status !== "active" || !!variant.deleted_at;
+        const isOutOfStock = isInactive || variant.stock <= 0;
         if (isOutOfStock) hasOutOfStock = true;
         const q = Math.min(item.quantity, variant.stock > 0 ? variant.stock : item.quantity, 7);
         const originalPrice = variant.originalPrice || variant.price || 0;
@@ -3098,14 +3135,13 @@ export const calculateCheckout = async (req, res) => {
           total: salePrice * q,
           discountPercentage: discount ? Math.round((discount / originalPrice) * 100) : 0,
           isOutOfStock,
+          isInactive,
           productId: item.productId,
           variantId: item.variantId,
         });
 
-        if (!isOutOfStock) {
-          subtotalMrp += originalPrice * q;
-          totalDiscount += discount * q;
-        }
+        subtotalMrp += originalPrice * q;
+        totalDiscount += discount * q;
       }
     }
 
@@ -3290,8 +3326,8 @@ export const placeOrder = async (req, res) => {
       if (!product) {
         return res.json({ success: false, message: 'Product not found.' });
       }
-      if (product.isActive === false) {
-        return res.json({ success: false, message: `Product "${product.name}" is inactive and cannot be purchased.` });
+      if (product.status !== "active" || !!product.deleted_at || variant?.status !== "active" || !!variant?.deleted_at) {
+        return res.json({ success: false, message: `Product "${product.name}" is unavailable and cannot be purchased.` });
       }
       if (!variant || variant.stock < quantity) {
         return res.json({ success: false, message: `Product "${product.name}" is out of stock.` });
@@ -3308,8 +3344,8 @@ export const placeOrder = async (req, res) => {
         if (!prod) {
           return res.json({ success: false, message: 'One of the products in your cart was not found.' });
         }
-        if (prod.isActive === false) {
-          return res.json({ success: false, message: `Product "${prod.name}" is inactive and cannot be purchased.` });
+        if (prod.status !== "active" || !!prod.deleted_at || varnt?.status !== "active" || !!varnt?.deleted_at) {
+          return res.json({ success: false, message: `Product "${prod.name}" is unavailable and cannot be purchased.` });
         }
         if (!varnt || varnt.stock < item.quantity) {
           return res.json({ success: false, message: `Product "${prod.name}" is out of stock.` });
@@ -3368,8 +3404,8 @@ export const placeOrder = async (req, res) => {
         if (!product || !variant) {
           return res.json({ success: false, message: "Product not found." });
         }
-        if (product.isActive === false) {
-          return res.json({ success: false, message: `Product "${product.name}" is inactive and cannot be purchased.` });
+        if (product.status !== "active" || !!product.deleted_at || variant?.status !== "active" || !!variant?.deleted_at) {
+          return res.json({ success: false, message: `Product "${product.name}" is unavailable and cannot be purchased.` });
         }
         if (variant.stock < item.quantity) {
           return res.json({ success: false, message: "Some products are out of stock." });
@@ -3454,7 +3490,7 @@ export const placeOrder = async (req, res) => {
       req._offerDiscount = offerDiscount;
 
     } else if (couponCode) {
-      
+      // ── Validate selected coupon ──────────────────────────────────────
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isDeleted: { $ne: true } }).lean();
       if (!coupon) return res.json({ success: false, message: 'Coupon not found.' });
       if (!coupon.isActive || now < new Date(coupon.startDate) || now > new Date(coupon.endDate))
