@@ -77,7 +77,7 @@
     <div class="lux-collections__track" id="collectionsTrack">
       {{#each categories}}
       <div class="lux-collection-card glass-card lux-reveal"
-        onclick="window.location.href='/user/shop?category={{this._id}}'">
+        onclick="window.location.href='/user/collection/{{this._id}}'">
         <div class="lux-collection-card__img-wrap">
           {{#if this.image}}
           <img src="{{this.image}}" alt="{{this.name}}" loading="lazy">
@@ -213,22 +213,22 @@
   <div class="lux-container">
     <div class="lux-numbers__grid">
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="5000">0</span>+</div>
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.happyCustomers}}">0</span>+</div>
         <div class="lux-number-card__label">Happy Customers</div>
         <div class="lux-number-card__glow"></div>
       </div>
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="1500">0</span>+</div>
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.watchesSold}}">0</span>+</div>
         <div class="lux-number-card__label">Luxury Watches Sold</div>
         <div class="lux-number-card__glow"></div>
       </div>
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="50">0</span>+</div>
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.premiumCollections}}">0</span>+</div>
         <div class="lux-number-card__label">Premium Collections</div>
         <div class="lux-number-card__glow"></div>
       </div>
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="99">0</span>%</div>
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.customerSatisfaction}}">0</span>%</div>
         <div class="lux-number-card__label">Customer Satisfaction</div>
         <div class="lux-number-card__glow"></div>
       </div>
@@ -413,37 +413,6 @@
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════
-     10. LIMITED EDITION EXPERIENCE
-     ══════════════════════════════════════════════════════════ -->
-<section class="lux-limited">
-  <div class="lux-limited__spotlight"></div>
-  <div class="lux-limited__overlay"></div>
-  <div class="lux-container lux-limited__layout">
-    <div class="lux-limited__text lux-reveal">
-      <div class="lux-eyebrow" style="justify-content:center;color:#fff;">EXCLUSIVE DROP</div>
-      <h2 class="lux-heading lux-limited__title"><span class="lux-gold">Midnight</span> Collection</h2>
-      <p class="lux-limited__desc">Strictly limited to 50 pieces worldwide. Secure yours before the vault closes.</p>
-      <div class="lux-limited__timer">
-        <div class="lux-limited__time-block">
-          <span id="lux-dh">12</span><small>HOURS</small>
-        </div>
-        <div class="lux-limited__time-sep">:</div>
-        <div class="lux-limited__time-block">
-          <span id="lux-dm">45</span><small>MINS</small>
-        </div>
-        <div class="lux-limited__time-sep">:</div>
-        <div class="lux-limited__time-block">
-          <span id="lux-ds">30</span><small>SECS</small>
-        </div>
-      </div>
-      <a href="/user/shop" class="lux-btn lux-btn--primary magnetic-btn">
-        <span class="lux-btn__text">Access Vault</span>
-        <span class="lux-btn__glow"></span>
-      </a>
-    </div>
-  </div>
-</section>
 
 <!-- ══════════════════════════════════════════════════════════
      11. INTERACTIVE TIMELINE
@@ -492,24 +461,6 @@
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════
-     12. NEWSLETTER SECTION
-     ══════════════════════════════════════════════════════════ -->
-<section class="lux-newsletter">
-  <div class="lux-newsletter__glow"></div>
-  <div class="lux-newsletter__card glass-card lux-reveal">
-    <h2 class="lux-newsletter__title">Join the Inner <span class="lux-gold">Circle</span></h2>
-    <p class="lux-newsletter__desc">Subscribe to receive exclusive access to limited editions, private events, and the
-      world of timeless luxury.</p>
-    <form class="lux-newsletter__form"
-      onsubmit="event.preventDefault(); this.querySelector('button').textContent='Welcome!'; this.querySelector('input').value='';">
-      <div class="lux-newsletter__input-wrap">
-        <input type="email" placeholder="Enter your email address" required class="lux-newsletter__input">
-        <button type="submit" class="lux-newsletter__btn">Subscribe</button>
-      </div>
-    </form>
-  </div>
-</section>
 
 <!-- ══════════════════════════════════════════════════════════
      13. TRUST STRIP
@@ -635,22 +586,6 @@
       }
     }
 
-    // ── 6. COUNTDOWN TIMER ──
-    let totalSeconds = 12 * 3600 + 45 * 60 + 30;
-    function updateTimer() {
-      if (totalSeconds <= 0) return;
-      totalSeconds--;
-      const h = Math.floor(totalSeconds / 3600);
-      const m = Math.floor((totalSeconds % 3600) / 60);
-      const s = totalSeconds % 60;
-      const dh = document.getElementById('lux-dh');
-      const dm = document.getElementById('lux-dm');
-      const ds = document.getElementById('lux-ds');
-      if (dh) dh.textContent = String(h).padStart(2, '0');
-      if (dm) dm.textContent = String(m).padStart(2, '0');
-      if (ds) ds.textContent = String(s).padStart(2, '0');
-    }
-    setInterval(updateTimer, 1000);
 
     // ── 7. TESTIMONIAL CAROUSEL ──
     const track = document.getElementById('testimonialTrack');

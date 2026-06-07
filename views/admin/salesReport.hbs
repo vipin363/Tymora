@@ -57,7 +57,7 @@ h2.page-title { font-size: 20px; font-weight: 700; color: var(--text-dark); marg
   border-radius: 8px; z-index: 100; border: 1px solid var(--border-color);
   overflow: hidden;
 }
-.dropdown:hover .dropdown-content { display: block; }
+.dropdown-content.show { display: block; }
 .dropdown-content button {
   color: var(--text-dark); padding: 10px 14px; text-decoration: none;
   display: block; width: 100%; text-align: left; border: none; background: transparent;
@@ -183,7 +183,7 @@ h2.page-title { font-size: 20px; font-weight: 700; color: var(--text-dark); marg
       <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <span class="topbar-title">Reports</span>
+      <span class="topbar-title"></span>
       <div class="admin-info">
         <div class="admin-avatar">A</div>
         <div class="admin-meta"><div class="admin-name">Admin</div></div>
@@ -208,11 +208,11 @@ h2.page-title { font-size: 20px; font-weight: 700; color: var(--text-dark); marg
             
             <div style="display:flex; gap:12px; align-items:center;">
                 <div class="dropdown">
-                    <button class="btn-primary">
+                    <button class="btn-primary" onclick="toggleExportMenu(event)">
                         Export Report 
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
-                    <div class="dropdown-content">
+                    <div class="dropdown-content" id="exportDropdownMenu">
                         <button onclick="exportReport('excel')">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:-2px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2-2-2-2"/><path d="M15 15l-2-2 2-2"/></svg>
                             Export Excel
@@ -500,9 +500,22 @@ h2.page-title { font-size: 20px; font-weight: 700; color: var(--text-dark); marg
 </div>
 
 <script>
-    
-    
-    
+    function toggleExportMenu(e) {
+        if(e) e.stopPropagation();
+        document.getElementById("exportDropdownMenu").classList.toggle("show");
+    }
+
+    // Close dropdown when clicking outside
+    window.onclick = function(event) {
+        if (!event.target.closest('.dropdown')) {
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) {
+                    dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+    }
 
     function exportReport(type) {
         const urlParams = new URLSearchParams(window.location.search);

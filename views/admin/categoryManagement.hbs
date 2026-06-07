@@ -12,27 +12,8 @@
           <line x1="3" y1="12" x2="21" y2="12" />
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg></button>
-      <span class="topbar-title">Dashboard</span>
+      <span class="topbar-title"></span>
 
-      <form method="GET" action="/admin/categoryManagement" class="search-bar">
-
-        <input class="searchbar" type="text" name="search" placeholder="Search category..." value="{{search}}">
-
-
-        <select name="status" class="sort-select">
-          <option value="" {{#unless status}}selected{{/unless}}>All</option>
-          <option value="visible" {{#if (eq status "visible" )}}selected{{/if}}>Visible</option>
-          <option value="hidden" {{#if (eq status "hidden" )}}selected{{/if}}>Hidden</option>
-          <option value="trash" {{#if (eq status "trash" )}}selected{{/if}}>Trash</option>
-        </select>
-
-        <button type="submit" class="btn-search">Search</button>
-
-        {{#if search}}
-        <a href="/admin/categoryManagement" class="btn-clear">Clear</a>
-        {{/if}}
-
-      </form>
       <div class="admin-info">
         <div class="admin-avatar">A</div>
         <div class="admin-meta">
@@ -52,21 +33,7 @@
 
       </div>
 
-      <!-- Mobile search bar -->
-      <form method="GET" action="/admin/categoryManagement" class="mobile-search-bar">
-        <input class="searchbar" type="text" name="search" placeholder="Search category..." value="{{search}}">
-        <select name="status" class="sort-select">
-          <option value="" {{#unless status}}selected{{/unless}}>All</option>
-          <option value="visible" {{#if (eq status "visible" )}}selected{{/if}}>Visible</option>
-          <option value="hidden" {{#if (eq status "hidden" )}}selected{{/if}}>Hidden</option>
-          <option value="trash" {{#if (eq status "trash" )}}selected{{/if}}>Trash</option>
 
-        </select>
-        <button type="submit" class="btn-search">Search</button>
-        {{#if search}}
-        <a href="/admin/categoryManagement" class="btn-clear">Clear</a>
-        {{/if}}
-      </form>
 
       <div class="stats-row">
         <div class="stat-card">
@@ -88,6 +55,20 @@
         </div>
 
       </div>
+
+      <form method="GET" action="/admin/categoryManagement" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #f1f5f9; margin-bottom:24px;">
+        <input type="text" name="search" placeholder="Search category..." value="{{search}}" style="flex:1; min-width:180px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; color:#334155;">
+        <select name="status" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+          <option value="" {{#unless status}}selected{{/unless}}>All</option>
+          <option value="visible" {{#if (eq status "visible" )}}selected{{/if}}>Visible</option>
+          <option value="hidden" {{#if (eq status "hidden" )}}selected{{/if}}>Hidden</option>
+          <option value="trash" {{#if (eq status "trash" )}}selected{{/if}}>Trash</option>
+        </select>
+        <button type="submit" class="btn-search">Search</button>
+        {{#if search}}
+        <a href="/admin/categoryManagement" class="btn-clear">Clear</a>
+        {{/if}}
+      </form>
 
       <div class="table-card">
         <div class="table-card-header">

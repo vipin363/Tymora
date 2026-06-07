@@ -26,7 +26,9 @@ export const addReview = async (req, res) => {
 
     const { productId, orderId, rating, reviewText } = req.body;
     if (!rating || !reviewText) return res.status(400).json({ success: false, message: "Rating and review text are required." });
-    if (reviewText.length < 5) return res.status(400).json({ success: false, message: "Review must be at least 5 characters." });
+    if (reviewText.trim().length < 3 || !/[A-Za-z]/.test(reviewText)) {
+      return res.status(400).json({ success: false, message: "Review must contain at least 3 characters and include letters." });
+    }
 
     
     const order = await Order.findOne({ orderId, userId });
@@ -66,8 +68,8 @@ export const editReview = async (req, res) => {
     const { reviewId } = req.params;
     const { rating, reviewText } = req.body;
 
-    if (!rating || !reviewText || reviewText.length < 5) {
-      return res.status(400).json({ success: false, message: "Invalid review data." });
+    if (!rating || !reviewText || reviewText.trim().length < 3 || !/[A-Za-z]/.test(reviewText)) {
+      return res.status(400).json({ success: false, message: "Invalid review data. Review must contain at least 3 characters and include letters." });
     }
 
     const review = await Review.findOneAndUpdate(

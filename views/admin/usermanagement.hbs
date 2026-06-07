@@ -1,4 +1,7 @@
 <link href="/adminUserManagement.css" rel="stylesheet">
+<style>
+    #exportDropdown.show { display: block !important; }
+</style>
 
 <div class="shell">
     {{> admin/sidebar}}
@@ -10,31 +13,7 @@
                     <line x1="3" y1="12" x2="21" y2="12" />
                     <line x1="3" y1="18" x2="21" y2="18" />
                 </svg></button>
-            <span class="topbar-title">Dashboard</span>
-
-            <form method="GET" action="/admin/users" class="search-bar">
-
-                <input type="text" name="search" placeholder="Search users..." value="{{search}}">
-
-                <!-- SORT DROPDOWN -->
-                <select name="sort" class="sort-select">
-                    <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
-                    <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
-                </select>
-
-                <select name="status" class="sort-select">
-                    <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All</option>
-                    <option value="blocked" {{#if (eq status "blocked" )}}selected{{/if}}>Blocked</option>
-                    <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
-                </select>
-
-                <button type="submit" class="btn-search">Search</button>
-
-                {{#if search}}
-                <a href="/admin/users" class="btn-clear">Clear</a>
-                {{/if}}
-
-            </form>
+            <span class="topbar-title"></span>
             <div class="admin-info">
                 <div class="admin-avatar">AU</div>
                 <div class="admin-meta">
@@ -58,24 +37,23 @@
                         <h2>User Management</h2>
                         <p>Manage customer accounts and activity from a centralized hub.</p>
                     </div>
-                    <a href="/admin/export-users" class="btn-primary">Export Users</a>
+                    <div style="position: relative;">
+                        <button class="btn-primary" onclick="document.getElementById('exportDropdown').classList.toggle('show')" type="button" style="display:inline-flex; align-items:center; gap:6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export Users
+                        </button>
+                        <div id="exportDropdown" style="display:none; position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); border:1px solid #e2e8f0; z-index:50; min-width:180px; overflow:hidden;">
+                            <a href="#" onclick="exportData('pdf'); return false;" style="display:flex; align-items:center; gap:10px; padding:12px 16px; color:#334155; text-decoration:none; font-size:0.88rem; font-weight:500; transition:background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                Export as PDF
+                            </a>
+                            <a href="#" onclick="exportData('excel'); return false;" style="display:flex; align-items:center; gap:10px; padding:12px 16px; color:#334155; text-decoration:none; font-size:0.88rem; font-weight:500; border-top:1px solid #f1f5f9; transition:background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#22c55e" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                Export as Excel
+                            </a>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Mobile-only search bar (hidden on desktop via CSS) -->
-                <form method="GET" action="/admin/users" class="mobile-search-bar" style="display:none">
-                    <input type="text" name="search" placeholder="Search users..." value="{{search}}">
-                    <select name="sort" class="sort-select">
-                        <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
-                        <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
-                    </select>
-                    <select name="status" class="sort-select">
-                        <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All</option>
-                        <option value="blocked" {{#if (eq status "blocked" )}}selected{{/if}}>Blocked</option>
-                        <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
-                    </select>
-                    <button type="submit" class="btn-search">Search</button>
-                    {{#if search}}<a href="/admin/users" class="btn-clear">Clear</a>{{/if}}
-                </form>
 
                 <!-- STATS (dynamic optional) -->
                 <div class="stats-grid">
@@ -95,10 +73,28 @@
                     </div>
 
                     <div class="stat-card">
-                        <div class="slabel">Total Revenue</div>
-                        <div class="svalue">₹{{stats.totalRevenue}}</div>
+                        <div class="slabel">Total Customer Spending</div>
+                        <div class="svalue">₹{{stats.totalCustomerSpending}}</div>
                     </div>
                 </div>
+
+                <!-- Search & Filter Bar -->
+                <form method="GET" action="/admin/users" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #f1f5f9; margin-bottom:24px;">
+                    <input type="text" name="search" placeholder="Search users..." value="{{search}}" style="flex:1; min-width:180px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; color:#334155;">
+                    <select name="sort" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+                        <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
+                        <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
+                    </select>
+                    <select name="status" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+                        <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All</option>
+                        <option value="blocked" {{#if (eq status "blocked" )}}selected{{/if}}>Blocked</option>
+                        <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
+                    </select>
+                    <button type="submit" class="btn-search">Search</button>
+                    {{#if search}}
+                    <a href="/admin/users" class="btn-clear">Clear</a>
+                    {{/if}}
+                </form>
 
 
                 <!-- TABLE -->
@@ -578,7 +574,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('modalOverlay').classList.remove('open');
         });
+        // ── EXPORT ─────────────────────────────────────────────────────────────────
+        function exportData(type) {
+            const params = new URLSearchParams(window.location.search);
+            params.delete('page');
+            window.open(`/admin/users/export/${type}?${params.toString()}`, '_blank');
+            document.getElementById('exportDropdown').classList.remove('show');
+        }
 
-
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dd = document.getElementById('exportDropdown');
+            if (dd && !e.target.closest('[onclick*="exportDropdown"]') && !dd.contains(e.target)) {
+                dd.classList.remove('show');
+            }
+        });
 
     </script>

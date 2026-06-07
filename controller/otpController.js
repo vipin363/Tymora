@@ -76,6 +76,7 @@ export const verifyOtp = async (req, res) => {
     // Create Referral record if referred
     if (data.referrerId && data.referralCodeUsed) {
       const settings = await Settings.findOne();
+      console.log(`[OTP] Creating Referral record: referrer=${data.referrerId} | code=${data.referralCodeUsed} | source=${data.referralSource}`);
       await Referral.create({
         referrer: data.referrerId,
         referredUser: newUser._id,
@@ -86,6 +87,9 @@ export const verifyOtp = async (req, res) => {
         referrerRewardAmount: settings?.referrerReward || 100,
         referredRewardAmount: settings?.referredReward || 50,
       });
+      console.log(`[OTP] ✅ Referral document created with rewardStatus=PENDING`);
+    } else {
+      console.log(`[OTP] No referral to record | referrerId=${data.referrerId || 'none'} | referralCodeUsed=${data.referralCodeUsed || 'none'}`);
     }
 
     req.session.user = { id: newUser._id, name: newUser.name };

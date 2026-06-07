@@ -20,6 +20,7 @@ import Referral from "../model/referralModel.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { calculateRefundAmount } from "../utils/refundCalculator.js";
+import { calculateActiveOrderTotals } from "../utils/orderCalculator.js";
 import { getReferralCode, clearReferralCookie } from "../middleware/captureReferral.js";
 import passport from 'passport';
 
@@ -27,9 +28,13 @@ import passport from 'passport';
 
 export const loadRegister = async (req, res) => {
   let message = req.query.message || "";
+  // Detailed referral debug trace
+  console.log(`[Register] Page loaded | URL: ${req.originalUrl}`);
+  console.log(`[Register] req.query.ref = ${req.query.ref || 'none'}`);
+  console.log(`[Register] req.cookies._tyref = ${req.cookies?._tyref || 'none'}`);
   // Cookie is the primary source; URL ?ref= is the fallback (and sets the cookie via middleware)
   const prefillRef = (req.query.ref || req.cookies?._tyref || "").toUpperCase();
-  console.log(`[Register] Page loaded | prefillRef=${prefillRef || 'none'}`);
+  console.log(`[Register] prefillRef resolved to: ${prefillRef || 'none'}`);
   res.render("user/register", { layout: "auth", message, prefillRef });
 };
 
@@ -85,7 +90,11 @@ export const registerUser = async (req, res) => {
     const referralCode = formCode || cookieCode;
     const referralSource = formCode ? 'Code' : 'Link';
 
-    console.log(`[Register] Attempt: email=${email} | referralCode=${referralCode || 'none'} | source=${referralSource}`);
+    console.log(`[Register] Attempt: email=${email}`);
+    console.log(`[Register] formCode (from form field) = ${formCode || 'none'}`);
+    console.log(`[Register] cookieCode (_tyref cookie) = ${cookieCode || 'none'}`);
+    console.log(`[Register] referralCode resolved = ${referralCode || 'none'}`);
+    console.log(`[Register] referralSource = ${referralSource}`);
 
     
     const user = await userSchema.findOne({ email });
@@ -291,6 +300,32 @@ export const homePage = async (req, res) => {
       productName: r.productId?.name || "Premium Watch",
       date: new Date(r.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" }),
     }));
+    // ── Calculate Dynamic Stats ──
+    const happyCustomersCount = await userSchema.countDocuments({ role: "user" });
+
+    // Watches sold: Total quantity of items in delivered orders
+    const watchesSoldResult = await Order.aggregate([
+      { $match: { "items.itemStatus": "delivered" } },
+      { $unwind: "$items" },
+      { $match: { "items.itemStatus": "delivered" } },
+      { $group: { _id: null, totalSold: { $sum: "$items.quantity" } } }
+    ]);
+    const watchesSold = watchesSoldResult.length > 0 ? watchesSoldResult[0].totalSold : 0;
+
+    // Premium Collections
+    const premiumCollections = validCategoryIds.length;
+
+    // Customer Satisfaction: % of 4+ star reviews
+    const totalReviews = await Review.countDocuments({ isVisible: true });
+    const positiveReviews = await Review.countDocuments({ rating: { $gte: 4 }, isVisible: true });
+    const customerSatisfaction = totalReviews > 0 ? Math.round((positiveReviews / totalReviews) * 100) : 99; // Default to 99 if no reviews
+
+    const stats = {
+      happyCustomers: happyCustomersCount,
+      watchesSold: watchesSold,
+      premiumCollections: premiumCollections,
+      customerSatisfaction: customerSatisfaction
+    };
 
     res.render("user/home", {
       layout: "main",
@@ -302,13 +337,14 @@ export const homePage = async (req, res) => {
       hasProducts: trendingProducts.length > 0,
       testimonials,
       hasTestimonials: testimonials.length > 0,
+      stats
     });
   } catch (err) {
     console.log("homePage error:", err);
     res.render("user/home", {
       layout: "main", user: null, message: "Something went wrong",
       navCategories: [], categories: [],
-      trendingProducts: [], testimonials: [],
+      trendingProducts: [], testimonials: [], stats: { happyCustomers: 0, watchesSold: 0, premiumCollections: 0, customerSatisfaction: 0 }
     });
   }
 };
@@ -2189,13 +2225,21 @@ export const addToCart = async (req, res) => {
       });
 
     const variant = await Variant.findOne({ _id: variantId, product: productId });
-    const product = await Product.findOne({ _id: productId });
+    const product = await Product.findOne({ _id: productId }).populate("category", "is_visible deleted_at");
 
-    if (!product || !variant)
-      return res.json({ success: false, message: "Product or variant not found" });
-
-    if (product.status !== "active" || !!product.deleted_at || variant.status !== "active" || !!variant.deleted_at)
-      return res.json({ success: false, message: "This product is no longer available." });
+    if (
+      !product ||
+      !variant ||
+      product.status !== "active" ||
+      !!product.deleted_at ||
+      variant.status !== "active" ||
+      !!variant.deleted_at ||
+      !product.category ||
+      product.category.is_visible === false ||
+      product.category.deleted_at
+    ) {
+      return res.json({ success: false, redirect: "/user/shop?msg=unavailable" });
+    }
 
     if (variant.stock <= 0)
       return res.json({ success: false, message: "This product is out of stock." });
@@ -2358,7 +2402,7 @@ export const checkProductStatus = async (req, res) => {
     // Also check if at least one active variant exists
     const variantExists = await Variant.exists({
       product: id,
-      status: "active",
+      status: 'active',
       deleted_at: null,
     });
 
@@ -2385,7 +2429,11 @@ export const getUserOrders = async (req, res) => {
     const skip = (page - 1) * limit;
     const searchQuery = req.query.search || "";
 
-    let query = { userId };
+    let query = { 
+      userId,
+      paymentStatus: { $ne: 'Failed' },
+      orderStatus: { $ne: 'Payment Pending' }
+    };
     if (searchQuery) {
       query.$or = [
         { orderId: { $regex: searchQuery, $options: "i" } },
@@ -2455,12 +2503,29 @@ export const getUserOrders = async (req, res) => {
         ["Delivered", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(p.orderStatus)
       );
 
+      let totalCancelledRefunds = 0;
+      let totalReturnedRefunds = 0;
+
+      mappedProducts.forEach(item => {
+        if (item.orderStatus === "Cancelled" && item.refundAmountProcessed) {
+          totalCancelledRefunds += item.refundAmountProcessed;
+        }
+        if (["Returned", "Refund Processed"].includes(item.orderStatus) && item.refundAmountProcessed) {
+          totalReturnedRefunds += item.refundAmountProcessed;
+        }
+      });
+
+      const finalAmountPaid = order.totalAmount - totalCancelledRefunds - totalReturnedRefunds;
+
       return {
         ...order,
         orderDateFormatted: fmtDate(order.orderDate),
         estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery),
         products: mappedProducts,
-        canDownloadInvoice
+        totalCancelledRefunds,
+        totalReturnedRefunds,
+        finalAmountPaid,
+        canDownloadInvoice: finalAmountPaid > 0 && canDownloadInvoice
       };
     });
 
@@ -2487,6 +2552,11 @@ export const cancelOrder = async (req, res) => {
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const { orderId, itemId, reason } = req.body;
+    
+    if (!reason || reason.trim().length < 3 || !/[A-Za-z]/.test(reason)) {
+      return res.status(400).json({ success: false, message: "Invalid cancellation reason. Please provide a valid reason." });
+    }
+
     const order = await Order.findOne({ orderId, userId });
 
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
@@ -2679,14 +2749,51 @@ export const loadOrderDetails = async (req, res) => {
       ["Delivered", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(p.orderStatus)
     );
 
+    let totalCancelledRefunds = 0;
+    let totalReturnedRefunds = 0;
+
+    mappedProducts.forEach(item => {
+      if (item.orderStatus === "Cancelled" && item.refundAmountProcessed) {
+        totalCancelledRefunds += item.refundAmountProcessed;
+      }
+      if (["Returned", "Refund Processed"].includes(item.orderStatus) && item.refundAmountProcessed) {
+        totalReturnedRefunds += item.refundAmountProcessed;
+      }
+    });
+
+    let finalAmountPaid = order.totalAmount - totalCancelledRefunds - totalReturnedRefunds;
+
+    // Apply recalculation for COD orders dynamically in the UI
+    let displayOrder = { ...order, isCOD: order.paymentMethod === 'COD' };
+    if (order.paymentMethod === 'COD') {
+      const nonCancelledProducts = order.products.filter(p => p.orderStatus !== "Cancelled");
+      const activeProducts = order.products.filter(p => !["Cancelled", "Returned", "Refund Processed"].includes(p.orderStatus));
+      
+      const recalculatedCancelled = await calculateActiveOrderTotals(order, nonCancelledProducts);
+      const recalculatedAll = await calculateActiveOrderTotals(order, activeProducts);
+
+      // Derive the exact drops
+      const cancelledDrop = order.totalAmount - recalculatedCancelled.finalAmountPaid;
+      const returnedDrop = recalculatedCancelled.finalAmountPaid - recalculatedAll.finalAmountPaid;
+
+      displayOrder.totalAmount = order.totalAmount; // Preserve exact original total
+      totalCancelledRefunds = cancelledDrop > 0 ? cancelledDrop : 0;
+      totalReturnedRefunds = returnedDrop > 0 ? returnedDrop : 0;
+      finalAmountPaid = recalculatedAll.finalAmountPaid;
+    }
+
     res.render("user/orderDetails", {
       layout: "main",
       order: {
-        ...order,
+        ...displayOrder,
+        subtotalSalePrice: displayOrder.subtotalMrp - (displayOrder.discount || 0),
         orderDateFormatted: fmtDate(order.orderDate),
         estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery),
         products: mappedProducts,
-        canDownloadInvoice
+        totalCancelledRefunds,
+        totalReturnedRefunds,
+        finalAmountPaid,
+        canDownloadInvoice: finalAmountPaid > 0 && canDownloadInvoice
       }
     });
   } catch (err) {
@@ -2705,10 +2812,8 @@ export const downloadInvoice = async (req, res) => {
     const order = await Order.findOne({ orderId, userId }).lean();
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-    const deliveredStatuses = ["Delivered", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"];
-    
-    const isOnlinePaid = ['Razorpay', 'Wallet', 'Online', 'Card', 'UPI', 'Stripe'].includes(order.paymentMethod) && order.paymentStatus === 'Paid';
-    const invoiceProducts = isOnlinePaid ? order.products : order.products.filter(p => deliveredStatuses.includes(p.orderStatus));
+    const hideStatuses = ["Cancelled", "Returned", "Refund Processed"];
+    const invoiceProducts = order.products.filter(p => !hideStatuses.includes(p.orderStatus));
 
     if (invoiceProducts.length === 0) {
       return res.status(400).json({ success: false, message: "Invoice is only available for delivered products or successful online payments." });
@@ -2758,7 +2863,8 @@ export const downloadInvoice = async (req, res) => {
     let yPosition = tableTop + 25;
     doc.font("Helvetica");
     
-    let computedSubtotal = 0;
+    // Recalculate invoice totals based on invoiceProducts (Target State Formula)
+    const recalculated = await calculateActiveOrderTotals(order, invoiceProducts);
 
     for (const item of invoiceProducts) {
       doc.text(`${item.productName} (${item.variantSpecs})`, 50, yPosition, { width: 170 });
@@ -2774,7 +2880,6 @@ export const downloadInvoice = async (req, res) => {
       doc.text(discPct > 0 ? `${discPct}%` : `-`, 415, yPosition, { width: 40 });
       doc.text(`Rs. ${item.salePrice}`, 460, yPosition, { width: 55 });
       doc.text(`Rs. ${item.itemTotal}`, 515, yPosition, { width: 60 });
-      computedSubtotal += item.itemTotal;
       yPosition += 40;
     }
 
@@ -2782,46 +2887,46 @@ export const downloadInvoice = async (req, res) => {
     yPosition += 15;
 
     doc.text("Subtotal:", 380, yPosition);
-    doc.text(`Rs. ${computedSubtotal}`, 490, yPosition);
+    doc.text(`Rs. ${recalculated.computedSubtotal}`, 490, yPosition);
     yPosition += 20;
 
-    if (order.offerDiscount > 0) {
+    if (recalculated.invoiceOfferDiscount > 0) {
       doc.text(`Offer Applied (${order.offerName || 'Offer'}):`, 380, yPosition);
-      doc.text(`- Rs. ${order.offerDiscount}`, 490, yPosition);
+      doc.text(`- Rs. ${recalculated.invoiceOfferDiscount.toFixed(2)}`, 490, yPosition);
       yPosition += 20;
     }
 
-    if (order.couponDiscount > 0) {
+    if (recalculated.invoiceCouponDiscount > 0) {
       doc.text(`Coupon Applied (${order.couponCode || 'Coupon'}):`, 380, yPosition);
-      doc.text(`- Rs. ${order.couponDiscount}`, 490, yPosition);
+      doc.text(`- Rs. ${recalculated.invoiceCouponDiscount.toFixed(2)}`, 490, yPosition);
       yPosition += 20;
     }
-
 
     doc.text("CGST (9%):", 380, yPosition);
-    doc.text(`Rs. ${order.cgst}`, 490, yPosition);
+    doc.text(`Rs. ${recalculated.invoiceCgst}`, 490, yPosition);
     yPosition += 20;
 
     doc.text("SGST (9%):", 380, yPosition);
-    doc.text(`Rs. ${order.sgst}`, 490, yPosition);
+    doc.text(`Rs. ${recalculated.invoiceSgst}`, 490, yPosition);
     yPosition += 20;
 
-    doc.text("Shipping:", 380, yPosition);
-    doc.text(`Rs. ${order.deliveryCharge}`, 490, yPosition);
-    yPosition += 20;
-
-    if (order.codCharge > 0) {
-      doc.text("COD Charge:", 380, yPosition);
-      doc.text(`Rs. ${order.codCharge}`, 490, yPosition);
+    if (recalculated.deliveryCharge > 0) {
+      doc.text("Delivery Charge:", 380, yPosition);
+      doc.text(`Rs. ${recalculated.deliveryCharge}`, 490, yPosition);
       yPosition += 20;
     }
 
-    doc.font("Helvetica-Bold").fontSize(12);
-    doc.text("Grand Total:", 380, yPosition);
-    doc.text(`Rs. ${order.totalAmount}`, 490, yPosition);
+    if (recalculated.codCharge > 0) {
+      doc.text("COD Charge:", 380, yPosition);
+      doc.text(`Rs. ${recalculated.codCharge}`, 490, yPosition);
+      yPosition += 20;
+    }
 
-    doc.moveDown(5);
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor("#888888").text("Thank you for choosing TYMORA.", { align: "center" });
+    doc.moveTo(380, yPosition).lineTo(550, yPosition).stroke();
+    yPosition += 15;
+
+    doc.font("Helvetica-Bold").fontSize(14).fillColor("#d4af37").text("Total Paid:", 380, yPosition);
+    doc.text(`Rs. ${recalculated.finalAmountPaid}`, 490, yPosition);
 
     doc.end();
   } catch (err) {
@@ -2836,6 +2941,11 @@ export const requestReturn = async (req, res) => {
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const { orderId, itemId, reason } = req.body;
+    
+    if (!reason || reason.trim().length < 3 || !/[A-Za-z]/.test(reason)) {
+      return res.status(400).json({ success: false, message: "Invalid return reason. Please provide a valid reason." });
+    }
+
     const order = await Order.findOne({ orderId, userId });
 
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
@@ -3046,8 +3156,8 @@ export const loadCheckout = async (req, res) => {
     await res.render('user/checkout', {
       layout: 'main',
       cartItems,
-      totalMRP: subtotalMrp,
-      discount: totalDiscount,
+      subtotal: subtotal,
+      youSaved: totalDiscount,
       hasOutOfStock,
       address: defaultAddress,
       addresses,
@@ -3136,6 +3246,7 @@ export const calculateCheckout = async (req, res) => {
           discountPercentage: discount ? Math.round((discount / originalPrice) * 100) : 0,
           isOutOfStock,
           isInactive,
+          unavailableReason: isInactive ? 'inactive' : (variant.stock <= 0 ? 'out_of_stock' : null),
           productId: item.productId,
           variantId: item.variantId,
         });
@@ -3283,8 +3394,7 @@ export const calculateCheckout = async (req, res) => {
     return res.json({
       success: true,
       cartItems,
-      totalMRP: subtotalMrp,
-      discount: totalDiscount,
+      cartItems,
       couponDiscount,
       offerDiscount,
       couponMessage,
@@ -3594,6 +3704,9 @@ export const placeOrder = async (req, res) => {
     });
 
     if (paymentMethod === 'Razorpay') {
+      order.orderStatus = 'Payment Pending';
+      order.products.forEach(p => p.orderStatus = 'Payment Pending');
+
       const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -3764,7 +3877,12 @@ export const verifyPayment = async (req, res) => {
     // 3. Idempotency: only process if not already paid
     const order = await Order.findOneAndUpdate(
       { orderId, paymentStatus: { $ne: 'Paid' } },
-      { paymentStatus: 'Paid', razorpayPaymentId: razorpay_payment_id },
+      { 
+        paymentStatus: 'Paid', 
+        razorpayPaymentId: razorpay_payment_id,
+        orderStatus: 'Pending',
+        "products.$[].orderStatus": 'Pending'
+      },
       { returnDocument: 'after' }
     );
 
@@ -3772,6 +3890,12 @@ export const verifyPayment = async (req, res) => {
       // Already processed or not found — safe to return success (idempotent)
       return res.json({ success: true, alreadyProcessed: true });
     }
+
+    // 3b. Push 'Pending' into the tracking timeline for each product
+    await Order.updateOne(
+      { _id: order._id },
+      { $push: { "products.$[].trackingTimeline": { status: "Pending", message: "Order placed successfully" } } }
+    );
 
     // 4. Atomic stock decrement with oversell protection
     for (const p of order.products) {
@@ -3834,6 +3958,7 @@ export const loadPaymentFailed = async (req, res) => {
       layout: 'main',
       order: {
         ...order,
+        subtotalSalePrice: order.subtotalMrp - (order.discount || 0),
         orderDateFormatted: fmt(order.orderDate),
         estimatedDeliveryFormatted: fmt(order.estimatedDelivery),
       },
@@ -3865,6 +3990,7 @@ export const loadOrderSuccess = async (req, res) => {
       layout: "main",
       order: {
         ...order,
+        subtotalSalePrice: order.subtotalMrp - (order.discount || 0),
         orderDateFormatted: fmt(order.orderDate),
         estimatedDeliveryFormatted: fmt(order.estimatedDelivery),
         canCancel,

@@ -13,40 +13,6 @@
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg></button>
 
-
-
-      <form method="GET" action="/admin/products" class="search-bar" id="filterForm">
-        <input type="text" name="search" placeholder="Search products..." value="{{search}}">
-        <select name="sort" class="sort-select">
-          <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
-          <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
-          <option value="price_asc" {{#if (eq sort "price_asc" )}}selected{{/if}}>Price ↑</option>
-          <option value="price_desc" {{#if (eq sort "price_desc" )}}selected{{/if}}>Price ↓</option>
-        </select>
-        <select name="status" class="sort-select">
-          <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All Status</option>
-          <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
-          <option value="inactive" {{#if (eq status "inactive" )}}selected{{/if}}>Inactive</option>
-        </select>
-        <select name="category" class="sort-select">
-          <option value="all" {{#if (eq category "all" )}}selected{{/if}}>All Categories</option>
-          {{#each categories}}
-          <option value="{{this._id}}" {{#if (eq ../category (toString this._id))}}selected{{/if}}>{{this.name}}
-          </option>
-          {{/each}}
-        </select>
-        <select name="brand" class="sort-select">
-          <option value="all" {{#if (eq brand "all" )}}selected{{/if}}>All Brands</option>
-          {{#each brands}}
-          <option value="{{this._id}}" {{#if (eq ../brand (toString this._id))}}selected{{/if}}>{{this.name}}</option>
-          {{/each}}
-        </select>
-        <button type="submit" class="btn-search">Search</button>
-        {{#if search}}
-        <a href="/admin/products" class="btn-clear">Clear</a>
-        {{/if}}
-      </form>
-
       <div class="admin-info">
         <div class="admin-avatar">A</div>
         <div class="admin-meta">
@@ -96,6 +62,37 @@
             <div class="svalue">{{stats.trashCount}}</div>
           </div>
         </div>
+
+      <form method="GET" action="/admin/products" class="search-bar" id="filterForm" style="display:flex; flex-wrap:wrap; width:100%; gap:12px; align-items:center; background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #f1f5f9; margin-bottom:24px; box-sizing:border-box;">
+        <input type="text" name="search" placeholder="Search products..." value="{{search}}" style="flex:1; min-width:350px; max-width:500px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; color:#334155;">
+        <select name="sort" class="sort-select" style="width:180px; flex-shrink:0; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+          <option value="latest" {{#if (eq sort "latest" )}}selected{{/if}}>Latest</option>
+          <option value="oldest" {{#if (eq sort "oldest" )}}selected{{/if}}>Oldest</option>
+          <option value="price_asc" {{#if (eq sort "price_asc" )}}selected{{/if}}>Price ↑</option>
+          <option value="price_desc" {{#if (eq sort "price_desc" )}}selected{{/if}}>Price ↓</option>
+        </select>
+        <select name="status" class="sort-select" style="width:180px; flex-shrink:0; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+          <option value="all" {{#if (eq status "all" )}}selected{{/if}}>All Status</option>
+          <option value="active" {{#if (eq status "active" )}}selected{{/if}}>Active</option>
+          <option value="inactive" {{#if (eq status "inactive" )}}selected{{/if}}>Inactive</option>
+        </select>
+        <select name="category" class="sort-select" style="width:180px; flex-shrink:0; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+          <option value="all" {{#if (eq category "all" )}}selected{{/if}}>All Categories</option>
+          {{#each categories}}
+          <option value="{{this._id}}" {{#if (eq ../category (toString this._id))}}selected{{/if}}>{{this.name}}</option>
+          {{/each}}
+        </select>
+        <select name="brand" class="sort-select" style="width:180px; flex-shrink:0; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+          <option value="all" {{#if (eq brand "all" )}}selected{{/if}}>All Brands</option>
+          {{#each brands}}
+          <option value="{{this._id}}" {{#if (eq ../brand (toString this._id))}}selected{{/if}}>{{this.name}}</option>
+          {{/each}}
+        </select>
+        <button type="submit" class="btn-search" style="flex-shrink:0; white-space:nowrap;">Search</button>
+        {{#if search}}
+        <a href="/admin/products" class="btn-clear" style="flex-shrink:0; white-space:nowrap;">Clear</a>
+        {{/if}}
+      </form>
 
         <!-- TABLE -->
         <div class="table-card">
@@ -1460,24 +1457,95 @@
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
   }
 
+  const cleanSpaces = (str) => typeof str === 'string' ? str.trim().replace(/\s+/g, ' ') : '';
+
+  function validateProductClientSide(name, desc) {
+    const cleanName = cleanSpaces(name);
+    if (!cleanName) return { valid: false, msg: "Product name is required." };
+    if (cleanName.length < 3 || cleanName.length > 100) return { valid: false, msg: "Product name must be between 3 and 100 characters." };
+    if (!/[a-zA-Z]/.test(cleanName)) return { valid: false, msg: "Product name must contain at least one alphabetic character." };
+    if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanName)) return { valid: false, msg: "Product name cannot contain special characters." };
+
+    const cleanDesc = cleanSpaces(desc);
+    if (!cleanDesc) return { valid: false, msg: "Description is required." };
+    if (cleanDesc.length < 20) return { valid: false, msg: "Description must contain at least 20 characters." };
+    if (cleanDesc.length > 2000) return { valid: false, msg: "Description cannot exceed 2000 characters." };
+    if (!/[a-zA-Z]/.test(cleanDesc)) return { valid: false, msg: "Description must contain meaningful text." };
+    
+    return { valid: true };
+  }
+
+  function validateVariantClientSide(vName, sku, strapCol, dialCol, caseCol, size, strapMat, caseMat, origPrice, salePrice, stock) {
+    const cleanVariantName = cleanSpaces(vName);
+    if (!cleanVariantName) return { valid: false, msg: "Variant name is required." };
+    if (cleanVariantName.length < 3 || cleanVariantName.length > 100) return { valid: false, msg: "Variant name must be between 3 and 100 characters." };
+    if (!/[a-zA-Z]/.test(cleanVariantName)) return { valid: false, msg: "Variant name cannot contain only numbers or symbols." };
+    if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanVariantName)) return { valid: false, msg: "Variant name cannot contain special characters." };
+
+    if (!sku) return { valid: false, msg: "SKU is required." };
+    if (!/^[a-zA-Z0-9\-]+$/.test(sku)) return { valid: false, msg: "SKU contains invalid characters." };
+
+    const validateMaterial = (mat, fieldName) => {
+      const clean = cleanSpaces(mat);
+      if (!clean) return { valid: false, msg: `${fieldName} name is required.` };
+      if (clean.length < 2 || clean.length > 50) return { valid: false, msg: `${fieldName} name must be between 2 and 50 characters.` };
+      if (!/[a-zA-Z]/.test(clean)) return { valid: false, msg: `${fieldName} name must contain alphabetic characters.` };
+      return { valid: true };
+    };
+    const sMat = validateMaterial(strapMat, "Strap material"); if (!sMat.valid) return sMat;
+    const cMat = validateMaterial(caseMat, "Case material"); if (!cMat.valid) return cMat;
+
+    const validateColor = (col, fieldName) => {
+      const clean = cleanSpaces(col);
+      if (!clean) return { valid: false, msg: `${fieldName} is required.` };
+      if (!/^[a-zA-Z\s]+$/.test(clean) && !/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(clean)) return { valid: false, msg: `${fieldName} must be a valid color name or hex code.` };
+      return { valid: true };
+    };
+    const sCol = validateColor(strapCol, "Strap color"); if (!sCol.valid) return sCol;
+    const dCol = validateColor(dialCol, "Dial color"); if (!dCol.valid) return dCol;
+    const cCol = validateColor(caseCol, "Case color"); if (!cCol.valid) return cCol;
+
+    const cleanSize = cleanSpaces(size);
+    if (!cleanSize) return { valid: false, msg: "Size is required." };
+    if (!/^\d+mm$/i.test(cleanSize)) return { valid: false, msg: "Please enter a valid watch size (e.g., 42mm)." };
+
+    const mrp = parseFloat(origPrice);
+    if (isNaN(mrp) || mrp <= 0) return { valid: false, msg: "MRP must be greater than zero." };
+    if (!/^\d+(\.\d{1,2})?$/.test(mrp.toString())) return { valid: false, msg: "MRP can have a maximum of two decimal places." };
+
+    const sp = parseFloat(salePrice);
+    if (isNaN(sp) || sp <= 0) return { valid: false, msg: "Sale price must be greater than zero." };
+    if (!/^\d+(\.\d{1,2})?$/.test(sp.toString())) return { valid: false, msg: "Sale price can have a maximum of two decimal places." };
+    if (sp > mrp) return { valid: false, msg: "Sale price cannot be greater than MRP." };
+
+    const stockNum = parseFloat(stock);
+    if (isNaN(stockNum) || stockNum < 0) return { valid: false, msg: "Stock cannot be negative." };
+    if (!Number.isInteger(stockNum)) return { valid: false, msg: "Stock must be a whole number." };
+
+    return { valid: true };
+  }
+
   async function submitProductForm() {
     const id = document.getElementById('productId').value;
     const name = document.getElementById('fName').value.trim();
     const category = document.getElementById('fCategory').value;
     const brand = document.getElementById('fBrand').value;
     const newBrand = document.getElementById('fNewBrand').value.trim();
+    const description = document.getElementById('fDesc').value;
 
-    if (!name) { showToast('Product name is required', 'blue'); return; }
-    if (!category) { showToast('Please select a category', 'blue'); return; }
-    if (!brand) { showToast('Please select a brand', 'blue'); return; }
-    if (brand === 'other' && !newBrand) { showToast('Please enter new brand name', 'blue'); return; }
+    const pCheck = validateProductClientSide(name, description);
+    if (!pCheck.valid) { showToast(pCheck.msg, 'red'); return; }
+
+    if (!category) { showToast('Please select a valid category.', 'red'); return; }
+    if (!brand) { showToast('Please select a valid brand.', 'red'); return; }
+    if (brand === 'other' && !newBrand) { showToast('Please enter a valid brand name.', 'red'); return; }
 
     const fd = new FormData();
     fd.append('name', name);
     fd.append('category', category);
     fd.append('brand', brand);
     if (brand === 'other') fd.append('newBrand', newBrand);
-    fd.append('description', document.getElementById('fDesc').value);
+    fd.append('description', description);
     fd.append('gender', document.getElementById('fGender').value);
     fd.append('status', document.getElementById('fStatus').value);
     fd.append('featured', document.getElementById('fFeatured').checked);
@@ -1494,25 +1562,17 @@
       const salePrice = document.getElementById('vSalePrice').value;
       const stock = document.getElementById('vStock').value;
       const vName = document.getElementById('vName').value.trim();
+      const sku = document.getElementById('vSku').value.trim();
 
-      if (!strapColor) { showToast('Strap color is required', 'blue'); return; }
-      if (!dialColor) { showToast('Dial color is required', 'blue'); return; }
-      if (!caseColor) { showToast('Case color is required', 'blue'); return; }
-      if (!size) { showToast('Size is required', 'blue'); return; }
-      if (!strapMaterial) { showToast('Strap material is required', 'blue'); return; }
-      if (!caseMaterial) { showToast('Case material is required', 'blue'); return; }
-      if (!originalPrice) { showToast('Original price is required', 'blue'); return; }
-      if (!salePrice) { showToast('Sale price is required', 'blue'); return; }
-      if (parseFloat(salePrice) > parseFloat(originalPrice)) {
-        showToast('Sale price cannot exceed original price', 'blue'); return;
-      }
-      if (!vName) { showToast('Variant name is required', 'blue'); return; }
+      const vCheck = validateVariantClientSide(vName, sku, strapColor, dialColor, caseColor, size, strapMaterial, caseMaterial, originalPrice, salePrice, stock);
+      if (!vCheck.valid) { showToast(vCheck.msg, 'red'); return; }
+
       if (pdCroppedBlobs.length + pdExistingImageUrls.length < 3) {
-        showToast('At least 3 variant images required', 'blue'); return;
+        showToast('Please upload at least 3 images.', 'red'); return;
       }
 
       fd.append('variantName', vName);
-      fd.append('sku', document.getElementById('vSku').value.trim());
+      fd.append('sku', sku);
       fd.append('strapColor', strapColor);
       fd.append('dialColor', dialColor);
       fd.append('caseColor', caseColor);
@@ -2213,7 +2273,7 @@
   async function submitVariantForm() {
     const productId = document.getElementById('vd-vProductId').value;
     const variantId = document.getElementById('vd-vVariantId').value;
-    const name = document.getElementById('vd-vName').value.trim();
+    const variantName = (document.getElementById('vd-vName').value || '').trim();
     const sku = document.getElementById('vd-vSku').value.trim();
     const size = document.getElementById('vd-vSize').value.trim();
     const originalPrice = document.getElementById('vd-vOriginalPrice').value;
@@ -2225,22 +2285,13 @@
     const strapMaterial = document.getElementById('vd-vStrapMaterial').value;
     const caseMaterial = document.getElementById('vd-vCaseMaterial').value;
 
-    if (!name) { showToast('Variant name is required', 'blue'); return; }
-    if (!strapColor) { showToast('Strap color is required', 'blue'); return; }
-    if (!dialColor) { showToast('Dial color is required', 'blue'); return; }
-    if (!caseColor) { showToast('Case color is required', 'blue'); return; }
-    if (!size) { showToast('Size is required', 'blue'); return; }
-    if (!strapMaterial) { showToast('Strap material is required', 'blue'); return; }
-    if (!caseMaterial) { showToast('Case material is required', 'blue'); return; }
-    if (!originalPrice) { showToast('Original price is required', 'blue'); return; }
-    if (!salePrice) { showToast('Sale price is required', 'blue'); return; }
-    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
-      showToast('Sale price cannot exceed original price', 'blue'); return;
-    }
-    if (vCroppedBlobs.length + vExistingImageUrls.length < 3) { showToast('At least 3 images required', 'blue'); return; }
+    const vCheck = validateVariantClientSide(variantName, sku, strapColor, dialColor, caseColor, size, strapMaterial, caseMaterial, originalPrice, salePrice, stock);
+    if (!vCheck.valid) { showToast(vCheck.msg, 'red'); return; }
+
+    if (vCroppedBlobs.length + vExistingImageUrls.length < 3) { showToast('Please upload at least 3 images.', 'red'); return; }
 
     const fd = new FormData();
-    fd.append('name', name); fd.append('sku', sku); fd.append('size', size);
+    fd.append('name', variantName); fd.append('sku', sku); fd.append('size', size);
     fd.append('originalPrice', originalPrice);
     fd.append('salePrice', salePrice); fd.append('stock', stock || '0');
     fd.append('strapColor', strapColor); fd.append('dialColor', dialColor); fd.append('caseColor', caseColor);

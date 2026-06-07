@@ -106,9 +106,6 @@
           <div class="os-prod-info">
             <div class="os-prod-name">{{this.productName}}</div>
             <div class="os-prod-specs">{{this.variantSpecs}} · Qty: {{this.quantity}}</div>
-            {{#if (gt this.discountPercent 0)}}
-            <div class="os-prod-specs" style="color: #4ade80;">{{this.discountPercent}}% OFF</div>
-            {{/if}}
           </div>
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
             <div class="os-prod-price">₹{{formatCurrency this.itemTotal}}</div>
@@ -122,12 +119,8 @@
         <div class="os-fin-title">Financial Summary</div>
 
         <div class="os-fin-row">
-          <span>Total MRP</span>
-          <span>₹{{formatCurrency order.subtotalMrp}}</span>
-        </div>
-        <div class="os-fin-row" style="color: #4ade80;">
-          <span>Discount</span>
-          <span>- ₹{{formatCurrency order.discount}}</span>
+          <span>Selling Price</span>
+          <span>₹{{formatCurrency order.subtotalSalePrice}}</span>
         </div>
         {{#if order.couponDiscount}}
         <div class="os-fin-row" style="color: var(--gold);">

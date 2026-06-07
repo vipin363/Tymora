@@ -142,8 +142,9 @@
 <div class="toast" id="copyToast"></div>
 
 <script>
-const REFERRAL_CODE = '{{user.referralCode}}';
-const REFERRAL_URL  = '{{referralUrl}}';
+// Read directly from DOM so browser has already decoded any HTML entities
+const REFERRAL_CODE = document.getElementById('refCode').textContent.trim();
+const REFERRAL_URL  = document.getElementById('refLink').textContent.trim();
 
 function showToast(msg) {
   const t = document.getElementById('copyToast');

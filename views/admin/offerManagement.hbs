@@ -210,35 +210,7 @@ textarea.finput { resize:vertical; min-height:72px; }
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
 
-      <!-- Search & Filters -->
-      <form method="GET" action="/admin/offers" class="search-bar">
-        <input type="text" name="search" class="searchbar" value="{{search}}" placeholder="Search offer code or title…">
 
-        <select name="status" class="sort-select" onchange="this.form.submit()">
-          <option value="all"       {{#ifEquals filterStatus "all"}}selected{{/ifEquals}}>All Status</option>
-          <option value="active"    {{#ifEquals filterStatus "active"}}selected{{/ifEquals}}>Active</option>
-          <option value="scheduled" {{#ifEquals filterStatus "scheduled"}}selected{{/ifEquals}}>Scheduled</option>
-          <option value="expired"   {{#ifEquals filterStatus "expired"}}selected{{/ifEquals}}>Expired</option>
-          <option value="disabled"  {{#ifEquals filterStatus "disabled"}}selected{{/ifEquals}}>Disabled</option>
-        </select>
-
-        <select name="discountType" class="sort-select" onchange="this.form.submit()">
-          <option value="all"        {{#ifEquals filterDiscountType "all"}}selected{{/ifEquals}}>All Types</option>
-          <option value="percentage" {{#ifEquals filterDiscountType "percentage"}}selected{{/ifEquals}}>Percentage</option>
-          <option value="fixed"      {{#ifEquals filterDiscountType "fixed"}}selected{{/ifEquals}}>Fixed Amount</option>
-        </select>
-
-        <select name="sort" class="sort-select" onchange="this.form.submit()">
-          <option value="latest"   {{#ifEquals sort "latest"}}selected{{/ifEquals}}>Latest</option>
-          <option value="oldest"   {{#ifEquals sort "oldest"}}selected{{/ifEquals}}>Oldest</option>
-          <option value="discount" {{#ifEquals sort "discount"}}selected{{/ifEquals}}>Highest Discount</option>
-          <option value="used"     {{#ifEquals sort "used"}}selected{{/ifEquals}}>Most Used</option>
-          <option value="expiring" {{#ifEquals sort "expiring"}}selected{{/ifEquals}}>Expiring Soon</option>
-        </select>
-
-        <button type="submit" class="btn-search">Apply</button>
-        {{#if search}}<a href="/admin/offers" class="btn-clear">Clear</a>{{/if}}
-      </form>
 
       <div class="admin-info">
         <div class="admin-avatar">A</div>
@@ -290,6 +262,35 @@ textarea.finput { resize:vertical; min-height:72px; }
             <div class="svalue" style="color:#c9a84c">{{stats.totalUsage}}</div>
           </div>
         </div>
+
+        <form method="GET" action="/admin/offers" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #f1f5f9; margin-bottom:24px;">
+          <input type="text" name="search" value="{{search}}" placeholder="Search offer code or title…" style="flex:1; min-width:180px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; color:#334155;">
+
+          <select name="status" onchange="this.form.submit()" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+            <option value="all"       {{#ifEquals filterStatus "all"}}selected{{/ifEquals}}>All Status</option>
+            <option value="active"    {{#ifEquals filterStatus "active"}}selected{{/ifEquals}}>Active</option>
+            <option value="scheduled" {{#ifEquals filterStatus "scheduled"}}selected{{/ifEquals}}>Scheduled</option>
+            <option value="expired"   {{#ifEquals filterStatus "expired"}}selected{{/ifEquals}}>Expired</option>
+            <option value="disabled"  {{#ifEquals filterStatus "disabled"}}selected{{/ifEquals}}>Disabled</option>
+          </select>
+
+          <select name="discountType" onchange="this.form.submit()" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+            <option value="all"        {{#ifEquals filterDiscountType "all"}}selected{{/ifEquals}}>All Types</option>
+            <option value="percentage" {{#ifEquals filterDiscountType "percentage"}}selected{{/ifEquals}}>Percentage</option>
+            <option value="fixed"      {{#ifEquals filterDiscountType "fixed"}}selected{{/ifEquals}}>Fixed Amount</option>
+          </select>
+
+          <select name="sort" onchange="this.form.submit()" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+            <option value="latest"   {{#ifEquals sort "latest"}}selected{{/ifEquals}}>Latest</option>
+            <option value="oldest"   {{#ifEquals sort "oldest"}}selected{{/ifEquals}}>Oldest</option>
+            <option value="discount" {{#ifEquals sort "discount"}}selected{{/ifEquals}}>Highest Discount</option>
+            <option value="used"     {{#ifEquals sort "used"}}selected{{/ifEquals}}>Most Used</option>
+            <option value="expiring" {{#ifEquals sort "expiring"}}selected{{/ifEquals}}>Expiring Soon</option>
+          </select>
+
+          <button type="submit" class="btn-search">Apply</button>
+          {{#if search}}<a href="/admin/offers" class="btn-clear">Clear</a>{{/if}}
+        </form>
 
         <!-- ── Table ─────────────────────────────────────── -->
         <div class="table-card">
@@ -424,15 +425,15 @@ textarea.finput { resize:vertical; min-height:72px; }
         <div class="fg">
           <div class="form-group">
             <label class="flabel">Offer Name <span>*</span></label>
-            <input class="finput" id="name" name="name" required placeholder="e.g. Summer Flash Sale">
+            <input class="finput" id="name" name="name" required minlength="3" maxlength="100" placeholder="e.g. Summer Flash Sale">
           </div>
           <div class="form-group">
             <label class="flabel">Offer Badge Text <span style="color:#94a3b8;font-weight:400">(optional)</span></label>
-            <input class="finput" id="offerBadgeText" name="offerBadgeText" placeholder="e.g. 50% OFF">
+            <input class="finput" id="offerBadgeText" name="offerBadgeText" maxlength="20" placeholder="e.g. 50% OFF">
           </div>
           <div class="form-group full">
             <label class="flabel">Description</label>
-            <textarea class="finput" id="description" name="description" rows="2" placeholder="Internal notes or customer-facing description…"></textarea>
+            <textarea class="finput" id="description" name="description" rows="2" maxlength="500" placeholder="Internal notes or customer-facing description… (max 500 chars)"></textarea>
           </div>
         </div>
 
@@ -455,7 +456,7 @@ textarea.finput { resize:vertical; min-height:72px; }
           </div>
           <div class="form-group" id="maxDiscContainer">
             <label class="flabel">Max Discount Cap (₹) <span style="color:#94a3b8;font-weight:400">(optional)</span></label>
-            <input class="finput" type="number" id="maxDiscountLimit" name="maxDiscountLimit" min="1" placeholder="e.g. 500">
+            <input class="finput" type="number" id="maxDiscountLimit" name="maxDiscountLimit" min="0" placeholder="e.g. 500">
           </div>
           <div class="form-group">
             <label class="flabel">Minimum Order Value (₹)</label>
@@ -694,8 +695,14 @@ function openCreateModal() {
   document.getElementById('modalTitle').textContent = '✨ Create New Offer';
 
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('startDate').value = today;
+  const startDateEl = document.getElementById('startDate');
+  startDateEl.value = today;
+  startDateEl.min = today;
+  startDateEl.disabled = false;
+
   document.getElementById('endDate').value   = today;
+  document.getElementById('endDate').min   = today;
+
   document.getElementById('isActive').checked = true;
   document.getElementById('pm-all').checked   = true;
   onPayAll(document.getElementById('pm-all'));
@@ -721,12 +728,29 @@ function openEditModal(c) {
   onDiscountTypeChange();
   document.getElementById('discountValue').value    = c.discountValue;
   document.getElementById('maxDiscountLimit').value = c.maxDiscountLimit || '';
-  document.getElementById('minPurchase').value      = c.minPurchase || 0;
+  document.getElementById('minPurchase').value      = c.minPurchaseAmount || c.minPurchase || 0;
   document.getElementById('usageLimit').value       = c.usageLimit || 0;
   document.getElementById('perUserLimit').value     = c.perUserLimit || 1;
   document.getElementById('priority').value         = c.priority || 0;
-  document.getElementById('startDate').value        = c.startDateFormatted || '';
-  document.getElementById('endDate').value          = c.endDateFormatted   || '';
+  
+  const today = new Date().toISOString().split('T')[0];
+  const startDateEl = document.getElementById('startDate');
+  startDateEl.value = c.startDateFormatted || '';
+  
+  // Start Date Protection
+  if (c.startDateFormatted && c.startDateFormatted <= today) {
+    startDateEl.disabled = true;
+    startDateEl.title = "Start date cannot be modified after the offer has started.";
+  } else {
+    startDateEl.disabled = false;
+    startDateEl.min = today;
+    startDateEl.title = "";
+  }
+  
+  const endDateEl = document.getElementById('endDate');
+  endDateEl.value = c.endDateFormatted || '';
+  endDateEl.min = c.startDateFormatted || today;
+  
   document.getElementById('isFirstTimeUserOnly').checked = !!c.isFirstTimeUserOnly;
   document.getElementById('isFreeShipping').checked      = !!c.isFreeShipping;
   document.getElementById('isStackable').checked         = !!c.isStackable;
@@ -784,6 +808,7 @@ async function saveOffer() {
   const pmChecked = [...document.querySelectorAll('input[name="paymentMethods"]:checked')].map(x => x.value);
   const paymentMethods = pmChecked.length ? pmChecked : ['All'];
 
+  const startDateEl = document.getElementById('startDate');
   const body = {
     name:         document.getElementById('name').value.trim(),
     offerBadgeText: document.getElementById('offerBadgeText').value.trim(),
@@ -796,7 +821,7 @@ async function saveOffer() {
     usageLimit:   Number(document.getElementById('usageLimit').value),
     perUserLimit: Number(document.getElementById('perUserLimit').value),
     priority:     Number(document.getElementById('priority').value),
-    startDate:    document.getElementById('startDate').value,
+    startDate:    startDateEl.value,
     endDate:      document.getElementById('endDate').value,
     isFirstTimeUserOnly: document.getElementById('isFirstTimeUserOnly').checked,
     isFreeShipping:      document.getElementById('isFreeShipping').checked,
@@ -815,8 +840,16 @@ async function saveOffer() {
 
   // Client-side guard
   if (!body.name) { showToast('Offer name is required', 'red'); return; }
-  if (body.discountType === 'percentage' && body.discountValue > 100) { showToast('Percentage cannot exceed 100%', 'red'); return; }
-  if (new Date(body.startDate) >= new Date(body.endDate)) { showToast('Expiry date must be after start date', 'red'); return; }
+  if (body.name.length < 3 || body.name.length > 100) { showToast('Name must be between 3 and 100 characters', 'red'); return; }
+  if (body.description && (body.description.length < 10 || body.description.length > 500)) { showToast('Description must be between 10 and 500 characters', 'red'); return; }
+
+  if (body.discountType === 'percentage' && (body.discountValue < 1 || body.discountValue > 100)) { showToast('Percentage must be between 1 and 100', 'red'); return; }
+  if (body.discountType === 'fixed' && body.discountValue <= 0) { showToast('Fixed discount must be greater than 0', 'red'); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+  if (!id && body.startDate < today) { showToast('Start date cannot be in the past', 'red'); return; }
+  if (new Date(body.startDate) > new Date(body.endDate)) { showToast('Expiry date cannot be before start date', 'red'); return; }
+  
   if (type !== 'global' && (($('#targetSelect').val() || []).length === 0)) { showToast('Please select at least one target', 'red'); return; }
 
   const url    = id ? `/admin/offers/${id}` : '/admin/offers';

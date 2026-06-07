@@ -12,14 +12,6 @@
       </div>
       <h1 class="os-title">Order Secured</h1>
       <p class="os-subtitle">Thank you for your order. Your masterwork is being prepared for delivery.</p>
-      {{#if order.totalSaved}}
-      <div class="os-savings">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M20 6L9 17l-5-5"></path>
-        </svg>
-        You saved ₹{{formatCurrency order.totalSaved}} on this order
-      </div>
-      {{/if}}
     </div>
 
     <!-- 2. INFO BAR -->
@@ -82,9 +74,6 @@
           <div class="os-prod-info">
             <div class="os-prod-name">{{this.productName}}</div>
             <div class="os-prod-specs">{{this.variantSpecs}} · Qty: {{this.quantity}}</div>
-            {{#if (gt this.discountPercent 0)}}
-            <div class="os-prod-specs" style="color: #4ade80;">{{this.discountPercent}}% OFF</div>
-            {{/if}}
             <div class="os-prod-warranty">
               <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -107,12 +96,8 @@
         <div class="os-fin-title">Financial Summary</div>
 
         <div class="os-fin-row">
-          <span>Total MRP</span>
-          <span>₹{{formatCurrency order.subtotalMrp}}</span>
-        </div>
-        <div class="os-fin-row" style="color: #4ade80;">
-          <span>Product Discount</span>
-          <span>- ₹{{formatCurrency order.discount}}</span>
+          <span>Selling Price</span>
+          <span>₹{{formatCurrency order.subtotalSalePrice}}</span>
         </div>
         {{#if order.couponCode}}
         <div class="os-fin-row" style="color: #4ade80;">
@@ -180,7 +165,8 @@
   <div class="mo-modal" style="background: #111; border: 1px solid rgba(201,168,76,0.3); border-radius: 12px; width: 400px; max-width: 90vw; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
     <h3 style="color: var(--gold); font-family: 'Playfair Display', serif; margin-bottom: 16px; font-size: 1.5rem;">Cancel Order</h3>
     <p style="color: var(--muted); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Are you sure you want to cancel order <strong id="cancelOrderIdText"></strong>? This action cannot be undone.</p>
-    <textarea id="cancelReasonInput" placeholder="Optional: Please tell us why you are cancelling this order..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: inherit; margin-bottom: 20px; resize: none; font-size: 13px;"></textarea>
+    <textarea id="cancelReasonInput" placeholder="Required: Please tell us why you are cancelling this order..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: inherit; margin-bottom: 8px; resize: none; font-size: 13px;"></textarea>
+    <p id="cancelReasonError" style="color:#f87171; font-size:0.82rem; margin:0 0 12px; display:none;"></p>
     <div class="mo-modal-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
       <button class="btn-os-secondary" style="background:transparent; color:#fff; border:1px solid #fff; padding: 10px 20px;" onclick="closeCancelModal()">Keep Order</button>
       <button class="btn-os-primary" style="background: #ef4444; color: #fff; border: none; padding: 10px 20px;" id="confirmCancelBtn">Confirm Cancel</button>
@@ -204,7 +190,8 @@
       {{/each}}
     </div>
 
-    <textarea id="returnReasonInput" placeholder="Mandatory: Please explain why you are returning the selected items..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: inherit; margin-bottom: 15px; resize: none; font-size: 13px;"></textarea>
+    <textarea id="returnReasonInput" placeholder="Required: Please explain why you are returning the selected items (e.g. Damaged item, Wrong size)..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: inherit; margin-bottom: 8px; resize: none; font-size: 13px;"></textarea>
+    <p id="returnReasonError" style="color:#f87171; font-size:0.82rem; margin:0 0 12px; display:none;"></p>
     
     <p style="color: var(--white); font-size: 12px; margin-bottom: 8px;">Upload Evidence Images (Max 3):</p>
     <input type="file" id="returnEvidenceInput" multiple accept="image/*" style="width: 100%; margin-bottom: 20px; color: var(--muted); font-size: 12px;">
@@ -231,7 +218,8 @@
       <option value="1">1 ★ - Disappointing</option>
     </select>
 
-    <textarea id="reviewTextInput" placeholder="Tell us about the craftsmanship, feel, and experience..." style="width: 100%; height: 100px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: inherit; margin-bottom: 20px; resize: none; font-size: 13px;"></textarea>
+    <textarea id="reviewTextInput" placeholder="Tell us about the craftsmanship, feel, and experience..." style="width: 100%; height: 100px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: inherit; margin-bottom: 8px; resize: none; font-size: 13px;"></textarea>
+    <p id="reviewTextError" style="color:#f87171; font-size:0.82rem; margin:0 0 12px; display:none;"></p>
 
     <div class="mo-modal-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
       <button class="btn-os-secondary" style="background:transparent; color:#fff; border:1px solid #fff; padding: 10px 20px;" onclick="closeAddReviewModal()">Cancel</button>
@@ -247,12 +235,41 @@
   gsap.from('.os-progress-box', { y: 20, opacity: 0, duration: 0.8, delay: 0.5 });
   gsap.from('.os-shipment, .os-financial', { y: 30, opacity: 0, duration: 0.8, stagger: 0.2, delay: 0.7 });
 
+  // ── Shared validation helpers ──────────────────────────────────
+  function showToast(msg, type) {
+    const wrap = document.createElement('div');
+    const bg = type === 'success' ? '#16a34a' : type === 'info' ? '#2563eb' : '#dc2626';
+    wrap.style.cssText = `position:fixed;top:20px;right:20px;z-index:99999;background:${bg};color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-width:320px;word-break:break-word;opacity:0;transition:opacity .25s;`;
+    wrap.textContent = msg;
+    document.body.appendChild(wrap);
+    requestAnimationFrame(() => { wrap.style.opacity = '1'; });
+    setTimeout(() => { wrap.style.opacity = '0'; setTimeout(() => wrap.remove(), 300); }, 3500);
+  }
+
+  function validateReason(value, fieldLabel) {
+    const v = (value || '').trim();
+    if (!v) return `Please enter a ${fieldLabel}.`;
+    if (v.length < 3) return `${fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)} must contain at least 3 characters.`;
+    if (!/[A-Za-z]/.test(v)) return `${fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)} cannot contain only numbers or special characters.`;
+    return null;
+  }
+
+  function showModalError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  // ── Cancel Modal ──────────────────────────────────────────────
   let targetCancelId = null;
 
   function openCancelModal(orderId) {
     targetCancelId = orderId;
-    document.getElementById('cancelOrderIdText').innerText = '#' + orderId;
     document.getElementById('cancelReasonInput').value = '';
+    showModalError('cancelReasonError', null);
+    const el = document.getElementById('cancelOrderIdText');
+    if (el) el.textContent = '#' + orderId;
     document.getElementById('cancelModalOverlay').style.display = 'flex';
   }
 
@@ -265,41 +282,42 @@
   if (confirmBtn) {
     confirmBtn.addEventListener('click', async () => {
       if (!targetCancelId) return;
-      
-      const reason = document.getElementById('cancelReasonInput').value.trim();
-      const btn = document.getElementById('confirmCancelBtn');
-      btn.disabled = true;
-      btn.innerText = 'Cancelling...';
+      const reason = document.getElementById('cancelReasonInput').value;
+      const err = validateReason(reason, 'cancellation reason');
+      if (err) { showModalError('cancelReasonError', err); return; }
+      showModalError('cancelReasonError', null);
 
+      const btn = document.getElementById('confirmCancelBtn');
+      btn.disabled = true; btn.innerText = 'Cancelling...';
       try {
         const res = await fetch('/user/orders/cancel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: targetCancelId, reason })
+          body: JSON.stringify({ orderId: targetCancelId, reason: reason.trim() })
         });
         const data = await res.json();
-        
         if (data.success) {
           window.location.reload();
         } else {
-          alert(data.message || 'Failed to cancel order.');
-          btn.disabled = false;
-          btn.innerText = 'Confirm Cancel';
+          showToast(data.message || 'Failed to cancel order.', 'error');
+          btn.disabled = false; btn.innerText = 'Confirm Cancel';
         }
       } catch (err) {
         console.error(err);
-        alert('An error occurred. Please try again.');
-        btn.disabled = false;
-        btn.innerText = 'Confirm Cancel';
+        showToast('An error occurred. Please try again.', 'error');
+        btn.disabled = false; btn.innerText = 'Confirm Cancel';
       }
     });
   }
+
+  // ── Return Modal ──────────────────────────────────────────────
   let targetReturnId = null;
 
   function openReturnModal(orderId) {
     targetReturnId = orderId;
     document.getElementById('returnReasonInput').value = '';
     document.getElementById('returnEvidenceInput').value = '';
+    showModalError('returnReasonError', null);
     document.querySelectorAll('.return-product-cb').forEach(cb => cb.checked = false);
     document.getElementById('returnModalOverlay').style.display = 'flex';
   }
@@ -314,58 +332,54 @@
     confirmReturnBtn.addEventListener('click', async () => {
       if (!targetReturnId) return;
 
-      const reason = document.getElementById('returnReasonInput').value.trim();
-      if (!reason) {
-        return alert("Please provide a reason for the return.");
-      }
+      const reason = document.getElementById('returnReasonInput').value;
+      const reasonErr = validateReason(reason, 'return reason');
+      if (reasonErr) { showModalError('returnReasonError', reasonErr); return; }
+      showModalError('returnReasonError', null);
 
       const selectedCbs = document.querySelectorAll('.return-product-cb:checked');
       if (selectedCbs.length === 0) {
-        return alert("Please select at least one product to return.");
+        showToast('Please select at least one product to return.', 'error');
+        return;
       }
 
       const returnedProducts = Array.from(selectedCbs).map(cb => cb.value);
       const files = document.getElementById('returnEvidenceInput').files;
 
       if (files.length > 3) {
-        return alert("You can only upload a maximum of 3 evidence images.");
+        showToast('You can only upload a maximum of 3 evidence images.', 'error');
+        return;
       }
 
       const btn = document.getElementById('confirmReturnBtn');
-      btn.disabled = true;
-      btn.innerText = 'Submitting...';
+      btn.disabled = true; btn.innerText = 'Submitting...';
 
       const formData = new FormData();
       formData.append('orderId', targetReturnId);
-      formData.append('reason', reason);
+      formData.append('reason', reason.trim());
       formData.append('returnedProducts', JSON.stringify(returnedProducts));
-      
       for (let i = 0; i < files.length; i++) {
         formData.append('evidenceImages', files[i]);
       }
 
       try {
-        const res = await fetch('/user/orders/return', {
-          method: 'POST',
-          body: formData
-        });
+        const res = await fetch('/user/orders/return', { method: 'POST', body: formData });
         const data = await res.json();
-
         if (data.success) {
           window.location.reload();
         } else {
-          alert(data.message || 'Failed to submit return request.');
-          btn.disabled = false;
-          btn.innerText = 'Submit Request';
+          showToast(data.message || 'Failed to submit return request.', 'error');
+          btn.disabled = false; btn.innerText = 'Submit Request';
         }
       } catch (err) {
         console.error(err);
-        alert('An error occurred. Please try again.');
-        btn.disabled = false;
-        btn.innerText = 'Submit Request';
+        showToast('An error occurred. Please try again.', 'error');
+        btn.disabled = false; btn.innerText = 'Submit Request';
       }
     });
   }
+
+  // ── Review Modal ──────────────────────────────────────────────
   let reviewProductId = null;
   let reviewOrderId = null;
 
@@ -374,6 +388,7 @@
     reviewOrderId = orderId;
     document.getElementById('reviewRatingInput').value = '';
     document.getElementById('reviewTextInput').value = '';
+    showModalError('reviewTextError', null);
     document.getElementById('addReviewModalOverlay').style.display = 'flex';
   }
 
@@ -389,10 +404,12 @@
       if (!reviewProductId || !reviewOrderId) return;
 
       const rating = document.getElementById('reviewRatingInput').value;
-      const reviewText = document.getElementById('reviewTextInput').value.trim();
+      if (!rating) { showToast('Please select a rating.', 'error'); return; }
 
-      if (!rating) return alert("Please select a rating.");
-      if (reviewText.length < 5) return alert("Review must be at least 5 characters long.");
+      const reviewText = document.getElementById('reviewTextInput').value;
+      const err = validateReason(reviewText, 'review');
+      if (err) { showModalError('reviewTextError', err); return; }
+      showModalError('reviewTextError', null);
 
       submitReviewBtn.disabled = true;
       submitReviewBtn.innerText = 'Submitting...';
@@ -401,27 +418,21 @@
         const res = await fetch('/user/reviews/add', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productId: reviewProductId,
-            orderId: reviewOrderId,
-            rating,
-            reviewText
-          })
+          body: JSON.stringify({ productId: reviewProductId, orderId: reviewOrderId, rating, reviewText: reviewText.trim() })
         });
         const data = await res.json();
-
         if (data.success) {
-          alert("Review submitted successfully!");
+          showToast('Review submitted successfully!', 'success');
           closeAddReviewModal();
-          window.location.reload();
+          setTimeout(() => window.location.reload(), 1000);
         } else {
-          alert(data.message || 'Failed to submit review.');
+          showToast(data.message || 'Failed to submit review.', 'error');
           submitReviewBtn.disabled = false;
           submitReviewBtn.innerText = 'Submit Review';
         }
       } catch (err) {
         console.error(err);
-        alert('An error occurred. Please try again.');
+        showToast('An error occurred. Please try again.', 'error');
         submitReviewBtn.disabled = false;
         submitReviewBtn.innerText = 'Submit Review';
       }

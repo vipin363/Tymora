@@ -211,17 +211,35 @@
 .lux-hero__word--time {
   font-size: clamp(60px, 12vw, 140px);
   letter-spacing: 0.3em;
-  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.9), 0 0 35px rgba(201, 168, 76, 0.12);
+  margin-right: -0.3em; /* Fixes right-offset caused by letter-spacing for true centering */
+  
+  /* Metallic Silver / Chrome Finish */
+  background: linear-gradient(
+    to bottom,
+    #e8e8e8 0%,
+    #b3b3b3 40%,
+    #7a7a7a 50%,
+    #999999 60%,
+    #d1d1d1 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #b3b3b3; /* Fallback */
+  
+  /* Drop shadow applied via filter because text-shadow doesn't work with background-clip text */
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 15px rgba(255, 255, 255, 0.05));
   line-height: 1.1;
 }
 
 .lux-hero__word--redefined {
-  font-size: clamp(24px, 5vw, 60px);
-  color: var(--lux-gold);
-  letter-spacing: 0.15em;
-  margin-top: -15px;
-  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.9), 0 0 35px rgba(201, 168, 76, 0.18);
-  line-height: 1.1;
+  font-size: clamp(10px, 1.4vw, 16px);
+  font-weight: 400;
+  color: #c9a84c; /* var(--lux-gold) */
+  letter-spacing: 0.3em;
+  margin-right: -0.3em; /* Geometrically center by negating the last letter's spacing */
+  margin-top: 5px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(201, 168, 76, 0.15);
+  line-height: 1.2;
 }
 
 .lux-hero__tagline {
@@ -1483,7 +1501,8 @@
   }
 
   .lux-hero__word--redefined {
-    font-size: clamp(24px, 8vw, 48px);
+    font-size: clamp(10px, 2.5vw, 14px);
+    margin-top: -5px;
   }
 
   .lux-hero__actions {

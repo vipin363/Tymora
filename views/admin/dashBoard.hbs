@@ -218,6 +218,7 @@
         border-collapse: collapse;
         table-layout: fixed;
     }
+
     .truncate-text {
         white-space: nowrap;
         overflow: hidden;
@@ -226,9 +227,18 @@
         max-width: 100%;
     }
 
-    .tbl th:nth-child(1) { width: 50%; }
-    .tbl th:nth-child(2) { width: 20%; }
-    .tbl th:nth-child(3) { width: 30%; }
+    .tbl th:nth-child(1) {
+        width: 50%;
+    }
+
+    .tbl th:nth-child(2) {
+        width: 20%;
+    }
+
+    .tbl th:nth-child(3) {
+        width: 30%;
+    }
+
     .tbl th {
         color: #475569;
         font-weight: 700;
@@ -254,6 +264,86 @@
 
     .tbl tbody tr:hover {
         background: #f8fafc;
+    }
+
+    /* ── Badge ──────────────────────────────────────── */
+    .type-badge {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.73rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .type-badge.credit {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .type-badge.debit {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    /* ── Ledger Table Specific ───────────────────────────────── */
+    .ledger-table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    .ledger-tbl {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 700px;
+    }
+
+    .ledger-tbl th {
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+        background: #f8fafc;
+    }
+
+    .ledger-tbl td {
+        padding: 14px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+        color: #334155;
+    }
+
+    .ledger-tbl tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    /* ── Empty State ─────────────────────────────────── */
+    .empty-box {
+        text-align: center;
+        padding: 64px 20px;
+    }
+
+    .empty-box svg {
+        width: 56px;
+        height: 56px;
+        stroke: rgba(0, 0, 0, .2);
+        margin-bottom: 16px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .empty-box h3 {
+        font-size: 1.05rem;
+        color: #888;
+        margin-bottom: 8px;
     }
 
     /* ── Loader ──────────────────────────────────────── */
@@ -310,7 +400,7 @@
                     <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
             </button>
-            <span class="topbar-title">Overview</span>
+            <span class="topbar-title"></span>
             <div class="admin-info">
                 <div class="admin-avatar">A</div>
                 <div class="admin-meta">
@@ -322,10 +412,10 @@
         <main class="content">
             <div class="page active">
                 <div
-                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom: 24px;">
+                    style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; margin-bottom: 24px;">
                     <div>
-                        <h2>Dashboard Analytics</h2>
-                        <p style="color:#64748b; font-size:0.9rem;">Track your business performance in real-time.</p>
+                        <h2>Welcome back, Admin 👋</h2>
+                        <p style="color:#64748b; font-size:0.9rem;">Here's what's happening with your store today.</p>
                     </div>
 
                     <div class="filter-form">
@@ -350,32 +440,67 @@
                     </div>
                 </div>
 
+                <!-- Blue Analytics Summary Card -->
+                <div
+                    style="background: linear-gradient(135deg, #0f172a, #1e3a8a); border-radius: 16px; padding: 32px; color: #fff; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);">
+                    <div style="margin-bottom: 24px;">
+                        <h2 style="color: #fff; margin-bottom: 8px; font-size: 1.5rem;">Revenue Overview</h2>
+                        <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Comprehensive performance tracking
+                            across all sales channels and regional distributors.</p>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                        <div style="display: flex; gap: 48px; flex-wrap: wrap; align-items: center;">
+                            <div>
+                                <div
+                                    style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    Total Revenue</div>
+                                <div style="font-size: 2.2rem; font-weight: 700;" id="heroTotalRevenue">₹0</div>
+                            </div>
+                            <div style="width: 1px; background: rgba(255,255,255,0.2); height: 50px;"></div>
+                            <div>
+                                <div
+                                    style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    Orders Today</div>
+                                <div style="font-size: 2.2rem; font-weight: 700;" id="heroTotalOrders">0</div>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/admin/reports"
+                                style="background: #fff; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.2s, box-shadow 0.2s;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,255,255,0.2)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                    <polyline points="10 9 9 9 8 9" />
+                                </svg>
+                                View Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- KPI Summary Cards -->
                 <div class="stats-grid">
                     <div class="stat-card highlight">
                         <div class="icon-wrap">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                 stroke-width="2">
-                                <line x1="12" y1="1" x2="12" y2="23" />
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
                             </svg>
                         </div>
-                        <div class="slabel">Net Revenue</div>
-                        <div class="svalue" id="kpiNetRev">₹0</div>
+                        <div class="slabel">Total Products</div>
+                        <div class="svalue" id="kpiTotalProducts">0</div>
                     </div>
                     <div class="stat-card green">
-                        <div class="icon-wrap">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                                <line x1="3" y1="6" x2="21" y2="6" />
-                                <path d="M16 10a4 4 0 0 1-8 0" />
-                            </svg>
-                        </div>
-                        <div class="slabel">Gross Sales</div>
-                        <div class="svalue" id="kpiGross">₹0</div>
-                    </div>
-                    <div class="stat-card purple">
                         <div class="icon-wrap">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                 stroke-width="2">
@@ -384,22 +509,10 @@
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                             </svg>
                         </div>
-                        <div class="slabel">Order Items Sold</div>
-                        <div class="svalue" id="kpiOrders">0</div>
+                        <div class="slabel">Total Orders</div>
+                        <div class="svalue" id="kpiGross">0</div>
                     </div>
                     <div class="stat-card orange">
-                        <div class="icon-wrap">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path
-                                    d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                                <line x1="7" y1="7" x2="7.01" y2="7" />
-                            </svg>
-                        </div>
-                        <div class="slabel">Total Discounts</div>
-                        <div class="svalue" id="kpiDisc">₹0</div>
-                    </div>
-                    <div class="stat-card red">
                         <div class="icon-wrap">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                 stroke-width="2">
@@ -408,19 +521,21 @@
                                     d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                             </svg>
                         </div>
-                        <div class="slabel">Refunds Issued</div>
-                        <div class="svalue" id="kpiRefunds">₹0</div>
+                        <div class="slabel">Return Count</div>
+                        <div class="svalue" id="kpiOrders">0</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="icon-wrap" style="background:#f1f5f9; color:#0f172a;">
+                    <div class="stat-card purple">
+                        <div class="icon-wrap">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                 stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
                         </div>
-                        <div class="slabel">Delivered Items</div>
-                        <div class="svalue" id="kpiDelivered">0</div>
+                        <div class="slabel">User Count</div>
+                        <div class="svalue" id="kpiDisc">0</div>
                     </div>
                 </div>
 
@@ -489,6 +604,29 @@
                     </div>
                 </div>
 
+                <!-- Recent Transactions (Ledger) -->
+                <div class="table-card" style="margin-bottom: 24px;">
+                    <h3>Recent Transactions</h3>
+                    <div class="ledger-table-wrapper">
+                        <table class="ledger-tbl">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th style="text-align:right;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactionsBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -498,9 +636,9 @@
 </div>
 
 <script>
-    
-    
-    
+
+
+
 
     function toggleCustomDate() {
         const val = document.getElementById('dateFilter').value;
@@ -550,13 +688,15 @@
     }
 
     function updateDashboard(data) {
+        // Update Hero
+        document.getElementById('heroTotalRevenue').innerText = `₹${formatCurr(data.metrics.totalRevenue)}`;
+        document.getElementById('heroTotalOrders').innerText = data.metrics.ordersTodayCount;
+
         // Update KPIs
-        document.getElementById('kpiNetRev').innerText = `₹${formatCurr(data.metrics.netRevenue)}`;
-        document.getElementById('kpiGross').innerText = `₹${formatCurr(data.metrics.grossSales)}`;
-        document.getElementById('kpiOrders').innerText = data.metrics.totalOrders; // Actually Total Items
-        document.getElementById('kpiDisc').innerText = `₹${formatCurr(data.metrics.totalDiscounts)}`;
-        document.getElementById('kpiRefunds').innerText = `₹${formatCurr(data.metrics.refunds)}`;
-        document.getElementById('kpiDelivered').innerText = data.metrics.deliveredCount;
+        document.getElementById('kpiTotalProducts').innerText = data.metrics.totalProducts;
+        document.getElementById('kpiGross').innerText = data.metrics.netOrders;
+        document.getElementById('kpiOrders').innerText = data.metrics.returnedCount;
+        document.getElementById('kpiDisc').innerText = data.metrics.userCount;
 
         // Render Charts
         renderCharts(data);
@@ -585,6 +725,29 @@
                 <td>₹${formatCurr(b.revenue)}</td>
             </tr>
         `);
+
+        // Render Recent Transactions
+        const recentTbody = document.getElementById('recentTransactionsBody');
+        if (!data.recentTransactions || data.recentTransactions.length === 0) {
+            recentTbody.innerHTML = `<tr><td colspan="7"><div class="empty-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg><h3>No Transactions Found</h3><p>Try adjusting your date range.</p></div></td></tr>`;
+        } else {
+            recentTbody.innerHTML = data.recentTransactions.map((t, idx) => {
+                const dateStr = moment(t.date).format('YYYY-MM-DD HH:mm');
+                const amtColor = t.type === 'Credit' ? '#166534' : '#991b1b';
+                const sign = t.type === 'Credit' ? '+' : '-';
+                return `
+                <tr>
+                    <td style="color:#94a3b8; font-size:0.8rem;">${idx + 1}</td>
+                    <td style="white-space:nowrap;">${dateStr}</td>
+                    <td><a href="/admin/orders/${t.orderId}" style="color:#3b82f6; text-decoration:none; font-weight:600;">${t.orderId}</a></td>
+                    <td>${t.customer}</td>
+                    <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${t.description}">${t.description}</td>
+                    <td><span class="type-badge ${t.type.toLowerCase()}">${t.type}</span></td>
+                    <td style="text-align:right; font-weight:600; color:${amtColor};">${sign}₹${formatCurr(t.amount)}</td>
+                </tr>
+                `;
+            }).join('');
+        }
     }
 
     function renderTable(id, dataArr, rowFn) {
@@ -600,37 +763,24 @@
         const rawChartData = data.chartData;
         const metrics = data.metrics;
 
-        // 1. Trend Chart (Line for Revenue, Bar for Orders)
+        // 1. Trend Chart (Bar for Revenue)
         const trendCtx = document.getElementById('trendChart').getContext('2d');
         const labels = rawChartData.trend.map(d => d._id);
         const revData = rawChartData.trend.map(d => d.revenue);
-        const ordersData = rawChartData.trend.map(d => d.orders);
 
         if (trendChartInstance) trendChartInstance.destroy();
 
         trendChartInstance = new Chart(trendCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
                     {
-                        type: 'line',
-                        label: 'Net Revenue (₹)',
+                        label: 'Revenue (₹)',
                         data: revData,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3,
-                        yAxisID: 'y'
-                    },
-                    {
-                        type: 'bar',
-                        label: 'Items Sold',
-                        data: ordersData,
-                        backgroundColor: '#dbeafe',
+                        backgroundColor: '#3b82f6',
                         borderRadius: 4,
-                        yAxisID: 'y1'
+                        maxBarThickness: 40
                     }
                 ]
             },
@@ -638,11 +788,10 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { position: 'top' } },
+                plugins: { legend: { display: false }, tooltip: { enabled: true } },
                 scales: {
                     x: { grid: { display: false } },
-                    y: { type: 'linear', display: true, position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'Revenue' } },
-                    y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Items Sold' } }
+                    y: { type: 'linear', display: true, position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'Revenue (₹)' } }
                 }
             }
         });

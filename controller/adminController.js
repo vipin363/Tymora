@@ -1,4 +1,6 @@
 import Admin from "../model/adminModel.js";
+import PDFDocument from "pdfkit";
+import ExcelJS from "exceljs";
 import User from "../model/userModel.js";
 import Address from "../model/addressModel.js";
 import bcrypt from "bcryptjs";
@@ -25,6 +27,153 @@ function calcDiscount(originalPrice, salePrice) {
   if (op <= 0) return 0;
   return Math.max(0, Math.round(((op - sp) / op) * 100));
 }
+
+const cleanSpaces = (str) => typeof str === 'string' ? str.trim().replace(/\s+/g, ' ') : '';
+
+const validateProductName = async (name, excludeProductId = null) => {
+  const cleanName = cleanSpaces(name);
+  if (!cleanName) return { valid: false, msg: "Product name is required." };
+  if (cleanName.length < 3 || cleanName.length > 100) return { valid: false, msg: "Product name must be between 3 and 100 characters." };
+  if (!/[a-zA-Z]/.test(cleanName)) return { valid: false, msg: "Product name must contain at least one alphabetic character." };
+  if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanName)) return { valid: false, msg: "Product name cannot contain special characters." };
+  
+  let query = { name: { $regex: new RegExp(`^${cleanName}$`, 'i') }, deleted_at: null };
+  if (excludeProductId) query._id = { $ne: excludeProductId };
+  const existing = await Product.findOne(query);
+  if (existing) return { valid: false, msg: "A product with this name already exists." };
+  
+  return { valid: true, value: cleanName };
+};
+
+const validateDescription = (desc) => {
+  const cleanDesc = cleanSpaces(desc);
+  if (!cleanDesc) return { valid: false, msg: "Description is required." };
+  if (cleanDesc.length < 20) return { valid: false, msg: "Description must contain at least 20 characters." };
+  if (cleanDesc.length > 2000) return { valid: false, msg: "Description cannot exceed 2000 characters." };
+  if (!/[a-zA-Z]/.test(cleanDesc)) return { valid: false, msg: "Description must contain meaningful text." };
+  return { valid: true, value: cleanDesc };
+};
+
+const validateCategoryBrand = async (categoryId, brandId, brandName) => {
+  if (!categoryId) return { valid: false, msg: "Please select a valid category." };
+  const category = await Category.findOne({ _id: categoryId, is_visible: true, deleted_at: null });
+  if (!category) return { valid: false, msg: "Please select a valid category." };
+
+  let finalBrandId = brandId;
+  if (brandId === "other") {
+    if (!brandName || !brandName.trim()) return { valid: false, msg: "Please select a valid brand." };
+    const cleanBrand = cleanSpaces(brandName);
+    const existingBrand = await Brand.findOne({ name: { $regex: new RegExp(`^${cleanBrand}$`, 'i') } });
+    if (existingBrand) finalBrandId = existingBrand._id;
+  } else {
+    if (!brandId) return { valid: false, msg: "Please select a valid brand." };
+    const brand = await Brand.findById(brandId);
+    if (!brand) return { valid: false, msg: "Please select a valid brand." };
+  }
+  return { valid: true, categoryId, finalBrandId, newBrandName: brandId === "other" ? cleanSpaces(brandName) : null };
+};
+
+const validateVariantInput = async (data, productId, variantId = null) => {
+  // Frontend sends field as 'name' (both add and edit), but keep 'variantName' as alias for backward compatibility
+  const { variantName: _variantName, name: _name, sku, strapColor, dialColor, caseColor, size, strapMaterial, caseMaterial, originalPrice, salePrice, stock } = data;
+  const variantName = _variantName || _name;
+  
+  const cleanVariantName = cleanSpaces(variantName);
+  if (!cleanVariantName) return { valid: false, msg: "Variant name is required." };
+  if (cleanVariantName.length < 3 || cleanVariantName.length > 100) return { valid: false, msg: "Variant name must be between 3 and 100 characters." };
+  if (!/[a-zA-Z]/.test(cleanVariantName)) return { valid: false, msg: "Variant name cannot contain only numbers or symbols." };
+  if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanVariantName)) return { valid: false, msg: "Variant name cannot contain special characters." };
+
+  if (!sku) return { valid: false, msg: "SKU is required." };
+  if (!/^[a-zA-Z0-9\-]+$/.test(sku)) return { valid: false, msg: "SKU contains invalid characters." };
+  let skuQuery = { sku: sku };
+  if (variantId) skuQuery._id = { $ne: variantId };
+  const existingSku = await Variant.findOne(skuQuery);
+  if (existingSku) return { valid: false, msg: "SKU already exists." };
+
+  const validateMaterial = (mat, fieldName) => {
+    const clean = cleanSpaces(mat);
+    if (!clean) return { valid: false, msg: `${fieldName} name is required.` };
+    if (clean.length < 2 || clean.length > 50) return { valid: false, msg: `${fieldName} name must be between 2 and 50 characters.` };
+    if (!/[a-zA-Z]/.test(clean)) return { valid: false, msg: `${fieldName} name must contain alphabetic characters.` };
+    return { valid: true, value: clean };
+  };
+  const strapMatCheck = validateMaterial(strapMaterial, "Strap material");
+  if (!strapMatCheck.valid) return strapMatCheck;
+  const caseMatCheck = validateMaterial(caseMaterial, "Case material");
+  if (!caseMatCheck.valid) return caseMatCheck;
+
+  const validateColor = (col, fieldName) => {
+    const clean = cleanSpaces(col);
+    if (!clean) return { valid: false, msg: `${fieldName} is required.` };
+    if (!/^[a-zA-Z\s]+$/.test(clean) && !/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(clean)) return { valid: false, msg: `${fieldName} must be a valid color name or hex code.` };
+    return { valid: true, value: clean };
+  };
+  const strapColorCheck = validateColor(strapColor, "Strap color");
+  if (!strapColorCheck.valid) return strapColorCheck;
+  const dialColorCheck = validateColor(dialColor, "Dial color");
+  if (!dialColorCheck.valid) return dialColorCheck;
+  const caseColorCheck = validateColor(caseColor, "Case color");
+  if (!caseColorCheck.valid) return caseColorCheck;
+
+  const cleanSize = cleanSpaces(size);
+  if (!cleanSize) return { valid: false, msg: "Size is required." };
+  if (!/^\d+mm$/i.test(cleanSize)) return { valid: false, msg: "Please enter a valid watch size (e.g., 42mm)." };
+
+  const mrp = parseFloat(originalPrice);
+  if (isNaN(mrp) || mrp <= 0) return { valid: false, msg: "MRP must be greater than zero." };
+  if (!/^\d+(\.\d{1,2})?$/.test(mrp.toString())) return { valid: false, msg: "MRP can have a maximum of two decimal places." };
+
+  const sp = parseFloat(salePrice);
+  if (isNaN(sp) || sp <= 0) return { valid: false, msg: "Sale price must be greater than zero." };
+  if (!/^\d+(\.\d{1,2})?$/.test(sp.toString())) return { valid: false, msg: "Sale price can have a maximum of two decimal places." };
+  if (sp > mrp) return { valid: false, msg: "Sale price cannot be greater than MRP." };
+
+  const stockNum = parseFloat(stock);
+  if (isNaN(stockNum) || stockNum < 0) return { valid: false, msg: "Stock cannot be negative." };
+  if (!Number.isInteger(stockNum)) return { valid: false, msg: "Stock must be a whole number." };
+
+  let dupQuery = {
+    product: productId,
+    size: cleanSize,
+    strapColor: strapColorCheck.value,
+    dialColor: dialColorCheck.value,
+    caseColor: caseColorCheck.value,
+    strapMaterial: strapMatCheck.value,
+    caseMaterial: caseMatCheck.value,
+    deleted_at: null
+  };
+  if (variantId) dupQuery._id = { $ne: variantId };
+  if (productId) {
+    const dupVariant = await Variant.findOne(dupQuery);
+    if (dupVariant) return { valid: false, msg: "A variant with the same size, colors, and materials already exists." };
+  }
+
+  return { 
+    valid: true, 
+    values: { 
+      variantName: cleanVariantName, 
+      sku, 
+      strapColor: strapColorCheck.value, 
+      dialColor: dialColorCheck.value, 
+      caseColor: caseColorCheck.value, 
+      size: cleanSize, 
+      strapMaterial: strapMatCheck.value, 
+      caseMaterial: caseMatCheck.value, 
+      originalPrice: mrp, 
+      salePrice: sp, 
+      stock: stockNum 
+    } 
+  };
+};
+
+const validateImages = (allImages) => {
+  if (allImages.length < 3) return { valid: false, msg: "Please upload at least 3 images." };
+  for (const img of allImages) {
+    if (!/\.(jpg|jpeg|png|webp)$/i.test(img)) return { valid: false, msg: "Only JPG, JPEG, PNG, and WEBP images are allowed." };
+  }
+  return { valid: true };
+};
 
 export const loadLogin = (req, res) => {
   res.render("admin/login", { layout: "auth",  layout: "auth" });
@@ -196,16 +345,20 @@ export const loadUsers = async (req, res) => {
 
     const totalPages = Math.ceil(totalUsers / limit);
 
+    const totalSpendingAgg = await Order.aggregate([
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+    const totalCustomerSpending = totalSpendingAgg[0] ? totalSpendingAgg[0].total : 0;
+
     // Fetch order stats per user
     const userIds = users.map((u) => u._id);
     const orderStats = await Order.aggregate([
       { $match: { userId: { $in: userIds } } },
-      { $unwind: "$products" },
       {
         $group: {
           _id: "$userId",
           totalOrders: { $sum: 1 },
-          totalSpending: { $sum: "$products.itemTotal" },
+          totalSpending: { $sum: "$totalAmount" },
         },
       },
     ]);
@@ -239,12 +392,145 @@ export const loadUsers = async (req, res) => {
         totalUsers,
         activeUsers,
         blockedUsers,
-        totalRevenue: 0,
+        totalCustomerSpending,
       },
     });
   } catch (err) {
     console.log(err);
     res.redirect("/admin/dashBoard");
+  }
+};
+
+// ── EXPORT USERS PDF ──────────────────────────────────────────────────────
+export const exportUsersPdf = async (req, res) => {
+  try {
+    const search = req.query.search || "";
+    const sortOption = req.query.sort || "latest";
+    const statusFilter = req.query.status || "all";
+
+    const query = {
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    };
+    if (statusFilter === "blocked") query.isBlocked = true;
+    else if (statusFilter === "active") query.isBlocked = false;
+
+    let sortQuery = sortOption === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+    const users = await User.find(query).sort(sortQuery).lean();
+    const userIds = users.map(u => u._id);
+    const orderStats = await Order.aggregate([
+      { $match: { userId: { $in: userIds } } },
+      { $group: { _id: "$userId", totalOrders: { $sum: 1 }, totalSpending: { $sum: "$totalAmount" } } }
+    ]);
+    const statsMap = {};
+    orderStats.forEach(s => { statsMap[s._id.toString()] = s; });
+
+    const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' });
+    res.setHeader('Content-disposition', 'attachment; filename=users_export.pdf');
+    res.setHeader('Content-type', 'application/pdf');
+    doc.pipe(res);
+
+    doc.fontSize(18).font('Helvetica-Bold').text('User Management Report', { align: 'center' });
+    doc.fontSize(9).font('Helvetica').text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+    if (search) doc.text(`Search: "${search}"`, { align: 'center' });
+    if (statusFilter !== 'all') doc.text(`Status: ${statusFilter}`, { align: 'center' });
+    doc.moveDown(1.5);
+
+    const cols = [30, 180, 370, 470, 530, 600, 680];
+    const headers = ['Name', 'Email', 'Phone', 'Orders', 'Spending', 'Status', 'Joined'];
+    doc.fontSize(9).font('Helvetica-Bold');
+    headers.forEach((h, i) => doc.text(h, cols[i], doc.y, { continued: i < headers.length - 1 }));
+    doc.text('');
+    doc.moveTo(30, doc.y + 3).lineTo(790, doc.y + 3).stroke();
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica').fontSize(8);
+    users.forEach(u => {
+      if (doc.y > 530) doc.addPage();
+      const os = statsMap[u._id.toString()] || { totalOrders: 0, totalSpending: 0 };
+      const y = doc.y;
+      const name = u.name?.length > 20 ? u.name.substring(0, 18) + '...' : (u.name || '-');
+      const email = u.email?.length > 28 ? u.email.substring(0, 26) + '...' : (u.email || '-');
+      doc.text(name, cols[0], y);
+      doc.text(email, cols[1], y);
+      doc.text(u.phone || '-', cols[2], y);
+      doc.text(String(os.totalOrders), cols[3], y);
+      doc.text(`Rs.${os.totalSpending.toFixed(0)}`, cols[4], y);
+      doc.text(u.isBlocked ? 'Blocked' : 'Active', cols[5], y);
+      doc.text(u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-', cols[6], y);
+      doc.moveDown(1);
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error('exportUsersPdf error:', err);
+    res.status(500).send('Error generating PDF');
+  }
+};
+
+// ── EXPORT USERS EXCEL ────────────────────────────────────────────────────
+export const exportUsersExcel = async (req, res) => {
+  try {
+    const search = req.query.search || "";
+    const sortOption = req.query.sort || "latest";
+    const statusFilter = req.query.status || "all";
+
+    const query = {
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    };
+    if (statusFilter === "blocked") query.isBlocked = true;
+    else if (statusFilter === "active") query.isBlocked = false;
+
+    let sortQuery = sortOption === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+    const users = await User.find(query).sort(sortQuery).lean();
+    const userIds = users.map(u => u._id);
+    const orderStats = await Order.aggregate([
+      { $match: { userId: { $in: userIds } } },
+      { $group: { _id: "$userId", totalOrders: { $sum: 1 }, totalSpending: { $sum: "$totalAmount" } } }
+    ]);
+    const statsMap = {};
+    orderStats.forEach(s => { statsMap[s._id.toString()] = s; });
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Users');
+    sheet.columns = [
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Email', key: 'email', width: 35 },
+      { header: 'Phone', key: 'phone', width: 18 },
+      { header: 'Orders', key: 'orders', width: 10 },
+      { header: 'Spending (Rs)', key: 'spending', width: 18 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Joined', key: 'joined', width: 18 },
+    ];
+    sheet.getRow(1).font = { bold: true };
+
+    users.forEach(u => {
+      const os = statsMap[u._id.toString()] || { totalOrders: 0, totalSpending: 0 };
+      sheet.addRow({
+        name: u.name || '-',
+        email: u.email || '-',
+        phone: u.phone || '-',
+        orders: os.totalOrders,
+        spending: os.totalSpending,
+        status: u.isBlocked ? 'Blocked' : 'Active',
+        joined: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-',
+      });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=users_export.xlsx');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('exportUsersExcel error:', err);
+    res.status(500).send('Error generating Excel');
   }
 };
 
@@ -305,12 +591,11 @@ export const loadUserProfile = async (req, res) => {
     // Aggregate spending stats
     const spendingAgg = await Order.aggregate([
       { $match: { userId: new mongoose.Types.ObjectId(userId) } },
-      { $unwind: "$products" },
       {
         $group: {
           _id: null,
           totalOrders: { $sum: 1 },
-          totalSpending: { $sum: "$products.itemTotal" },
+          totalSpending: { $sum: "$totalAmount" },
         },
       },
     ]);
@@ -320,16 +605,12 @@ export const loadUserProfile = async (req, res) => {
       : 0;
 
     // Format order history for the view
-    const formattedOrders = orderHistory.flatMap((order) =>
-      order.products.map((item) => ({
-        orderId: order.orderId || order._id.toString().slice(-8).toUpperCase(),
-        orderDate: order.orderDate?.toDateString?.() || order.createdAt?.toDateString(),
-        productName: item.productName || "Product",
-        quantity: item.quantity,
-        amount: item.itemTotal || 0,
-        status: item.orderStatus || order.orderStatus || "Pending",
-      }))
-    );
+    const formattedOrders = orderHistory.map((order) => ({
+      orderId: order.orderId || order._id.toString().slice(-8).toUpperCase(),
+      orderDate: order.orderDate?.toDateString?.() || order.createdAt?.toDateString(),
+      amount: order.totalAmount || 0,
+      status: order.orderStatus || "Pending",
+    }));
 
     const selectedUser = {
       _id: user._id,
@@ -793,82 +1074,47 @@ export const addProduct = async (req, res) => {
       existingImages,
     } = req.body;
 
-    if (!name || !category || !brand) {
-      return res.json({
-        success: false,
-        message: "Name, category and brand are required.",
-      });
-    }
+    const nameCheck = await validateProductName(name);
+    if (!nameCheck.valid) return res.json({ success: false, message: nameCheck.msg });
+    
+    const descCheck = validateDescription(description);
+    if (!descCheck.valid) return res.json({ success: false, message: descCheck.msg });
+    
+    const catBrandCheck = await validateCategoryBrand(category, brand, newBrand);
+    if (!catBrandCheck.valid) return res.json({ success: false, message: catBrandCheck.msg });
+    
+    const variantCheck = await validateVariantInput(req.body, null, null);
+    if (!variantCheck.valid) return res.json({ success: false, message: variantCheck.msg });
 
-    // Validate default variant required fields
-    if (
-      !strapColor ||
-      !dialColor ||
-      !caseColor ||
-      !size ||
-      !strapMaterial ||
-      !caseMaterial ||
-      !originalPrice ||
-      !salePrice
-    ) {
-      return res.json({
-        success: false,
-        message: "All default variant fields are required.",
-      });
-    }
-    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
-      return res.json({
-        success: false,
-        message: "Sale price cannot exceed original price.",
-      });
-    }
-    const discountPct = calcDiscount(originalPrice, salePrice);
+    const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
+    const existingArr = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
+    const allImages = [...existingArr, ...uploadedImages];
+    const imageCheck = validateImages(allImages);
+    if (!imageCheck.valid) return res.json({ success: false, message: imageCheck.msg });
 
-    let brandId = brand;
-    if (brand === "other" && newBrand?.trim()) {
-      let existing = await Brand.findOne({
-        name: { $regex: `^${newBrand.trim()}$`, $options: "i" },
-      });
-      if (!existing) existing = await Brand.create({ name: newBrand.trim() });
+    let brandId = catBrandCheck.finalBrandId;
+    if (catBrandCheck.newBrandName && brand === "other") {
+      let existing = await Brand.findOne({ name: { $regex: new RegExp(`^${catBrandCheck.newBrandName}$`, 'i') } });
+      if (!existing) existing = await Brand.create({ name: catBrandCheck.newBrandName });
       brandId = existing._id;
     }
 
-    // Images come from variant image section (min 3)
-    const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
-    const existingArr = Array.isArray(existingImages)
-      ? existingImages
-      : existingImages
-        ? [existingImages]
-        : [];
-    const allImages = [...existingArr, ...uploadedImages];
-
-    if (allImages.length < 3) {
-      return res.json({
-        success: false,
-        message: "At least 3 images are required for the default variant.",
-      });
-    }
-
-    // Check SKU uniqueness if provided
-    if (sku) {
-      const skuExists = await Variant.findOne({ sku });
-      if (skuExists)
-        return res.json({ success: false, message: "SKU already exists." });
-    }
+    const vVals = variantCheck.values;
+    const discountPct = calcDiscount(vVals.originalPrice, vVals.salePrice);
 
     // Create product
     const product = new Product({
-      name: name.trim(),
-      category,
+      name: nameCheck.value,
+      category: catBrandCheck.categoryId,
       brand: brandId,
-      description: description || "",
+      description: descCheck.value,
       gender: gender || "unisex",
       images: allImages,
       status: status || "active",
       featured: featured === "true" || featured === true,
       dealOfTheDay: dealOfTheDay === "true" || dealOfTheDay === true,
-      originalPrice: parseFloat(originalPrice) || 0,
-      salePrice: parseFloat(salePrice) || 0,
+      originalPrice: vVals.originalPrice,
+      salePrice: vVals.salePrice,
       discountPercentage: discountPct,
       price: parseFloat(salePrice) || 0,
       discount: discountPct,
@@ -935,18 +1181,25 @@ export const editProduct = async (req, res) => {
       dealOfTheDay,
     } = req.body;
 
-    let brandId = brand;
-    if (brand === "other" && newBrand?.trim()) {
-      let existing = await Brand.findOne({
-        name: { $regex: `^${newBrand.trim()}$`, $options: "i" },
-      });
-      if (!existing) existing = await Brand.create({ name: newBrand.trim() });
+    const currentProduct = await Product.findById(req.params.id);
+    if (!currentProduct) return res.json({ success: false, message: "Product not found." });
+
+    const nameCheck = await validateProductName(name, req.params.id);
+    if (!nameCheck.valid) return res.json({ success: false, message: nameCheck.msg });
+    
+    const descCheck = validateDescription(description);
+    if (!descCheck.valid) return res.json({ success: false, message: descCheck.msg });
+    
+    const catBrandCheck = await validateCategoryBrand(category, brand, newBrand);
+    if (!catBrandCheck.valid) return res.json({ success: false, message: catBrandCheck.msg });
+
+    let brandId = catBrandCheck.finalBrandId;
+    if (catBrandCheck.newBrandName && brand === "other") {
+      let existing = await Brand.findOne({ name: { $regex: new RegExp(`^${catBrandCheck.newBrandName}$`, 'i') } });
+      if (!existing) existing = await Brand.create({ name: catBrandCheck.newBrandName });
       brandId = existing._id;
     }
 
-    const currentProduct = await Product.findById(req.params.id);
-    if (!currentProduct)
-      return res.json({ success: false, message: "Product not found." });
 
     const wasActive = currentProduct.status === "active";
     const goingActive = status === "active";
@@ -1335,62 +1588,33 @@ export const addVariant = async (req, res) => {
       existingImages,
     } = req.body;
 
-    if (sku) {
-      const existing = await Variant.findOne({ sku });
-      if (existing)
-        return res.json({ success: false, message: "SKU already exists." });
-    }
+    const variantCheck = await validateVariantInput(req.body, productId, null);
+    if (!variantCheck.valid) return res.json({ success: false, message: variantCheck.msg });
 
     const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
-    const existingArr = Array.isArray(existingImages)
-      ? existingImages
-      : existingImages
-        ? [existingImages]
-        : [];
+    const existingArr = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
     const allImages = [...existingArr, ...uploadedImages];
+    const imageCheck = validateImages(allImages);
+    if (!imageCheck.valid) return res.json({ success: false, message: imageCheck.msg });
 
-    if (allImages.length < 3) {
-      return res.json({
-        success: false,
-        message: "At least 3 images are required.",
-      });
-    }
-
-    const existingDefault = await Variant.findOne({
-      product: productId,
-      isDefault: true,
-      deleted_at: null,
-    });
-
+    const existingDefault = await Variant.findOne({ product: productId, isDefault: true, deleted_at: null });
     const shouldBeDefault = !existingDefault;
 
-    // Validate pricing
-    if (!originalPrice || !salePrice) {
-      return res.json({
-        success: false,
-        message: "Original price and sale price are required.",
-      });
-    }
-    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
-      return res.json({
-        success: false,
-        message: "Sale price cannot exceed original price.",
-      });
-    }
-    const discountPct = calcDiscount(originalPrice, salePrice);
+    const vVals = variantCheck.values;
+    const discountPct = calcDiscount(vVals.originalPrice, vVals.salePrice);
 
     const variant = await Variant.create({
       product: productId,
-      name,
-      sku,
-      strapColor,
-      dialColor,
-      caseColor,
-      size,
-      strapMaterial,
-      caseMaterial,
-      originalPrice: parseFloat(originalPrice),
-      salePrice: parseFloat(salePrice),
+      name: vVals.variantName,
+      sku: vVals.sku || undefined,
+      strapColor: vVals.strapColor,
+      dialColor: vVals.dialColor,
+      caseColor: vVals.caseColor,
+      size: vVals.size,
+      strapMaterial: vVals.strapMaterial,
+      caseMaterial: vVals.caseMaterial,
+      originalPrice: vVals.originalPrice,
+      salePrice: vVals.salePrice,
       discountPercentage: discountPct,
       price: parseFloat(salePrice),
       stock: parseInt(stock) || 0,
@@ -1439,58 +1663,38 @@ export const editVariant = async (req, res) => {
       existingImages,
     } = req.body;
 
-    if (sku) {
-      const existing = await Variant.findOne({ sku, _id: { $ne: variantId } });
-      if (existing)
-        return res.json({ success: false, message: "SKU already exists." });
-    }
+    const existingVariant = await Variant.findById(variantId);
+    if (!existingVariant) return res.json({ success: false, message: "Variant not found." });
+
+    const variantCheck = await validateVariantInput(req.body, existingVariant.product, variantId);
+    if (!variantCheck.valid) return res.json({ success: false, message: variantCheck.msg });
 
     const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
-    const existingArr = Array.isArray(existingImages)
-      ? existingImages
-      : existingImages
-        ? [existingImages]
-        : [];
+    const existingArr = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
     const allImages = [...existingArr, ...uploadedImages];
+    const imageCheck = validateImages(allImages);
+    if (!imageCheck.valid) return res.json({ success: false, message: imageCheck.msg });
 
-    if (allImages.length < 3) {
-      return res.json({
-        success: false,
-        message: "At least 3 images are required.",
-      });
-    }
-
-    if (!originalPrice || !salePrice) {
-      return res.json({
-        success: false,
-        message: "Original price and sale price are required.",
-      });
-    }
-    if (parseFloat(salePrice) > parseFloat(originalPrice)) {
-      return res.json({
-        success: false,
-        message: "Sale price cannot exceed original price.",
-      });
-    }
-    const discountPct = calcDiscount(originalPrice, salePrice);
+    const vVals = variantCheck.values;
+    const discountPct = calcDiscount(vVals.originalPrice, vVals.salePrice);
 
     const updated = await Variant.findByIdAndUpdate(
       variantId,
       {
         $set: {
-          name,
-          sku,
-          strapColor,
-          dialColor,
-          caseColor,
-          size,
-          strapMaterial,
-          caseMaterial,
-          originalPrice: parseFloat(originalPrice),
-          salePrice: parseFloat(salePrice),
+          name: vVals.variantName,
+          sku: vVals.sku || undefined,
+          strapColor: vVals.strapColor,
+          dialColor: vVals.dialColor,
+          caseColor: vVals.caseColor,
+          size: vVals.size,
+          strapMaterial: vVals.strapMaterial,
+          caseMaterial: vVals.caseMaterial,
+          originalPrice: vVals.originalPrice,
+          salePrice: vVals.salePrice,
           discountPercentage: discountPct,
-          price: parseFloat(salePrice),
-          stock: parseInt(stock) || 0,
+          price: vVals.salePrice,
+          stock: vVals.stock,
           images: allImages,
           status: status || "active",
           offerProduct: offerProduct === "true" || offerProduct === true,
@@ -1804,7 +2008,12 @@ export const loadAdminOrders = async (req, res) => {
     const statusFilter = req.query.status || "all";
     const paymentFilter = req.query.payment || "all";
 
-    let query = {};
+    let query = {
+      $and: [
+        { paymentStatus: { $ne: 'Failed' } },
+        { orderStatus: { $ne: 'Payment Pending' } }
+      ]
+    };
     if (search) {
       query.$or = [
         { orderId: { $regex: search, $options: "i" } },
@@ -1928,13 +2137,31 @@ export const loadAdminOrderDetail = async (req, res) => {
       };
     });
 
+    let totalCancelledRefunds = 0;
+    let totalReturnedRefunds = 0;
+
+    formattedProducts.forEach(item => {
+      if (item.orderStatus === "Cancelled" && item.refundAmountProcessed) {
+        totalCancelledRefunds += item.refundAmountProcessed;
+      }
+      if (["Returned", "Refund Processed"].includes(item.orderStatus) && item.refundAmountProcessed) {
+        totalReturnedRefunds += item.refundAmountProcessed;
+      }
+    });
+
+    const finalAmountPaid = order.totalAmount - totalCancelledRefunds - totalReturnedRefunds;
+
     res.render("admin/adminOrderDetail", { layout: "admin", 
       activePage: "orders",
       order: {
         ...order,
+        subtotalSalePrice: order.subtotalMrp - (order.discount || 0),
         products: formattedProducts,
         orderDateFormatted: fmtDate(order.orderDate),
-        estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery)
+        estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery),
+        totalCancelledRefunds,
+        totalReturnedRefunds,
+        finalAmountPaid
       },
       user: user ? { name: user.name, email: user.email, phone: user.phone || "-" } : null
     });

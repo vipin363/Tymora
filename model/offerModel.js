@@ -2,35 +2,30 @@ import mongoose from 'mongoose';
 
 const offerSchema = new mongoose.Schema({
 
-  name: { type: String, required: true, trim: true },
-  description: { type: String, trim: true, default: "" },
+  name: { type: String, required: true, trim: true, minlength: 3, maxlength: 100 },
+  description: { type: String, trim: true, maxlength: 500, default: "" },
   offerBadgeText: { type: String, trim: true, default: "" },
   isActive: { type: Boolean, default: true },
 
- 
   discountType: { type: String, enum: ['percentage', 'fixed'], required: true },
-  discountValue: { type: Number, required: true, min: 0 },
-  maxDiscountLimit: { type: Number, default: null },
-  minPurchaseAmount: { type: Number, default: 0 },
-
+  discountValue: { type: Number, required: true, min: 1 },
+  maxDiscountLimit: { type: Number, default: null, min: 0 },
+  minPurchaseAmount: { type: Number, default: 0, min: 0 },
 
   offerType: { type: String, enum: ['product', 'category', 'brand', 'global'], required: true },
-  
   
   applicableProducts:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   applicableCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   applicableBrands:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' }],
 
-
   excludedProducts:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   excludedCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   excludedBrands:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' }],
 
- 
   allowedUsers: { type: String, enum: ['all', 'first_time', 'premium', 'specific'], default: 'all' },
   specificUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Only populated if allowedUsers='specific'
-  usageLimit: { type: Number, default: null }, // Global cap across all users
-  perUserLimit: { type: Number, default: 1 },  // Cap per individual user
+  usageLimit: { type: Number, default: null, min: 0 }, // Global cap across all users
+  perUserLimit: { type: Number, default: 1, min: 1 },  // Cap per individual user
   usedCount: { type: Number, default: 0 },     // Track how many times it was actually used
 
  

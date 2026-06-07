@@ -2,7 +2,7 @@ import express from 'express';
 const router=express.Router()
 import {isAdminLogin,isAdminAuth} from '../middleware/adminAuth.js'
 import {loadLogin,login,loadDashboard,logout,loadForgotPassword,forgotPassword,
-       resetAdminPassword,loadUsers,blockUser,unblockUser,deleteUser,loadUserProfile,
+       resetAdminPassword,loadUsers,blockUser,unblockUser,deleteUser,loadUserProfile,exportUsersPdf,exportUsersExcel,
        loadCategoryManagement,addCategory,editCategory,deleteCategory,permanentDeleteCategory, 
        restoreCategory, loadTrash,getCategoryStats,loadProductManagement, addProduct, editProduct,
        getProductJson, softDeleteProduct, loadProductTrash,restoreProduct, permanentDeleteProduct, 
@@ -16,7 +16,7 @@ import { loadAdminOffers, createOffer, updateOffer, toggleOfferStatus, deleteOff
 import { loadAdminCoupons, createCoupon, updateCoupon, toggleCouponStatus, deleteCoupon } from '../controller/couponController.js';
 import { loadSalesReport, exportPdfReport, exportExcelReport, getDashboardData } from '../controller/adminReportController.js';
 import { loadAdminOtpPage, verifyAdminForgotOtp,resendAdminOtp } from '../controller/otpController.js';
-import { loadLedgerBook, exportLedgerExcel, exportLedgerPdf } from '../controller/adminLedgerController.js';
+
 import upload from '../middleware/uploard.js';
 import Category from '../model/categoryModel.js';
 import uploadProduct from '../middleware/productUpload.js'
@@ -50,6 +50,8 @@ router.get('/users', isAdminAuth, loadUsers);
 router.post('/block-user/:id', isAdminAuth, blockUser);
 router.post('/unblock-user/:id', isAdminAuth, unblockUser);
 router.post('/delete-user/:id', isAdminAuth, deleteUser);
+router.get('/users/export/pdf', isAdminAuth, exportUsersPdf);
+router.get('/users/export/excel', isAdminAuth, exportUsersExcel);
 router.get('/users/:id',isAdminAuth, loadUserProfile);
 
 router.get('/categoryManagement', isAdminAuth, loadCategoryManagement);
@@ -151,9 +153,9 @@ router.get('/reports/export/pdf', isAdminAuth, exportPdfReport);
 router.get('/reports/export/excel', isAdminAuth, exportExcelReport);
 
 
-router.get('/ledger', isAdminAuth, loadLedgerBook);
-router.get('/ledger/export/excel', isAdminAuth, exportLedgerExcel);
-router.get('/ledger/export/pdf', isAdminAuth, exportLedgerPdf);
+router.get('/ledger', isAdminAuth, (req, res) => res.redirect('/admin/dashboard'));
+// router.get('/ledger/export/excel', isAdminAuth, exportLedgerExcel);
+// router.get('/ledger/export/pdf', isAdminAuth, exportLedgerPdf);
 
 router.use((req,res)=>{
    res.redirect('/admin/login');

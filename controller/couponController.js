@@ -119,29 +119,50 @@ export const createCoupon = async (req, res) => {
   try {
     const d = req.body;
     d.code = (d.code || '').toUpperCase().trim().replace(/\s+/g, '');
+    d.title = (d.title || '').trim();
+    if (d.description) d.description = d.description.trim();
 
-    if (!d.code) return res.status(400).json({ success: false, message: 'Coupon code is required' });
-    if (!/^[A-Z0-9]{3,20}$/.test(d.code))
-      return res.status(400).json({ success: false, message: 'Code must be 3–20 alphanumeric characters (no spaces)' });
+    if (!d.code) return res.status(400).json({ success: false, message: 'Coupon code is required.' });
+    if (!/^[A-Z0-9]{4,30}$/.test(d.code))
+      return res.status(400).json({ success: false, message: 'Coupon code must contain only letters and numbers (4-30 chars).' });
 
-    if (await Coupon.findOne({ code: d.code }))
-      return res.status(400).json({ success: false, message: 'Coupon code already exists' });
+    if (!d.title || d.title.length < 3 || d.title.length > 100)
+      return res.status(400).json({ success: false, message: 'Coupon title must be between 3 and 100 characters.' });
+      
+    if (d.description && (d.description.length < 10 || d.description.length > 500))
+      return res.status(400).json({ success: false, message: 'Description must be between 10 and 500 characters.' });
 
-    if (d.discountType === 'percentage' && Number(d.discountValue) > 100)
-      return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%' });
-    if (Number(d.discountValue) < 0)
-      return res.status(400).json({ success: false, message: 'Discount value cannot be negative' });
-    if (new Date(d.startDate) >= new Date(d.endDate))
-      return res.status(400).json({ success: false, message: 'Expiry date must be after start date' });
+    // Case-insensitive duplicate check
+    const existingCode = await Coupon.findOne({ code: { $regex: new RegExp(`^${d.code}$`, 'i') } });
+    if (existingCode) return res.status(400).json({ success: false, message: 'Coupon code already exists.' });
 
-    // Per-user vs global limit sanity
+    const val = Number(d.discountValue);
+    if (d.discountType === 'percentage' && (val < 1 || val > 100))
+      return res.status(400).json({ success: false, message: 'Percentage discount must be between 1% and 100%.' });
+    if (d.discountType === 'fixed' && val <= 0)
+      return res.status(400).json({ success: false, message: 'Fixed discount must be greater than 0.' });
+
+    if (Number(d.minPurchase) < 0) return res.status(400).json({ success: false, message: 'Minimum order value cannot be negative.' });
+    if (Number(d.maxDiscountLimit) < 0) return res.status(400).json({ success: false, message: 'Max discount limit cannot be negative.' });
+    if (Number(d.usageLimit) < 0) return res.status(400).json({ success: false, message: 'Usage limit cannot be negative.' });
+    if (Number(d.perUserLimit) < 1) return res.status(400).json({ success: false, message: 'Per user limit must be at least 1.' });
+
+    const now = new Date();
+    // Start date start-of-day for comparison to allow today
+    const startObj = new Date(d.startDate);
+    const todayStr = now.toISOString().split('T')[0];
+    const startStr = startObj.toISOString().split('T')[0];
+    
+    if (startStr < todayStr)
+      return res.status(400).json({ success: false, message: 'Start date cannot be in the past.' });
+    if (new Date(d.endDate) < startObj)
+      return res.status(400).json({ success: false, message: 'Expiry date cannot be before start date.' });
+
     if (Number(d.usageLimit) > 0 && Number(d.perUserLimit) > Number(d.usageLimit))
-      return res.status(400).json({ success: false, message: 'Per-user limit cannot exceed global usage limit' });
+      return res.status(400).json({ success: false, message: 'Per-user limit cannot exceed global usage limit.' });
 
-    // Applicability targets
     _setTargets(d);
 
-    // Booleans from form checkboxes
     ['isFirstTimeUserOnly', 'isFreeShipping', 'isStackable', 'autoApply', 'isActive'].forEach(k => {
       d[k] = d[k] === true || d[k] === 'true' || d[k] === 'on';
     });
@@ -157,23 +178,61 @@ export const createCoupon = async (req, res) => {
 export const updateCoupon = async (req, res) => {
   try {
     const { id } = req.params;
+    const existingCoupon = await Coupon.findById(id);
+    if (!existingCoupon) return res.status(404).json({ success: false, message: 'Coupon not found.' });
+
     const d = req.body;
     d.code = (d.code || '').toUpperCase().trim().replace(/\s+/g, '');
+    d.title = (d.title || '').trim();
+    if (d.description) d.description = d.description.trim();
 
-    if (!d.code) return res.status(400).json({ success: false, message: 'Coupon code is required' });
-    if (!/^[A-Z0-9]{3,20}$/.test(d.code))
-      return res.status(400).json({ success: false, message: 'Code must be 3–20 alphanumeric characters' });
+    if (!d.code) return res.status(400).json({ success: false, message: 'Coupon code is required.' });
+    if (!/^[A-Z0-9]{4,30}$/.test(d.code))
+      return res.status(400).json({ success: false, message: 'Coupon code must contain only letters and numbers (4-30 chars).' });
 
-    if (await Coupon.findOne({ code: d.code, _id: { $ne: id } }))
-      return res.status(400).json({ success: false, message: 'Coupon code already in use' });
+    if (!d.title || d.title.length < 3 || d.title.length > 100)
+      return res.status(400).json({ success: false, message: 'Coupon title must be between 3 and 100 characters.' });
+      
+    if (d.description && (d.description.length < 10 || d.description.length > 500))
+      return res.status(400).json({ success: false, message: 'Description must be between 10 and 500 characters.' });
 
-    if (d.discountType === 'percentage' && Number(d.discountValue) > 100)
-      return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%' });
-    if (new Date(d.startDate) >= new Date(d.endDate))
-      return res.status(400).json({ success: false, message: 'Expiry date must be after start date' });
+    const duplicateCheck = await Coupon.findOne({ code: { $regex: new RegExp(`^${d.code}$`, 'i') }, _id: { $ne: id } });
+    if (duplicateCheck) return res.status(400).json({ success: false, message: 'Coupon code already exists.' });
+
+    const val = Number(d.discountValue);
+    if (d.discountType === 'percentage' && (val < 1 || val > 100))
+      return res.status(400).json({ success: false, message: 'Percentage discount must be between 1% and 100%.' });
+    if (d.discountType === 'fixed' && val <= 0)
+      return res.status(400).json({ success: false, message: 'Fixed discount must be greater than 0.' });
+
+    if (Number(d.minPurchase) < 0) return res.status(400).json({ success: false, message: 'Minimum order value cannot be negative.' });
+    if (Number(d.maxDiscountLimit) < 0) return res.status(400).json({ success: false, message: 'Max discount limit cannot be negative.' });
+    if (Number(d.usageLimit) < 0) return res.status(400).json({ success: false, message: 'Usage limit cannot be negative.' });
+    if (Number(d.perUserLimit) < 1) return res.status(400).json({ success: false, message: 'Per user limit must be at least 1.' });
+
+    // Start Date Logic
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const newStartStr = new Date(d.startDate).toISOString().split('T')[0];
+    const oldStartStr = existingCoupon.startDate.toISOString().split('T')[0];
+
+    // If the coupon has already started (i.e. old start date is today or in the past)
+    if (oldStartStr <= todayStr) {
+      if (newStartStr !== oldStartStr) {
+        return res.status(400).json({ success: false, message: 'Start date cannot be modified after the coupon has started.' });
+      }
+    } else {
+      // Coupon hasn't started yet. New start date cannot be in the past.
+      if (newStartStr < todayStr) {
+        return res.status(400).json({ success: false, message: 'Start date cannot be in the past.' });
+      }
+    }
+
+    if (new Date(d.endDate) < new Date(d.startDate))
+      return res.status(400).json({ success: false, message: 'Expiry date cannot be before start date.' });
 
     if (Number(d.usageLimit) > 0 && Number(d.perUserLimit) > Number(d.usageLimit))
-      return res.status(400).json({ success: false, message: 'Per-user limit cannot exceed global usage limit' });
+      return res.status(400).json({ success: false, message: 'Per-user limit cannot exceed global usage limit.' });
 
     _setTargets(d);
     ['isFirstTimeUserOnly', 'isFreeShipping', 'isStackable', 'autoApply', 'isActive'].forEach(k => {
@@ -181,8 +240,6 @@ export const updateCoupon = async (req, res) => {
     });
 
     const updated = await Coupon.findByIdAndUpdate(id, d, { new: true, runValidators: true });
-    if (!updated) return res.status(404).json({ success: false, message: 'Coupon not found' });
-
     res.json({ success: true, message: 'Coupon updated successfully' });
   } catch (err) {
     console.error('updateCoupon:', err);

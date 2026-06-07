@@ -1,4 +1,6 @@
 import Order from '../model/orderModel.js';
+import User from '../model/userModel.js';
+import Product from '../model/productModel.js';
 import Coupon from '../model/couponModel.js';
 import Offer from '../model/offerModel.js';
 import Referral from '../model/referralModel.js';
@@ -49,14 +51,15 @@ const buildMatchConditions = (query) => {
 
 // Compute status filter condition for the unwound products
 const getProductStatusMatch = (statusFilter) => {
-    if (!statusFilter || statusFilter === 'all') return {};
-    
-    if (statusFilter === 'delivered') return { "products.orderStatus": "Delivered" };
-    if (statusFilter === 'cancelled') return { "products.orderStatus": "Cancelled" };
-    if (statusFilter === 'returned') return { "products.orderStatus": { $in: ["Returned", "Refund Processed"] } };
-    if (statusFilter === 'pending') return { "products.orderStatus": { $nin: ["Delivered", "Cancelled", "Returned", "Refund Processed"] } };
-    
-    return {};
+    const matchStage = {};
+    if (statusFilter && statusFilter !== 'All Statuses' && statusFilter !== 'all') {
+        if (statusFilter === 'Returned') {
+            matchStage["products.orderStatus"] = { $in: ["Returned", "Refund Processed"] };
+        } else {
+            matchStage["products.orderStatus"] = statusFilter;
+        }
+    }
+    return matchStage;
 };
 
 const getReportData = async (query, isExport = false) => {
@@ -68,6 +71,11 @@ const getReportData = async (query, isExport = false) => {
     const productMatch = getProductStatusMatch(query.status);
     const searchRegex = query.search ? new RegExp(query.search, 'i') : null;
 
+    console.log("===================================");
+    console.log("Status Filter:", query.status);
+    console.log("Match Stage:", productMatch);
+    console.log("===================================");
+
     // Base Pipeline for overall metrics
     const metricsPipeline = [
         { $match: orderMatch },
@@ -77,31 +85,27 @@ const getReportData = async (query, isExport = false) => {
             $group: {
                 _id: null,
                 totalItems: { $sum: 1 },
-                grossSales: { 
-                    $sum: { 
+                grossSales: {
+                    $sum: {
                         $cond: [
-                            { $in: ["$products.orderStatus", ["Cancelled", "Returned", "Refund Processed"]] },
-                            0,
-                            { $multiply: ["$products.mrp", "$products.quantity"] }
-                        ] 
-                    } 
+                            { $eq: ["$products.orderStatus", "Delivered"] },
+                            "$products.productFinalPaidPrice",
+                            0
+                        ]
+                    }
                 },
-                couponDiscount: { 
-                    $sum: { 
-                        $cond: [{ $in: ["$products.orderStatus", ["Cancelled", "Returned", "Refund Processed"]] }, 0, "$products.couponDiscountShare"] 
-                    } 
+                refunds: {
+                    $sum: {
+                        $cond: [
+                            { $gt: ["$products.refundAmountProcessed", 0] },
+                            "$products.refundAmountProcessed",
+                            0
+                        ]
+                    }
                 },
-                offerDiscount: { 
-                    $sum: { 
-                        $cond: [{ $in: ["$products.orderStatus", ["Cancelled", "Returned", "Refund Processed"]] }, 0, { $add: ["$products.productOfferDiscount", "$products.categoryOfferDiscount", "$products.offerDiscountShare"] }] 
-                    } 
-                },
-                referralDiscount: { 
-                    $sum: { 
-                        $cond: [{ $in: ["$products.orderStatus", ["Cancelled", "Returned", "Refund Processed"]] }, 0, "$products.referralDiscountShare"] 
-                    } 
-                },
-                refunds: { $sum: { $cond: [{ $in: ["$products.orderStatus", ["Cancelled", "Returned", "Refund Processed"]] }, "$products.refundAmountProcessed", 0] } },
+                couponDiscount: { $sum: "$products.couponDiscountShare" },
+                offerDiscount: { $sum: { $add: ["$products.productOfferDiscount", "$products.categoryOfferDiscount", "$products.offerDiscountShare"] } },
+                referralDiscount: { $sum: "$products.referralDiscountShare" },
                 deliveredCount: { $sum: { $cond: [{ $eq: ["$products.orderStatus", "Delivered"] }, 1, 0] } },
                 cancelledCount: { $sum: { $cond: [{ $eq: ["$products.orderStatus", "Cancelled"] }, 1, 0] } },
                 returnedCount: { $sum: { $cond: [{ $in: ["$products.orderStatus", ["Returned", "Refund Processed"]] }, 1, 0] } }
@@ -111,18 +115,42 @@ const getReportData = async (query, isExport = false) => {
 
     const metricsData = await Order.aggregate(metricsPipeline);
     const metrics = metricsData[0] || {
-        totalItems: 0, grossSales: 0, couponDiscount: 0, offerDiscount: 0,
-        referralDiscount: 0, refunds: 0, deliveredCount: 0, cancelledCount: 0, returnedCount: 0
+        totalItems: 0, grossSales: 0, refunds: 0, couponDiscount: 0, offerDiscount: 0,
+        referralDiscount: 0, deliveredCount: 0, cancelledCount: 0, returnedCount: 0
     };
 
+    const netRevenue = metrics.grossSales - metrics.refunds;
     const totalDiscounts = (metrics.couponDiscount || 0) + (metrics.offerDiscount || 0) + (metrics.referralDiscount || 0);
-    const netRevenue = metrics.grossSales - totalDiscounts;
+
+    const netOrders = await Order.countDocuments(orderMatch);
+
+    let userMatch = {};
+    if (orderMatch.orderDate) {
+        userMatch.createdAt = orderMatch.orderDate;
+    }
+    const userCount = await User.countDocuments(userMatch);
+
+    // Orders Today
+    const startOfToday = moment().startOf('day').toDate();
+    const endOfToday = moment().endOf('day').toDate();
+    const ordersTodayResult = await Order.aggregate([
+        { $match: { orderDate: { $gte: startOfToday, $lte: endOfToday } } },
+        { $unwind: "$products" },
+        { $match: { "products.orderStatus": { $nin: ["Cancelled", "Returned", "Refund Processed"] } } },
+        { $group: { _id: "$_id" } },
+        { $count: "count" }
+    ]);
+    const ordersTodayCount = ordersTodayResult[0] ? ordersTodayResult[0].count : 0;
+
+    // Total Products
+    const totalProducts = await Product.countDocuments({ deleted_at: null });
 
     // Top 10 Products
     const topProductsPipeline = [
         { $match: orderMatch },
         { $unwind: "$products" },
-        { $match: { "products.orderStatus": { $nin: ["Cancelled", "Returned", "Refund Processed"] } } },
+        { $match: productMatch },
+        { $match: { "products.orderStatus": "Delivered" } },
         {
             $group: {
                 _id: "$products.productId",
@@ -140,7 +168,8 @@ const getReportData = async (query, isExport = false) => {
     const topCategoriesPipeline = [
         { $match: orderMatch },
         { $unwind: "$products" },
-        { $match: { "products.orderStatus": { $nin: ["Cancelled", "Returned", "Refund Processed"] } } },
+        { $match: productMatch },
+        { $match: { "products.orderStatus": "Delivered" } },
         {
             $lookup: {
                 from: 'products',
@@ -176,7 +205,8 @@ const getReportData = async (query, isExport = false) => {
     const topBrandsPipeline = [
         { $match: orderMatch },
         { $unwind: "$products" },
-        { $match: { "products.orderStatus": { $nin: ["Cancelled", "Returned", "Refund Processed"] } } },
+        { $match: productMatch },
+        { $match: { "products.orderStatus": "Delivered" } },
         {
             $lookup: {
                 from: 'products',
@@ -249,10 +279,10 @@ const getReportData = async (query, isExport = false) => {
                             productName: "$products.productName",
                             quantity: "$products.quantity",
                             mrp: { $multiply: ["$products.mrp", "$products.quantity"] },
+                            sellingPrice: { $multiply: ["$products.salePrice", "$products.quantity"] },
                             couponDiscount: "$products.couponDiscountShare",
                             offerDiscount: { $add: ["$products.productOfferDiscount", "$products.categoryOfferDiscount", "$products.offerDiscountShare"] },
-                            referralDiscount: "$products.referralDiscountShare",
-                            refundAmount: "$products.refundAmountProcessed",
+                            refundAmount: { $ifNull: ["$products.refundAmountProcessed", 0] },
                             netAmount: "$products.productFinalPaidPrice",
                             status: "$products.orderStatus",
                             returnStatus: { $ifNull: ["$products.returnStatus", "None"] },
@@ -281,29 +311,6 @@ const getReportData = async (query, isExport = false) => {
     const totalRecords = tableResult[0]?.metadata[0]?.total || 0;
     const totalPages = Math.ceil(totalRecords / limit);
 
-    const trendPipeline = [
-        { $match: orderMatch },
-        { $unwind: "$products" },
-        { $match: productMatch },
-        {
-            $group: {
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$orderDate" } },
-                revenue: { 
-                    $sum: { 
-                        $cond: [
-                            { $and: [{ $eq: ["$products.orderStatus", "Cancelled"] }, { $eq: ["$paymentMethod", "COD"] }] },
-                            0,
-                            { $subtract: ["$products.productFinalPaidPrice", { $ifNull: ["$products.refundAmountProcessed", 0] }] }
-                        ]
-                    } 
-                },
-                orders: { $sum: 1 }
-            }
-        },
-        { $sort: { "_id": 1 } }
-    ];
-    const trendData = await Order.aggregate(trendPipeline);
-    
     const paymentDistPipeline = [
         { $match: orderMatch },
         {
@@ -315,19 +322,99 @@ const getReportData = async (query, isExport = false) => {
     ];
     const paymentDistData = await Order.aggregate(paymentDistPipeline);
 
+    const ordersForLedger = await Order.find(orderMatch).populate('userId', 'name').lean();
+    let transactions = [];
+    let runningBalance = 0;
+
+    ordersForLedger.forEach(order => {
+        order.products.forEach(prod => {
+            // Apply Status Filter to Ledger Inner Loop dynamically
+            if (query.status && query.status !== 'All Statuses' && query.status !== 'all') {
+                if (query.status === 'Returned') {
+                    if (!['Returned', 'Refund Processed'].includes(prod.orderStatus)) return;
+                } else {
+                    if (prod.orderStatus !== query.status) return;
+                }
+            }
+
+            // Credit: Delivered product revenue
+            if (prod.orderStatus === 'Delivered' && prod.productFinalPaidPrice > 0) {
+                let creditDate = order.orderDate;
+                const deliveryEntry = prod.trackingTimeline?.find(t => t.status === 'Delivered');
+                if (deliveryEntry) creditDate = deliveryEntry.timestamp;
+                
+                transactions.push({
+                    date: creditDate, orderId: order.orderId, customer: order.userId?.name || 'Guest',
+                    description: `Product Sale - ${prod.productName}`, type: 'Credit',
+                    amount: prod.productFinalPaidPrice, timestamp: new Date(creditDate).getTime()
+                });
+            }
+
+            // Debit: Actual refund processed
+            if (prod.refundAmountProcessed && prod.refundAmountProcessed > 0) {
+                let refundDate = order.orderDate;
+                const refundEntry = prod.trackingTimeline?.find(t => t.status === 'Refund Processed' || t.status === 'Cancelled' || t.status === 'Returned');
+                if (refundEntry) refundDate = refundEntry.timestamp;
+                
+                transactions.push({
+                    date: refundDate, orderId: order.orderId, customer: order.userId?.name || 'Guest',
+                    description: `Refund Issued - ${prod.productName}`, type: 'Debit',
+                    amount: prod.refundAmountProcessed, timestamp: new Date(refundDate).getTime()
+                });
+            }
+        });
+    });
+
+    transactions.sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Build trendData directly from these exact same transactions to guarantee a match
+    const trendMap = {};
+    transactions.forEach(t => {
+        if (t.type === 'Credit') runningBalance += t.amount;
+        else runningBalance -= t.amount;
+        t.balance = runningBalance;
+
+        // Group by day for the trend chart
+        const dateStr = new Date(t.timestamp).toISOString().split('T')[0];
+        if (!trendMap[dateStr]) trendMap[dateStr] = { _id: dateStr, revenue: 0, orders: new Set() };
+        
+        if (t.type === 'Credit') {
+            trendMap[dateStr].revenue += t.amount;
+            trendMap[dateStr].orders.add(t.orderId);
+        } else {
+            trendMap[dateStr].revenue -= t.amount;
+        }
+    });
+
+    const trendData = Object.values(trendMap).map(d => ({
+        _id: d._id,
+        revenue: d.revenue,
+        orders: d.orders.size
+    })).sort((a, b) => a._id.localeCompare(b._id));
+
+    transactions.sort((a, b) => b.timestamp - a.timestamp);
+    const recentTransactions = transactions.slice(0, 10);
+
     return {
         metrics: {
-            totalOrders: totalRecords,
+            totalOrders: totalRecords, 
             grossSales: metrics.grossSales,
             totalDiscounts,
             couponDiscount: metrics.couponDiscount,
             offerDiscount: metrics.offerDiscount,
             referralDiscount: metrics.referralDiscount,
             refunds: metrics.refunds,
-            netRevenue,
+            netRevenue: netRevenue, 
             deliveredCount: metrics.deliveredCount,
             cancelledCount: metrics.cancelledCount,
-            returnedCount: metrics.returnedCount
+            returnedCount: metrics.returnedCount,
+
+            // New Dashboard Metrics
+            totalRevenue: netRevenue,
+            netOrders,
+            userCount,
+            ordersTodayCount,
+            totalProducts
         },
         topProducts,
         topCategories,
@@ -338,7 +425,8 @@ const getReportData = async (query, isExport = false) => {
         chartData: {
             trend: trendData,
             payment: paymentDistData
-        }
+        },
+        recentTransactions
     };
 };
 
@@ -347,7 +435,8 @@ export const loadSalesReport = async (req, res) => {
         const data = await getReportData(req.query, false);
 
 
-        res.render('admin/salesReport', { layout: 'admin', 
+        res.render('admin/salesReport', {
+            layout: 'admin',
             activePage: 'reports',
             query: req.query,
             metrics: data.metrics,
@@ -357,6 +446,7 @@ export const loadSalesReport = async (req, res) => {
             topProducts: data.topProducts,
             topCategories: data.topCategories,
             topBrands: data.topBrands,
+            recentTransactions: data.recentTransactions,
             chartData: JSON.stringify(data.chartData),
             todayDate: new Date().toISOString().split('T')[0]
         });
@@ -394,27 +484,28 @@ export const exportPdfReport = async (req, res) => {
         // Orders Table header
         doc.fontSize(14).text('Order Details', { underline: true });
         doc.moveDown(1);
-        
-        // Simple table approach for PDFKit in landscape
+
         const colOrder = 30;
         const colDate = 130;
         const colCust = 200;
         const colProd = 320;
-        const colQty = 470;
-        const colGross = 510;
-        const colDisc = 570;
-        const colNet = 630;
-        const colStatus = 700;
-        
+        const colQty = 450;
+        const colGross = 480;
+        const colSell = 530;
+        const colNet = 590;
+        const colRefund = 650;
+        const colStatus = 710;
+
         doc.font('Helvetica-Bold').fontSize(9);
         doc.text('Order ID', colOrder, doc.y, { continued: false });
         doc.text('Date', colDate, doc.y - 11);
         doc.text('Customer', colCust, doc.y - 11);
         doc.text('Product', colProd, doc.y - 11);
         doc.text('Qty', colQty, doc.y - 11);
-        doc.text('Gross', colGross, doc.y - 11);
-        doc.text('Discount', colDisc, doc.y - 11);
-        doc.text('Net Amt', colNet, doc.y - 11);
+        doc.text('MRP', colGross, doc.y - 11);
+        doc.text('Sell Price', colSell, doc.y - 11);
+        doc.text('Final Amt', colNet, doc.y - 11);
+        doc.text('Refund Amt', colRefund, doc.y - 11);
         doc.text('Status', colStatus, doc.y - 11);
         doc.moveTo(30, doc.y + 5).lineTo(780, doc.y + 5).stroke();
         doc.moveDown(1);
@@ -427,7 +518,7 @@ export const exportPdfReport = async (req, res) => {
             const y = doc.y;
             doc.text(o.orderId, colOrder, y);
             doc.text(moment(o.orderDate).format('YYYY-MM-DD'), colDate, y);
-            
+
             let custName = o.customerName || '';
             if (custName.length > 18) custName = custName.substring(0, 15) + '...';
             doc.text(custName, colCust, y);
@@ -435,14 +526,12 @@ export const exportPdfReport = async (req, res) => {
             let prodName = o.productName || '';
             if (prodName.length > 25) prodName = prodName.substring(0, 22) + '...';
             doc.text(prodName, colProd, y);
-            
+
             doc.text(o.quantity.toString(), colQty, y);
             doc.text(`Rs. ${o.mrp.toFixed(2)}`, colGross, y);
-            
-            const totalDisc = (o.couponDiscount || 0) + (o.offerDiscount || 0) + (o.referralDiscount || 0);
-            doc.text(`Rs. ${totalDisc.toFixed(2)}`, colDisc, y);
-
+            doc.text(`Rs. ${(o.sellingPrice || 0).toFixed(2)}`, colSell, y);
             doc.text(`Rs. ${o.netAmount.toFixed(2)}`, colNet, y);
+            doc.text(`Rs. ${o.refundAmount.toFixed(2)}`, colRefund, y);
             doc.text(o.status, colStatus, y);
             doc.moveDown(1.5);
         });
@@ -465,7 +554,7 @@ export const exportExcelReport = async (req, res) => {
     try {
         const data = await getReportData(req.query, true);
         const workbook = new ExcelJS.Workbook();
-        
+
         // Sheet 1: Summary
         const summarySheet = workbook.addWorksheet('Sales Summary');
         summarySheet.columns = [
@@ -496,9 +585,9 @@ export const exportExcelReport = async (req, res) => {
             { header: 'Quantity', key: 'qty', width: 10 },
             { header: 'Payment Method', key: 'method', width: 18 },
             { header: 'Subtotal (MRP)', key: 'mrp', width: 15 },
+            { header: 'Selling Price', key: 'sellingPrice', width: 15 },
             { header: 'Coupon Discount', key: 'couponDisc', width: 16 },
             { header: 'Offer Discount', key: 'offerDisc', width: 16 },
-            { header: 'Referral Discount', key: 'refDisc', width: 18 },
             { header: 'Final Amount', key: 'net', width: 15 },
             { header: 'Order Status', key: 'status', width: 18 },
             { header: 'Refund Amount', key: 'refund', width: 15 },
@@ -520,14 +609,14 @@ export const exportExcelReport = async (req, res) => {
                 qty: o.quantity,
                 method: o.paymentMethod,
                 mrp: o.mrp,
+                sellingPrice: o.sellingPrice || 0,
                 couponDisc: o.couponDiscount,
                 offerDisc: o.offerDiscount,
-                refDisc: o.referralDiscount,
                 net: o.netAmount,
                 status: o.status,
                 refund: o.refundAmount || 0,
                 delDate: o.deliveredDate ? moment(o.deliveredDate).format('YYYY-MM-DD HH:mm') : 'N/A',
-                returnStatus: o.returnStatus !== 'None' ? o.returnStatus : 'N/A'
+                returnStatus: o.returnStatus !== 'None' ? (o.returnStatus === 'Return Requested' ? 'Requested' : (o.returnStatus === 'Return Rejected' ? 'Rejected' : o.returnStatus)) : 'N/A'
             });
         });
 

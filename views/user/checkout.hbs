@@ -59,7 +59,7 @@
                 </div>
                 <div class="ps-price-block">
                   <div class="ps-total">₹{{formatCurrency this.total}}</div>
-                  {{#if (gt this.discountPercentage 0)}}
+                  {{#if false}}
                   <div style="display:flex; gap: 8px;">
                     <span class="ps-mrp">₹{{formatCurrency this.originalPrice}}</span>
                     <span class="ps-discount">{{this.discountPercentage}}% OFF</span>
@@ -297,12 +297,8 @@
 
         <div class="summary-breakdown">
           <div class="sum-row">
-            <span>MRP</span>
-            <span class="val" id="sum-mrp">₹{{formatCurrency totalMRP}}</span>
-          </div>
-          <div class="sum-row discount">
-            <span>Discount</span>
-            <span class="val" id="sum-discount">- ₹{{formatCurrency discount}}</span>
+            <span>Selling Price</span>
+            <span class="val" id="sum-selling-price">₹{{formatCurrency subtotal}}</span>
           </div>
           <div class="sum-row discount">
             <span>Offer Discount</span>
@@ -329,11 +325,6 @@
           <div class="sum-row">
             <span>SGST (9%)</span>
             <span class="val" id="sum-sgst">₹{{formatCurrency sgst}}</span>
-          </div>
-          
-          <div class="sum-row discount" style="margin-top: 12px; font-weight: 600;">
-            <span>YOU SAVED ↑</span>
-            <span class="val" id="sum-saved">- ₹{{formatCurrency discount}}</span>
           </div>
         </div>
         
@@ -385,10 +376,13 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   // ── State ────────────────────────────────────────────────────────────────
-  let deliveryCharge  = 0;
-  let codCharge       = 0;
-  let currentOfferId  = '';   // applied offer _id
-  let currentCoupon   = '';   // applied coupon code
+  let deliveryCharge    = 0;
+  let codCharge         = 0;
+  let currentOfferId    = '';   // applied offer _id
+  let currentCoupon     = '';   // applied coupon code
+  // Once a product-availability error is shown, lock it so no subsequent
+  // AJAX recalculation (delivery/payment change) can overwrite it.
+  let productErrorLocked = false;
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const offersSelect       = document.getElementById('offers-select');
@@ -460,13 +454,11 @@
 
   // ── Update order summary DOM ──────────────────────────────────────────────
   function updateSummaryDOM(data) {
-    document.getElementById('sum-mrp').textContent       = fmtINR(data.totalMRP);
-    document.getElementById('sum-discount').textContent  = '- ' + fmtINR(data.discount);
+    document.getElementById('sum-selling-price').textContent = fmtINR(data.subtotal);
     document.getElementById('sum-delivery').textContent  = data.deliveryCharge === 0 ? 'Free' : fmtINR(data.deliveryCharge);
     document.getElementById('sum-cod').textContent       = data.codCharge === 0 ? fmtINR(0) : fmtINR(data.codCharge);
     document.getElementById('sum-cgst').textContent      = fmtINR(data.cgst);
     document.getElementById('sum-sgst').textContent      = fmtINR(data.sgst);
-    document.getElementById('sum-saved').textContent     = '- ' + fmtINR(data.youSaved);
     document.getElementById('sum-final-total').textContent = fmtINR(data.finalTotal);
 
     // Offer row
@@ -495,7 +487,7 @@
       if (couponZero) couponZero.style.display = 'inline';
     }
 
-    let oosItem = null;
+    let firstUnavailableItem = null;
     if (data.cartItems && data.cartItems.length > 0) {
       data.cartItems.forEach(item => {
         const card = document.querySelector(`.product-summary-card[data-variant="${item.variantId}"]`);
@@ -518,7 +510,7 @@
               badge.textContent = 'UNAVAILABLE';
               controls.appendChild(badge);
             }
-            if (!oosItem) oosItem = item;
+            if (!firstUnavailableItem) firstUnavailableItem = item;
           } else {
             card.style.opacity = '1';
             card.style.pointerEvents = 'auto';
@@ -530,11 +522,26 @@
     }
 
     const placeOrderError = document.getElementById('place-order-error-msg');
-    if (oosItem && placeOrderError) {
-      placeOrderError.textContent = `Product "${oosItem.name}" is no longer available. Return to cart and remove the product to continue.`;
-      placeOrderError.style.display = 'block';
-    } else if (placeOrderError) {
+    if (firstUnavailableItem && placeOrderError) {
+      // Only set the message if it has not already been locked by a previous render.
+      // This prevents delivery/payment AJAX refreshes from replacing the specific
+      // error message with a generic one.
+      if (!productErrorLocked) {
+        const reason = firstUnavailableItem.unavailableReason;
+        let msg;
+        if (reason === 'inactive') {
+          msg = `Product "${firstUnavailableItem.name}" is unavailable and cannot be purchased. Return to cart and remove the product to continue.`;
+        } else {
+          msg = `Product "${firstUnavailableItem.name}" is out of stock. Return to cart and remove the product to continue.`;
+        }
+        placeOrderError.textContent = msg;
+        placeOrderError.style.display = 'block';
+        productErrorLocked = true;  // lock — no further AJAX update may overwrite this
+      }
+    } else if (placeOrderError && !productErrorLocked) {
+      // Only hide the error banner if it was never locked (i.e. all items are now fine)
       placeOrderError.style.display = 'none';
+      productErrorLocked = false;
     }
 
     window.checkoutDataState = { hasOutOfStock: data.hasOutOfStock, finalTotal: data.finalTotal };
@@ -854,15 +861,21 @@
       } else {
         const placeOrderError = document.getElementById('place-order-error-msg');
         if (data.message && (data.message.includes('unavailable') || data.message.includes('out of stock'))) {
+           // Show the specific server message and lock it so AJAX recalculations
+           // cannot overwrite it with a generic fallback.
            if (placeOrderError) {
-             placeOrderError.textContent = data.message + ' Return to cart and remove the product to continue.';
+             placeOrderError.textContent = data.message.endsWith('.')
+               ? data.message + ' Return to cart and remove the product to continue.'
+               : data.message;
              placeOrderError.style.display = 'block';
+             productErrorLocked = true;
            }
            placeOrderBtn.disabled = true;
            placeOrderBtn.style.opacity = '0.5';
            placeOrderBtn.style.cursor = 'not-allowed';
            placeOrderBtn.textContent = 'PLACE ORDER >';
-           fetchUpdatedTotals();
+           // Do NOT call fetchUpdatedTotals() here — doing so triggers updateSummaryDOM
+           // which would overwrite the specific error message with a generic one.
         } else {
            paymentErrorContainer.textContent = data.message || 'Failed to place order. Please try again.';
            paymentErrorContainer.style.display = 'block';

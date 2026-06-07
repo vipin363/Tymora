@@ -14,6 +14,7 @@ import { connectDB } from './db/connectDB.js';
 import passport from 'passport';
 import './config/passport.js';
 import { captureReferral } from './middleware/captureReferral.js';
+import Order from './model/orderModel.js';
 
 const app = express();
 
@@ -106,6 +107,22 @@ app.use('/user', userRoute);
 app.use('/', userRoute);
 
 await connectDB();
+
+// Background cleanup for abandoned Razorpay orders (runs every 15 minutes)
+setInterval(async () => {
+    try {
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        const result = await Order.deleteMany({
+            orderStatus: 'Payment Pending',
+            createdAt: { $lt: thirtyMinutesAgo }
+        });
+        if (result.deletedCount > 0) {
+            console.log(`[Cleanup] Deleted ${result.deletedCount} abandoned Payment Pending orders.`);
+        }
+    } catch (err) {
+        console.error('[Cleanup] Error deleting abandoned orders:', err);
+    }
+}, 15 * 60 * 1000);
 
 app.listen(3000, () => {
     console.log("Server started 3000");

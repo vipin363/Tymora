@@ -39,7 +39,7 @@ const orderItemSchema = new mongoose.Schema({
       'Cancelled', 'Return Requested',
       'Return Approved', 'Pickup Scheduled',
       'Return Picked', 'Refund Processed',
-      'Return Rejected', 'Returned'
+      'Return Rejected', 'Returned', 'Payment Pending'
     ],
     default: 'Pending',
   },

@@ -6,36 +6,7 @@
   <div class="main">
     <header class="topbar">
       <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <span class="topbar-title">Order Management</span>
-
-<form method="GET" action="/admin/orders" class="search-bar">
-  <input class="searchbar" type="text" name="search" placeholder="Search orders..." value="{{search}}">
-
-  <select name="status" class="sort-select">
-    <option value="all" {{#ifEquals status "all"}}selected{{/ifEquals}}>All Status</option>
-    <option value="Pending" {{#ifEquals status "Pending"}}selected{{/ifEquals}}>Pending</option>
-    <option value="Confirmed" {{#ifEquals status "Confirmed"}}selected{{/ifEquals}}>Confirmed</option>
-    <option value="Packed" {{#ifEquals status "Packed"}}selected{{/ifEquals}}>Packed</option>
-    <option value="Shipped" {{#ifEquals status "Shipped"}}selected{{/ifEquals}}>Shipped</option>
-    <option value="Delivered" {{#ifEquals status "Delivered"}}selected{{/ifEquals}}>Delivered</option>
-    <option value="Cancelled" {{#ifEquals status "Cancelled"}}selected{{/ifEquals}}>Cancelled</option>
-    <option value="Return Requested" {{#ifEquals status "Return Requested"}}selected{{/ifEquals}}>Return Requested</option>
-    <option value="Returned" {{#ifEquals status "Returned"}}selected{{/ifEquals}}>Returned</option>
-  </select>
-
-  <select name="sort" class="sort-select">
-    <option value="latest" {{#ifEquals sort "latest"}}selected{{/ifEquals}}>Latest</option>
-    <option value="oldest" {{#ifEquals sort "oldest"}}selected{{/ifEquals}}>Oldest</option>
-    <option value="amount_high" {{#ifEquals sort "amount_high"}}selected{{/ifEquals}}>Amount ↓</option>
-    <option value="amount_low" {{#ifEquals sort "amount_low"}}selected{{/ifEquals}}>Amount ↑</option>
-  </select>
-
-  <button type="submit" class="btn-search">Search</button>
-
-  {{#if search}}
-    <a href="/admin/orders" class="btn-clear">Clear</a>
-  {{/if}}
-</form>
+      <span class="topbar-title"></span>
 
       <div class="admin-info">
         <div class="admin-avatar">A</div>
@@ -75,6 +46,35 @@
         <div class="svalue" style="color:#ef4444">{{stats.cancelledCount}}</div>
       </div>
     </div>
+
+    <form method="GET" action="/admin/orders" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #f1f5f9; margin-bottom:24px;">
+      <input type="text" name="search" placeholder="Search orders..." value="{{search}}" style="flex:1; min-width:180px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; color:#334155;">
+
+      <select name="status" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+        <option value="all" {{#ifEquals status "all"}}selected{{/ifEquals}}>All Status</option>
+        <option value="Pending" {{#ifEquals status "Pending"}}selected{{/ifEquals}}>Pending</option>
+        <option value="Confirmed" {{#ifEquals status "Confirmed"}}selected{{/ifEquals}}>Confirmed</option>
+        <option value="Packed" {{#ifEquals status "Packed"}}selected{{/ifEquals}}>Packed</option>
+        <option value="Shipped" {{#ifEquals status "Shipped"}}selected{{/ifEquals}}>Shipped</option>
+        <option value="Delivered" {{#ifEquals status "Delivered"}}selected{{/ifEquals}}>Delivered</option>
+        <option value="Cancelled" {{#ifEquals status "Cancelled"}}selected{{/ifEquals}}>Cancelled</option>
+        <option value="Return Requested" {{#ifEquals status "Return Requested"}}selected{{/ifEquals}}>Return Requested</option>
+        <option value="Returned" {{#ifEquals status "Returned"}}selected{{/ifEquals}}>Returned</option>
+      </select>
+
+      <select name="sort" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+        <option value="latest" {{#ifEquals sort "latest"}}selected{{/ifEquals}}>Latest</option>
+        <option value="oldest" {{#ifEquals sort "oldest"}}selected{{/ifEquals}}>Oldest</option>
+        <option value="amount_high" {{#ifEquals sort "amount_high"}}selected{{/ifEquals}}>Amount ↓</option>
+        <option value="amount_low" {{#ifEquals sort "amount_low"}}selected{{/ifEquals}}>Amount ↑</option>
+      </select>
+
+      <button type="submit" class="btn-search">Search</button>
+
+      {{#if search}}
+        <a href="/admin/orders" class="btn-clear">Clear</a>
+      {{/if}}
+    </form>
 
     <!-- TABLE -->
     <div class="table-card">

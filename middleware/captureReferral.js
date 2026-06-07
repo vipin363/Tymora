@@ -12,6 +12,7 @@
  */
 export function captureReferral(req, res, next) {
   const raw = req.query.ref;
+  console.log(`[CaptureReferral] Executing for URL: ${req.originalUrl} | ?ref=${raw || 'none'}`);
   if (raw && typeof raw === 'string') {
     const code = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (code.length >= 4 && code.length <= 20) {
@@ -21,7 +22,7 @@ export function captureReferral(req, res, next) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       });
-      console.log(`[Referral] ✅ Code captured: ${code} | URL: ${req.method} ${req.originalUrl}`);
+      console.log(`[CaptureReferral] ✅ Cookie _tyref successfully set to: ${code}`);
     }
   }
   next();

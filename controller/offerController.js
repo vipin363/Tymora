@@ -101,57 +101,78 @@ export const loadAdminOffers = async (req, res) => {
 
 export const createOffer = async (req, res) => {
   try {
-    const {
-      name, description, offerBadgeText, isActive,
-      discountType, discountValue, maxDiscountLimit, minPurchaseAmount,
-      offerType, applicableProducts, applicableCategories, applicableBrands,
-      excludedProducts, excludedCategories, excludedBrands,
-      allowedUsers, isFirstTimeUserOnly, usageLimit, perUserLimit, paymentMethods,
-      startDate, endDate, includesFreeShipping, isStackable, stackableWithCoupons, autoApply, priority
-    } = req.body;
+    const d = req.body;
+    const name = (d.name || '').trim();
+    const description = d.description ? d.description.trim() : '';
 
-    if (!name || !discountType || !discountValue || !offerType || !startDate || !endDate) {
-      return res.json({ success: false, message: "Missing required core fields" });
+    if (!name || name.length < 3 || name.length > 100) {
+      return res.json({ success: false, message: "Offer name must be between 3 and 100 characters." });
     }
 
-    if (new Date(endDate) <= new Date(startDate)) {
-      return res.json({ success: false, message: "End Date must be after Start Date" });
+    if (description && (description.length < 10 || description.length > 500)) {
+      return res.json({ success: false, message: "Description must be between 10 and 500 characters." });
     }
 
-    if (discountType === 'percentage' && (discountValue <= 0 || discountValue > 100)) {
-      return res.json({ success: false, message: "Percentage discount must be between 1 and 100" });
+    if (!d.discountType || !d.discountValue || !d.offerType || !d.startDate || !d.endDate) {
+      return res.json({ success: false, message: "Missing required core fields." });
+    }
+
+    const val = Number(d.discountValue);
+    if (d.discountType === 'percentage' && (val < 1 || val > 100)) {
+      return res.json({ success: false, message: "Percentage discount must be between 1% and 100%." });
+    }
+    if (d.discountType === 'fixed' && val <= 0) {
+      return res.json({ success: false, message: "Fixed discount must be greater than 0." });
+    }
+
+    if (Number(d.minPurchaseAmount) < 0) return res.json({ success: false, message: "Minimum order value cannot be negative." });
+    if (Number(d.maxDiscountLimit) < 0) return res.json({ success: false, message: "Max discount limit cannot be negative." });
+    if (Number(d.usageLimit) < 0) return res.json({ success: false, message: "Usage limit cannot be negative." });
+    if (Number(d.perUserLimit) < 1) return res.json({ success: false, message: "Per user limit must be at least 1." });
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const startObj = new Date(d.startDate);
+    const startStr = startObj.toISOString().split('T')[0];
+
+    if (startStr < todayStr) {
+      return res.json({ success: false, message: "Start date cannot be in the past." });
+    }
+
+    if (new Date(d.endDate) < startObj) {
+      return res.json({ success: false, message: "End Date must be after Start Date." });
     }
 
     // Safety fallback for empty arrays from client
     const parseArr = arr => Array.isArray(arr) ? arr : (arr ? [arr] : []);
 
     const offer = new Offer({
-      name, description, offerBadgeText,
-      isActive: isActive !== false && isActive !== 'false',
-      discountType, discountValue,
-      maxDiscountLimit: maxDiscountLimit || null,
-      minPurchaseAmount: minPurchaseAmount || 0,
+      name, description, offerBadgeText: d.offerBadgeText,
+      isActive: d.isActive !== false && d.isActive !== 'false',
+      discountType: d.discountType, discountValue: val,
+      maxDiscountLimit: d.maxDiscountLimit || null,
+      minPurchaseAmount: d.minPurchaseAmount || 0,
       
-      offerType,
-      applicableProducts:   parseArr(applicableProducts),
-      applicableCategories: parseArr(applicableCategories),
-      applicableBrands:     parseArr(applicableBrands),
+      offerType: d.offerType,
+      applicableProducts:   parseArr(d.applicableProducts),
+      applicableCategories: parseArr(d.applicableCategories),
+      applicableBrands:     parseArr(d.applicableBrands),
       
-      excludedProducts:   parseArr(excludedProducts),
-      excludedCategories: parseArr(excludedCategories),
-      excludedBrands:     parseArr(excludedBrands),
+      excludedProducts:   parseArr(d.excludedProducts),
+      excludedCategories: parseArr(d.excludedCategories),
+      excludedBrands:     parseArr(d.excludedBrands),
 
-      allowedUsers: (isFirstTimeUserOnly === true || isFirstTimeUserOnly === 'true') ? 'first_time' : (allowedUsers || 'all'),
-      usageLimit: usageLimit || null,
-      perUserLimit: perUserLimit || 1,
-      paymentMethods: parseArr(paymentMethods),
+      allowedUsers: (d.isFirstTimeUserOnly === true || d.isFirstTimeUserOnly === 'true') ? 'first_time' : (d.allowedUsers || 'all'),
+      usageLimit: d.usageLimit || null,
+      perUserLimit: d.perUserLimit || 1,
+      paymentMethods: parseArr(d.paymentMethods),
 
-      startDate, endDate,
-      includesFreeShipping: includesFreeShipping === true || includesFreeShipping === 'true',
-      isStackable: isStackable === true || isStackable === 'true',
-      stackableWithCoupons: stackableWithCoupons === true || stackableWithCoupons === 'true',
-      autoApply: autoApply === true || autoApply === 'true',
-      priority: priority || 0
+      startDate: d.startDate, endDate: d.endDate,
+      includesFreeShipping: d.includesFreeShipping === true || d.includesFreeShipping === 'true',
+      isStackable: d.isStackable === true || d.isStackable === 'true',
+      stackableWithCoupons: d.stackableWithCoupons === true || d.stackableWithCoupons === 'true',
+      autoApply: d.autoApply === true || d.autoApply === 'true',
+      priority: d.priority || 0
     });
 
     await offer.save();
@@ -167,51 +188,88 @@ export const createOffer = async (req, res) => {
 export const updateOffer = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name, description, offerBadgeText, isActive,
-      discountType, discountValue, maxDiscountLimit, minPurchaseAmount,
-      offerType, applicableProducts, applicableCategories, applicableBrands,
-      excludedProducts, excludedCategories, excludedBrands,
-      allowedUsers, isFirstTimeUserOnly, usageLimit, perUserLimit, paymentMethods,
-      startDate, endDate, includesFreeShipping, isStackable, stackableWithCoupons, autoApply, priority
-    } = req.body;
+    const existingOffer = await Offer.findById(id);
+    if (!existingOffer) return res.json({ success: false, message: "Offer not found." });
 
-    if (new Date(endDate) <= new Date(startDate)) {
-      return res.json({ success: false, message: "End Date must be after Start Date" });
+    const d = req.body;
+    const name = (d.name || '').trim();
+    const description = d.description ? d.description.trim() : '';
+
+    if (!name || name.length < 3 || name.length > 100) {
+      return res.json({ success: false, message: "Offer name must be between 3 and 100 characters." });
+    }
+
+    if (description && (description.length < 10 || description.length > 500)) {
+      return res.json({ success: false, message: "Description must be between 10 and 500 characters." });
+    }
+
+    const val = Number(d.discountValue);
+    if (d.discountType === 'percentage' && (val < 1 || val > 100)) {
+      return res.json({ success: false, message: "Percentage discount must be between 1% and 100%." });
+    }
+    if (d.discountType === 'fixed' && val <= 0) {
+      return res.json({ success: false, message: "Fixed discount must be greater than 0." });
+    }
+
+    if (Number(d.minPurchaseAmount) < 0) return res.json({ success: false, message: "Minimum order value cannot be negative." });
+    if (Number(d.maxDiscountLimit) < 0) return res.json({ success: false, message: "Max discount limit cannot be negative." });
+    if (Number(d.usageLimit) < 0) return res.json({ success: false, message: "Usage limit cannot be negative." });
+    if (Number(d.perUserLimit) < 1) return res.json({ success: false, message: "Per user limit must be at least 1." });
+
+    // Start Date Logic
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const newStartStr = new Date(d.startDate).toISOString().split('T')[0];
+    const oldStartStr = existingOffer.startDate.toISOString().split('T')[0];
+
+    // If the offer has already started (i.e. old start date is today or in the past)
+    if (oldStartStr <= todayStr) {
+      if (newStartStr !== oldStartStr) {
+        return res.json({ success: false, message: "Start date cannot be modified after the offer has started." });
+      }
+    } else {
+      // Offer hasn't started yet. New start date cannot be in the past.
+      if (newStartStr < todayStr) {
+        return res.json({ success: false, message: "Start date cannot be in the past." });
+      }
+    }
+
+    if (new Date(d.endDate) < new Date(d.startDate)) {
+      return res.json({ success: false, message: "End Date must be after Start Date." });
     }
 
     const parseArr = arr => Array.isArray(arr) ? arr : (arr ? [arr] : []);
 
     const updated = await Offer.findByIdAndUpdate(id, {
-      name, description, offerBadgeText,
-      isActive: isActive !== false && isActive !== 'false',
-      discountType, discountValue,
-      maxDiscountLimit: maxDiscountLimit || null,
-      minPurchaseAmount: minPurchaseAmount || 0,
+      name, description, offerBadgeText: d.offerBadgeText,
+      isActive: d.isActive !== false && d.isActive !== 'false',
+      discountType: d.discountType, discountValue: val,
+      maxDiscountLimit: d.maxDiscountLimit || null,
+      minPurchaseAmount: d.minPurchaseAmount || 0,
       
-      offerType,
-      applicableProducts:   parseArr(applicableProducts),
-      applicableCategories: parseArr(applicableCategories),
-      applicableBrands:     parseArr(applicableBrands),
+      offerType: d.offerType,
+      applicableProducts:   parseArr(d.applicableProducts),
+      applicableCategories: parseArr(d.applicableCategories),
+      applicableBrands:     parseArr(d.applicableBrands),
       
-      excludedProducts:   parseArr(excludedProducts),
-      excludedCategories: parseArr(excludedCategories),
-      excludedBrands:     parseArr(excludedBrands),
+      excludedProducts:   parseArr(d.excludedProducts),
+      excludedCategories: parseArr(d.excludedCategories),
+      excludedBrands:     parseArr(d.excludedBrands),
 
-      allowedUsers: (isFirstTimeUserOnly === true || isFirstTimeUserOnly === 'true') ? 'first_time' : (allowedUsers || 'all'),
-      usageLimit: usageLimit || null,
-      perUserLimit: perUserLimit || 1,
-      paymentMethods: parseArr(paymentMethods),
+      allowedUsers: (d.isFirstTimeUserOnly === true || d.isFirstTimeUserOnly === 'true') ? 'first_time' : (d.allowedUsers || 'all'),
+      usageLimit: d.usageLimit || null,
+      perUserLimit: d.perUserLimit || 1,
+      paymentMethods: parseArr(d.paymentMethods),
 
-      startDate, endDate,
-      includesFreeShipping: includesFreeShipping === true || includesFreeShipping === 'true',
-      isStackable: isStackable === true || isStackable === 'true',
-      stackableWithCoupons: stackableWithCoupons === true || stackableWithCoupons === 'true',
-      autoApply: autoApply === true || autoApply === 'true',
-      priority: priority || 0
+      startDate: d.startDate, endDate: d.endDate,
+      includesFreeShipping: d.includesFreeShipping === true || d.includesFreeShipping === 'true',
+      isStackable: d.isStackable === true || d.isStackable === 'true',
+      stackableWithCoupons: d.stackableWithCoupons === true || d.stackableWithCoupons === 'true',
+      autoApply: d.autoApply === true || d.autoApply === 'true',
+      priority: d.priority || 0
     }, { new: true });
 
-    if (!updated) return res.json({ success: false, message: "Offer not found" });
+    if (!updated) return res.json({ success: false, message: "Offer not found." });
 
     res.json({ success: true, message: "Offer updated successfully!" });
   } catch (error) {

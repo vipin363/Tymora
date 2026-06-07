@@ -2,17 +2,16 @@ import mongoose from "mongoose";
 
 const couponSchema = new mongoose.Schema({
 
-  code:        { type: String, required: true, unique: true, uppercase: true, trim: true },
-  title:       { type: String, required: true, trim: true },
-  description: { type: String, trim: true, default: '' },
+  code:        { type: String, required: true, unique: true, uppercase: true, trim: true, match: /^[A-Z0-9]{4,30}$/ },
+  title:       { type: String, required: true, trim: true, minlength: 3, maxlength: 100 },
+  description: { type: String, trim: true, maxlength: 500, default: '' },
 
   
   discountType:     { type: String, enum: ['percentage', 'fixed'], required: true },
-  discountValue:    { type: Number, required: true, min: 0 },
-  maxDiscountLimit: { type: Number, default: null },   // cap for percentage coupons
-  minPurchase:      { type: Number, default: 0 },       // minimum cart value
+  discountValue:    { type: Number, required: true, min: 1 },
+  maxDiscountLimit: { type: Number, default: null, min: 0 },   // cap for percentage coupons
+  minPurchase:      { type: Number, default: 0, min: 0 },       // minimum cart value
 
- 
   offerType: {
     type: String,
     enum: ['global', 'product', 'category', 'brand'],
@@ -22,16 +21,14 @@ const couponSchema = new mongoose.Schema({
   applicableCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   applicableBrands:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' }],
 
- 
   excludedProducts:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   excludedCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   excludedBrands:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' }],
 
-  
   isFirstTimeUserOnly: { type: Boolean, default: false },
   allowedUsers:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }], // empty = all users
-  usageLimit:          { type: Number, default: 0 },  // 0 = unlimited
-  perUserLimit:        { type: Number, default: 1 },
+  usageLimit:          { type: Number, default: 0, min: 0 },  // 0 = unlimited
+  perUserLimit:        { type: Number, default: 1, min: 1 },
   usedCount:           { type: Number, default: 0 },
   usedBy:              [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
 
