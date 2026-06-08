@@ -18,7 +18,7 @@ async (req, accessToken, refreshToken, profile, done) => {
 
       let user = await userSchema.findOne({ email });
 
-      // ─── LOGIN FLOW ────────────────────────────────────────────────
+      //LOGIN FLOW
       if (!isRegister) {
          if (!user) {
             console.log(`[Google OAuth] Login failed – user not found: ${email}`);
@@ -32,13 +32,13 @@ async (req, accessToken, refreshToken, profile, done) => {
          return done(null, user);
       }
 
-      // ─── REGISTER FLOW ─────────────────────────────────────────────
+      // REGISTER FLOW 
       if (user) {
          console.log(`[Google OAuth] Register failed – user already exists: ${email}`);
          return done(null, false, { message: "User already exists" });
       }
 
-      // --- Recover referral code from cookie (primary) or session (fallback) ---
+      
       const rawRefCode = getReferralCode(req);
       console.log(`[Google OAuth] Referral code recovered: ${rawRefCode || 'none'}`);
 
@@ -68,7 +68,7 @@ async (req, accessToken, refreshToken, profile, done) => {
          }
       }
 
-      // --- Generate unique referral code for the new user ---
+   
       const prefix = (profile.displayName || 'USER').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 4);
       let newCode, exists;
       do {
@@ -87,7 +87,7 @@ async (req, accessToken, refreshToken, profile, done) => {
 
       console.log(`[Google OAuth] New user created: ${email} | referralCode=${newCode}`);
 
-      // --- Create Referral record if valid referrer ---
+      
       if (referrerId && referralCodeUsed) {
          const Settings = (await import('../model/settingsModel.js')).default;
          const Referral = (await import('../model/referralModel.js')).default;
@@ -110,7 +110,7 @@ async (req, accessToken, refreshToken, profile, done) => {
          }
       }
 
-      // --- Clear session fallback after consumption (cookie cleared in route callback) ---
+    
       req.session.googleReferralCode = null;
 
       console.log(`[Google OAuth] ✅ Registration complete for: ${email}`);

@@ -9,23 +9,17 @@ export const calculateRefundAmount = async (order, itemIdToRefund, returnQuantit
 
     const qtyToRefund = returnQuantity || item.quantity;
 
-    // 1. Base refund = what the customer actually paid for this item (proportional to qty)
-    //    productFinalPaidPrice = itemTotal - couponShare - offerShare (already excludes discount)
-    // 1. Calculate Original Customer Payment (Total actually paid, excluding previously refunded amounts conceptually)
-    // Actually, order.totalAmount is the absolute truth of what they paid initially.
+    
     const originalTotalPaid = order.totalAmount;
 
-    // 2. Calculate Total Refunded So Far
-    // Sum of all refundAmountProcessed on all items. 
-    // (Note: we don't count the current item yet, as it hasn't been processed).
     let totalRefundedSoFar = 0;
     order.products.forEach(p => {
       totalRefundedSoFar += (p.refundAmountProcessed || 0);
     });
 
-    // 3. Determine Kept Quantities and Kept Subtotals
+   
     let keptSubtotal = 0;
-    let offerKeptSubtotal = 0; // Subtotal of kept items that were eligible for the offer
+    let offerKeptSubtotal = 0; 
     let activeProductsRemaining = 0;
 
     order.products.forEach(p => {
@@ -36,14 +30,14 @@ export const calculateRefundAmount = async (order, itemIdToRefund, returnQuantit
       if (keptQty > 0) {
         keptSubtotal += p.salePrice * keptQty;
         activeProductsRemaining += keptQty;
-        // If the item originally received a share of the offer, it was eligible
+       
         if (p.offerDiscountShare && p.offerDiscountShare > 0) {
           offerKeptSubtotal += p.salePrice * keptQty;
         }
       }
     });
 
-    // 4. Recalculate Expected Allowed Discounts on Kept Items
+    
     let allowedCoupon = 0;
     if (order.couponCode && keptSubtotal > 0) {
       const coupon = await Coupon.findOne({ code: order.couponCode });
@@ -69,16 +63,15 @@ export const calculateRefundAmount = async (order, itemIdToRefund, returnQuantit
             allowedOffer = offer.maxDiscountLimit;
           }
         } else {
-          // If it's a fixed offer, we apply it fully as long as threshold is met
+         
           allowedOffer = offer.discountValue;
         }
-        // Ensure offer discount doesn't exceed the applicable subtotal
+       
         if (allowedOffer > offerKeptSubtotal) allowedOffer = offerKeptSubtotal;
       }
     }
 
-    // 5. Calculate Expected Payment for Remaining Items
-    // The customer should pay: (Kept Subtotal - Discounts) + Proportional Kept GST + Delivery + COD
+    
     const expectedBasePrice = Math.max(0, keptSubtotal - allowedCoupon - allowedOffer);
     
     let expectedGst = 0;
@@ -94,27 +87,21 @@ export const calculateRefundAmount = async (order, itemIdToRefund, returnQuantit
 
     const expectedPayment = expectedBasePrice + expectedGst + expectedFees;
 
-    // 6. Calculate Refund Owed to satisfy the Financial Integrity Rule
-    // Total Refunded So Far + Current Expected Payment + THIS REFUND = Original Customer Payment
-    // Therefore: THIS REFUND = Original Payment - Expected Payment - Total Refunded So Far
     
-    // Calculate total theoretical refund owed for all cancelled/returned items up to this point
     const totalRefundOwed = originalTotalPaid - expectedPayment;
     
-    // The refund for this specific operation
     let refundAmount = totalRefundOwed - totalRefundedSoFar;
 
-    // Safety clamps
     if (refundAmount < 0) refundAmount = 0;
     
-    // Check if threshold was broken to inform the UI (purely for messaging)
+   
     const thresholdBroken = (order.couponCode && allowedCoupon === 0 && order.couponDiscount > 0) || 
                             (order.offerId && allowedOffer === 0 && order.offerDiscount > 0);
 
     return {
       refundAmount,
       thresholdBroken,
-      lostDiscountValue: 0 // No longer used as a deducted penalty, the math natively absorbs it
+      lostDiscountValue: 0 
     };
 
   } catch (error) {

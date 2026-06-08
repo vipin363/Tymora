@@ -3855,12 +3855,12 @@ export const verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
 
-    // 1. Validate all fields present
+    //  Validate all fields present
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
       return res.status(400).json({ success: false, message: 'Missing payment verification fields.' });
     }
 
-    // 2. Verify Razorpay signature
+    //  Verify Razorpay signature
     const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
     hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
     const generated_signature = hmac.digest('hex');
@@ -3874,7 +3874,7 @@ export const verifyPayment = async (req, res) => {
       return res.json({ success: false, message: 'Payment verification failed. Invalid signature.' });
     }
 
-    // 3. Idempotency: only process if not already paid
+    //  Idempotency: only process if not already paid
     const order = await Order.findOneAndUpdate(
       { orderId, paymentStatus: { $ne: 'Paid' } },
       { 
@@ -3891,13 +3891,13 @@ export const verifyPayment = async (req, res) => {
       return res.json({ success: true, alreadyProcessed: true });
     }
 
-    // 3b. Push 'Pending' into the tracking timeline for each product
+    //  Push 'Pending' into the tracking timeline for each product
     await Order.updateOne(
       { _id: order._id },
       { $push: { "products.$[].trackingTimeline": { status: "Pending", message: "Order placed successfully" } } }
     );
 
-    // 4. Atomic stock decrement with oversell protection
+    //  Atomic stock decrement with oversell protection
     for (const p of order.products) {
       const updated = await Variant.findOneAndUpdate(
         { _id: p.variantId, stock: { $gte: p.quantity } },
@@ -3912,7 +3912,7 @@ export const verifyPayment = async (req, res) => {
       }
     }
 
-    // 5. Mark coupon as used (deferred from placeOrder)
+    //  Mark coupon as used (deferred from placeOrder)
     if (order.pendingCouponId) {
       await Coupon.findByIdAndUpdate(order.pendingCouponId, {
         $push: { usedBy: order.userId },
@@ -3921,7 +3921,7 @@ export const verifyPayment = async (req, res) => {
       await Order.findByIdAndUpdate(order._id, { $unset: { pendingCouponId: '' } });
     }
 
-    // 5b. Mark offer as used (deferred from placeOrder)
+    //  Mark offer as used (deferred from placeOrder)
     if (order.pendingOfferId) {
       await Offer.findByIdAndUpdate(order.pendingOfferId, {
         $inc: { usedCount: 1 }
@@ -3929,10 +3929,10 @@ export const verifyPayment = async (req, res) => {
       await Order.findByIdAndUpdate(order._id, { $unset: { pendingOfferId: '' } });
     }
 
-    // 6. Clear cart (deferred from placeOrder)
+    // Clear cart (deferred from placeOrder)
     await Cart.findOneAndUpdate({ userId: order.userId }, { $set: { items: [] } });
 
-    // 7. Clear buyNow session if present
+    // Clear buyNow session if present
     if (req.session.buyNow) delete req.session.buyNow;
 
     res.json({ success: true, orderId });

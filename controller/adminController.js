@@ -74,7 +74,7 @@ const validateCategoryBrand = async (categoryId, brandId, brandName) => {
 };
 
 const validateVariantInput = async (data, productId, variantId = null) => {
-  // Frontend sends field as 'name' (both add and edit), but keep 'variantName' as alias for backward compatibility
+  
   const { variantName: _variantName, name: _name, sku, strapColor, dialColor, caseColor, size, strapMaterial, caseMaterial, originalPrice, salePrice, stock } = data;
   const variantName = _variantName || _name;
   
@@ -401,7 +401,7 @@ export const loadUsers = async (req, res) => {
   }
 };
 
-// ── EXPORT USERS PDF ──────────────────────────────────────────────────────
+//  EXPORT USERS PDF
 export const exportUsersPdf = async (req, res) => {
   try {
     const search = req.query.search || "";
@@ -471,7 +471,7 @@ export const exportUsersPdf = async (req, res) => {
   }
 };
 
-// ── EXPORT USERS EXCEL ────────────────────────────────────────────────────
+// EXPORT USERS EXCEL 
 export const exportUsersExcel = async (req, res) => {
   try {
     const search = req.query.search || "";
