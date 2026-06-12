@@ -38,12 +38,27 @@
       <button type="submit" class="search-btn">Search</button>
     </div>
 
-    <select class="sort-select" name="sort" onchange="this.form.submit()">
-      <option value="">Sort by</option>
-      {{#each sortOptions}}
-        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-      {{/each}}
-    </select>
+    <!-- CUSTOM SORT DROPDOWN -->
+    <div class="custom-sort-dropdown" id="customSortDropdown">
+      <div class="custom-sort-trigger" id="customSortTrigger">
+        <span>
+          {{#each sortOptions}}
+            {{#if this.selected}}{{this.label}}{{/if}}
+          {{/each}}
+          {{#unless filters.sort}}Sort by{{/unless}}
+        </span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+      <div class="custom-sort-options" id="customSortOptions">
+        <div class="custom-sort-option {{#unless filters.sort}}selected{{/unless}}" data-value="">Sort by</div>
+        {{#each sortOptions}}
+          <div class="custom-sort-option {{#if this.selected}}selected{{/if}}" data-value="{{this.value}}">{{this.label}}</div>
+        {{/each}}
+      </div>
+      <input type="hidden" name="sort" id="sortInput" value="{{filters.sort}}">
+    </div>
 
     <button type="button" class="filter-toggle" id="filterToggle">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2">

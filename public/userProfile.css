@@ -4,18 +4,6 @@
    Standardized to work with main.hbs and shared theme.
    ============================================================ */
 
-/* ── BREADCRUMB ── */
-.breadcrumb {
-  padding: 0 40px;
-  font-size: 10px;
-  margin-top: 0;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.breadcrumb a { color: var(--muted); text-decoration: none; }
-.breadcrumb a:hover { color: var(--gold); }
-.breadcrumb span { color: var(--white); }
 
 /* ── ACCOUNT WRAP ── */
 .account-wrap {
@@ -396,7 +384,7 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-  .account-wrap { grid-template-columns: 1fr; padding: 20px; }
+  .account-wrap { grid-template-columns: 1fr; padding: 0 20px 20px; }
   .left-col { flex-direction: row; flex-wrap: wrap; }
   .profile-card, .info-card { flex: 1; min-width: 300px; }
 }
@@ -410,5 +398,4 @@
   .stat-value { font-size: 22px; }
   .stat-label { font-size: 7px; letter-spacing: 1px; }
   .quick-card { padding: 20px 12px; }
-  .breadcrumb { padding: 14px 20px; }
 }

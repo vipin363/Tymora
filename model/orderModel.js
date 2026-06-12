@@ -107,8 +107,7 @@ const orderSchema = new mongoose.Schema({
     default: 'Pending',
   },
 
-  // Order-level status is computed or represents the overall state (e.g. if all cancelled, overall is cancelled)
-  // For legacy/simplicity we can keep an overall status but the source of truth will be product level
+
   orderStatus: {
     type: String,
     default: 'Pending',

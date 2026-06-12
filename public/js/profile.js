@@ -222,6 +222,7 @@
         return;
       }
 
+      showGlobalLoader();
       try {
         const res = await fetch("/user/changePassword", {
           method: "POST",
@@ -237,9 +238,11 @@
           setTimeout(() => { window.location.reload(); }, 1000);
         } else {
           if (els.passwordError) els.passwordError.innerText = data.message || "Something went wrong";
+          hideGlobalLoader();
         }
       } catch (err) {
         if (els.passwordError) els.passwordError.innerText = "Something went wrong";
+        hideGlobalLoader();
       }
     });
   }

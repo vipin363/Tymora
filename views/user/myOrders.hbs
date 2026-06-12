@@ -1,5 +1,14 @@
 <link href="/myOrders.css" rel="stylesheet">
 
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Orders</span>
+</div>
+
 <div class="mo-wrapper">
 
   <div class="mo-header">
@@ -9,11 +18,17 @@
   </div>
 
   <div class="mo-search-bar">
-    <form action="/user/orders" method="GET" style="display:flex; gap:10px;">
-      <input type="text" name="search" class="mo-search-input" placeholder="Search by Order ID or Product Name" value="{{search}}">
+    <form action="/user/orders" method="GET" class="mo-search-form">
+      <div class="mo-search-input-wrap">
+        <svg class="mo-search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" name="search" class="mo-search-input" placeholder="Search by Order ID or Product Name" value="{{search}}">
+      </div>
       <button type="submit" class="mo-btn-search">Search</button>
       {{#if search}}
-      <a href="/user/orders" class="mo-btn-search" style="background:transparent; border:1px solid var(--muted); color:var(--white); text-decoration:none;">Clear</a>
+      <a href="/user/orders" class="mo-btn-clear">Clear</a>
       {{/if}}
     </form>
   </div>
@@ -30,7 +45,11 @@
           <div class="mo-order-date">Placed on {{this.orderDateFormatted}}</div>
         </div>
         <div class="mo-status-wrap">
-          <span class="mo-status status-{{this.orderStatus}}">{{this.orderStatus}}</span>
+          {{#if this.isPaymentFailed}}
+            <span class="mo-status status-payment-failed">Payment Failed</span>
+          {{else}}
+            <span class="mo-status status-{{this.orderStatus}}">{{this.orderStatus}}</span>
+          {{/if}}
         </div>
       </div>
 
@@ -44,7 +63,13 @@
             <div class="mo-prod-info" style="flex: 1;">
               <div class="mo-prod-name">{{this.productName}}</div>
               <div class="mo-prod-meta">{{this.variantSpecs}} · Qty: {{this.quantity}}</div>
-              <div class="mo-prod-meta" style="margin-top: 4px;">Status: <strong style="color:var(--gold);">{{this.orderStatus}}</strong></div>
+              <div class="mo-prod-meta" style="margin-top: 4px;">Status:
+                {{#if ../isPaymentFailed}}
+                  <strong class="text-payment-failed">Payment Failed</strong>
+                {{else}}
+                  <strong style="color:var(--gold);">{{this.orderStatus}}</strong>
+                {{/if}}
+              </div>
 
             </div>
             <div class="mo-prod-price-wrap">
@@ -57,48 +82,47 @@
               {{/if}}
             </div>
           </div>
-          <div class="mo-prod-actions" style="display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap;">
+          <div class="mo-prod-actions">
             {{#if this.canTrack}}
-            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding: 5px 15px; font-size: 0.85rem;">Track Order</a>
+            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn mo-btn-outline-gold">Track Order</a>
             {{/if}}
             {{#if this.isReturned}}
-            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding: 5px 15px; font-size: 0.85rem;">View Tracking</a>
+            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn mo-btn-outline-gold">View Tracking</a>
             {{/if}}
 
             {{#if this.canCancel}}
-            <button class="mo-btn mo-btn-danger" style="padding: 5px 15px; font-size: 0.85rem;" onclick="openCancelModal('{{../orderId}}', '{{this._id}}')">Cancel Order</button>
+            <button class="mo-btn mo-btn-outline-danger" onclick="openCancelModal('{{../orderId}}', '{{this._id}}')">Cancel Order</button>
             {{/if}}
             {{#if this.canReturn}}
-            <button class="mo-btn" style="background:transparent; border:1px solid #fff; color:#fff; padding: 5px 15px; font-size: 0.85rem;" onclick="openReturnModal('{{../orderId}}', '{{this._id}}')">Return Order</button>
+            <button class="mo-btn mo-btn-outline-white" onclick="openReturnModal('{{../orderId}}', '{{this._id}}')">Return Order</button>
             {{/if}}
             {{#if this.showReview}}
-            <button class="mo-btn" style="background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding: 5px 15px; font-size: 0.85rem;" onclick="openReviewModal('{{../orderId}}', '{{this.productId}}')">Add Review</button>
+            <button class="mo-btn mo-btn-outline-blue" onclick="openReviewModal('{{../orderId}}', '{{this.productId}}')">Add Review</button>
             {{/if}}
           </div>
         </div>
         {{/each}}
       </div>
 
-      <div class="mo-card-foot" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <div>
+      <div class="mo-card-foot">
+        <div class="mo-foot-left">
           <div class="mo-delivery-info">
-            <span>Est. Delivery:</span>
-            <strong>{{this.estimatedDeliveryFormatted}}</strong>
-            &nbsp;·&nbsp;
-            <span>{{this.deliveryType}} Delivery</span>
-            &nbsp;·&nbsp;
-            <span>{{this.paymentMethod}}</span>
+            <span class="mo-muted">Est. Delivery:</span> <strong class="mo-white">{{this.estimatedDeliveryFormatted}}</strong>
+            <span class="mo-divider">·</span>
+            <span class="mo-muted">{{this.deliveryType}} Delivery</span>
+            <span class="mo-divider">·</span>
+            <span class="mo-muted">{{this.paymentMethod}}</span>
           </div>
           <div class="mo-total">
             {{#if (lt this.finalAmountPaid this.totalAmount)}}
-              Final Amount Paid: <strong style="color:var(--gold);">₹{{formatCurrency this.finalAmountPaid}}</strong>
+              <span class="mo-muted">Final Amount Paid:</span> <strong class="mo-gold">₹{{formatCurrency this.finalAmountPaid}}</strong>
             {{else}}
-              Total: <strong>₹{{formatCurrency this.totalAmount}}</strong>
+              <span class="mo-muted">Total:</span> <strong class="mo-white">₹{{formatCurrency this.totalAmount}}</strong>
             {{/if}}
           </div>
         </div>
-        <div>
-          <a href="/user/order-details/{{this.orderId}}" class="mo-btn mo-btn-primary" style="padding: 8px 24px; text-decoration: none; display: inline-block;">View Order</a>
+        <div class="mo-foot-right">
+          <a href="/user/order-details/{{this.orderId}}" class="mo-btn mo-btn-solid-gold">View Order</a>
         </div>
       </div>
 
@@ -138,11 +162,11 @@
   <div class="mo-modal">
     <h3>Cancel Product</h3>
     <p>Are you sure you want to cancel this product? This action cannot be undone.</p>
-    <textarea id="cancelReasonInput" placeholder="Required: Please tell us why you are cancelling this product..."></textarea>
-    <p id="cancelReasonError" style="color:#f87171; font-size:0.82rem; margin:4px 0 8px; display:none;"></p>
+    <textarea id="cancelReasonInput" class="mo-modal-textarea" placeholder="Required: Please tell us why you are cancelling this product..."></textarea>
+    <p id="cancelReasonError" class="mo-modal-error"></p>
     <div class="mo-modal-actions">
-      <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeCancelModal()">Keep Product</button>
-      <button class="mo-btn mo-btn-danger" id="confirmCancelBtn">Confirm Cancel</button>
+      <button class="mo-btn mo-btn-outline-white" onclick="closeCancelModal()">Keep Product</button>
+      <button class="mo-btn mo-btn-solid-danger" id="confirmCancelBtn">Confirm Cancel</button>
     </div>
   </div>
 </div>
@@ -152,11 +176,11 @@
   <div class="mo-modal">
     <h3>Return Product</h3>
     <p>Please provide a reason for returning this product.</p>
-    <textarea id="returnReasonInput" placeholder="Reason for return (e.g. Damaged item, Wrong size)..."></textarea>
-    <p id="returnReasonError" style="color:#f87171; font-size:0.82rem; margin:4px 0 8px; display:none;"></p>
+    <textarea id="returnReasonInput" class="mo-modal-textarea" placeholder="Reason for return (e.g. Damaged item, Wrong size)..."></textarea>
+    <p id="returnReasonError" class="mo-modal-error"></p>
     <div class="mo-modal-actions">
-      <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeReturnModal()">Cancel</button>
-      <button class="mo-btn mo-btn-primary" id="confirmReturnBtn">Submit Return Request</button>
+      <button class="mo-btn mo-btn-outline-white" onclick="closeReturnModal()">Cancel</button>
+      <button class="mo-btn mo-btn-solid-gold" id="confirmReturnBtn">Submit Return Request</button>
     </div>
   </div>
 </div>
@@ -167,9 +191,9 @@
     <h3>Add Review</h3>
     <p>Please rate and review this product.</p>
     
-    <div style="margin: 15px 0; text-align: left;">
-      <label style="display: block; margin-bottom: 5px;">Rating (1-5):</label>
-      <select id="reviewRatingInput" style="width:100%; padding:8px; border-radius:4px; border:1px solid #333; background:#0f0f1e; color:#fff;">
+    <div class="mo-modal-select-wrap">
+      <label>Rating (1-5):</label>
+      <select id="reviewRatingInput" class="mo-modal-select">
         <option value="5">5 ★★★★★</option>
         <option value="4">4 ★★★★☆</option>
         <option value="3">3 ★★★☆☆</option>
@@ -178,11 +202,11 @@
       </select>
     </div>
     
-    <textarea id="reviewTextInput" placeholder="Write your honest review (e.g. Good watch, Bad quality)..."></textarea>
-    <p id="reviewTextError" style="color:#f87171; font-size:0.82rem; margin:4px 0 8px; display:none;"></p>
+    <textarea id="reviewTextInput" class="mo-modal-textarea" placeholder="Write your honest review (e.g. Good watch, Bad quality)..."></textarea>
+    <p id="reviewTextError" class="mo-modal-error"></p>
     <div class="mo-modal-actions">
-      <button class="mo-btn" style="background:transparent; color:#fff; border:1px solid #fff;" onclick="closeReviewModal()">Cancel</button>
-      <button class="mo-btn mo-btn-primary" style="background:#3b82f6; color:#fff;" id="confirmReviewBtn">Submit Review</button>
+      <button class="mo-btn mo-btn-outline-white" onclick="closeReviewModal()">Cancel</button>
+      <button class="mo-btn mo-btn-solid-blue" id="confirmReviewBtn">Submit Review</button>
     </div>
   </div>
 </div>
@@ -246,6 +270,7 @@
 
     const btn = document.getElementById('confirmCancelBtn');
     btn.disabled = true; btn.innerText = 'Cancelling...';
+    showGlobalLoader();
     try {
       const res = await fetch('/user/orders/cancel', {
         method: 'POST',
@@ -258,11 +283,13 @@
       } else {
         showToast(data.message || 'Failed to cancel product.', 'error');
         btn.disabled = false; btn.innerText = 'Confirm Cancel';
+        hideGlobalLoader();
       }
     } catch (err) {
       console.error(err);
       showToast('An error occurred. Please try again.', 'error');
       btn.disabled = false; btn.innerText = 'Confirm Cancel';
+      hideGlobalLoader();
     }
   });
 
@@ -290,6 +317,7 @@
 
     const btn = document.getElementById('confirmReturnBtn');
     btn.disabled = true; btn.innerText = 'Submitting...';
+    showGlobalLoader();
     try {
       const res = await fetch('/user/orders/return', {
         method: 'POST',
@@ -302,11 +330,13 @@
       } else {
         showToast(data.message || 'Failed to submit return request.', 'error');
         btn.disabled = false; btn.innerText = 'Submit Return Request';
+        hideGlobalLoader();
       }
     } catch (err) {
       console.error(err);
       showToast('An error occurred. Please try again.', 'error');
       btn.disabled = false; btn.innerText = 'Submit Return Request';
+      hideGlobalLoader();
     }
   });
 
@@ -336,6 +366,7 @@
 
     const btn = document.getElementById('confirmReviewBtn');
     btn.disabled = true; btn.innerText = 'Submitting...';
+    showGlobalLoader();
     try {
       const res = await fetch('/user/reviews/add', {
         method: 'POST',
@@ -349,10 +380,12 @@
       } else {
         showToast(data.message || 'Failed to submit review.', 'error');
         btn.disabled = false; btn.innerText = 'Submit Review';
+        hideGlobalLoader();
       }
     } catch (err) {
       showToast('Error submitting review.', 'error');
       btn.disabled = false; btn.innerText = 'Submit Review';
+      hideGlobalLoader();
     }
   });
 </script>

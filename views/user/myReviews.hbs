@@ -1,10 +1,20 @@
 <link href="/myReviews.css" rel="stylesheet">
 
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Reviews</span>
+</div>
+
 <div class="mr-wrapper">
-  
+
   <div class="mr-header">
-    <h1 class="mr-title">My Reviews</h1>
-    <p class="mr-subtitle">Manage your product reviews</p>
+    <h1 class="mr-title">My <em>Reviews</em></h1>
+    <p class="mr-subtitle">Your voice. Your experience. Your TYMORA story.</p>
+    <div class="mr-heading-underline"></div>
   </div>
 
   <div class="mr-container">
@@ -33,7 +43,7 @@
     {{else}}
       <div class="mr-empty">
         <h2>No Reviews Yet</h2>
-        <p>Share your thoughts on the products you've purchased.</p>
+        <p>Share your thoughts on the timepieces you've experienced.</p>
       </div>
     {{/if}}
   </div>
@@ -45,16 +55,16 @@
   <div class="mr-modal">
     <h3>Edit Review</h3>
     <select id="editRating">
-      <option value="5">5 - Excellent</option>
-      <option value="4">4 - Good</option>
-      <option value="3">3 - Average</option>
-      <option value="2">2 - Poor</option>
-      <option value="1">1 - Terrible</option>
+      <option value="5">5 ★★★★★ — Excellent</option>
+      <option value="4">4 ★★★★☆ — Good</option>
+      <option value="3">3 ★★★☆☆ — Average</option>
+      <option value="2">2 ★★☆☆☆ — Poor</option>
+      <option value="1">1 ★☆☆☆☆ — Terrible</option>
     </select>
-    <textarea id="editReviewText"></textarea>
+    <textarea id="editReviewText" placeholder="Share your honest thoughts about this timepiece..."></textarea>
     <div class="mr-modal-actions">
       <button class="mr-btn" onclick="closeEditModal()">Cancel</button>
-      <button class="mr-btn" style="background:var(--gold);color:#000;border:none;" id="saveEditBtn">Save Changes</button>
+      <button class="mr-btn mr-modal-btn-save" id="saveEditBtn">Save Changes</button>
     </div>
   </div>
 </div>

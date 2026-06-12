@@ -8,7 +8,7 @@ body {
 }
 
 .checkout-wrapper {
-  padding: 20px 40px 80px;
+  padding: 10px 40px 80px;
   background-color: #0d0d0d;
   min-height: 100vh;
   font-family: 'Montserrat', sans-serif;
@@ -48,13 +48,15 @@ body {
 
 /* Page Heading */
 .page-heading {
-  margin-bottom: 28px;
+  margin-top: 0;
+  margin-bottom: 18px;
 }
 
 .page-heading h1 {
   font-family: 'Playfair Display', serif;
   font-size: 3rem;
   color: var(--white);
+  margin-top: 0;
   margin-bottom: 8px;
 }
 
@@ -753,10 +755,12 @@ body {
 }
 
 /* ── ORDER SUMMARY SIDEBAR ── */
-.summary-sidebar {
-  position: sticky;
-  margin-top: -50px;
-  top: calc(var(--nav-height) + 5px);
+@media (min-width: 1001px) {
+  .summary-sidebar {
+    position: sticky;
+    top: calc(var(--nav-height) + 20px);
+    align-self: flex-start;
+  }
 }
 
 .summary-card {
@@ -886,10 +890,11 @@ body {
   .summary-sidebar {
     position: relative;
     top: 0;
+    align-self: auto;
   }
 
   .checkout-wrapper {
-    padding: 120px 20px 60px;
+    padding: 0 20px 60px;
   }
 
   .payment-grid {

@@ -6,6 +6,24 @@
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
 
+window.showGlobalLoader = function () {
+  const overlay = document.getElementById('global-loader-overlay');
+  if (overlay) {
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    document.body.style.pointerEvents = 'none';
+  }
+};
+
+window.hideGlobalLoader = function () {
+  const overlay = document.getElementById('global-loader-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    document.body.style.pointerEvents = '';
+  }
+};
+
   /* ── MOBILE MENU ── */
   const hamburger    = document.getElementById('hamburgerBtn');
   const navLinks     = document.querySelector('.nav-links');
@@ -51,28 +69,119 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ── MOBILE SEARCH ── */
-  const searchToggle      = document.getElementById('searchToggle');
-  const mobileSearchBar   = document.getElementById('mobileSearchBar');
-  const mobileSearchInput = document.getElementById('mobileSearchInput');
+  /* ── PREMIUM GLOBAL SEARCH OVERLAY ── */
+  const searchToggle        = document.getElementById('searchToggle');
+  const mobileSearchBar     = document.getElementById('mobileSearchBar');
+  const desktopSearchTrigger= document.getElementById('desktopSearchTrigger');
+  const desktopNavSearch    = document.querySelector('.nav-search');
+  const mobileSearchInput   = document.getElementById('mobileSearchInput');
+  const searchOverlay       = document.getElementById('searchOverlay');
+  const liveSearchInput     = document.getElementById('liveSearchInput');
+  const closeSearchModal    = document.getElementById('closeSearchModal');
+  const searchResultsContainer = document.getElementById('searchResults');
 
-  if (searchToggle && mobileSearchBar && mobileSearchInput) {
-    searchToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isOpen = mobileSearchBar.classList.toggle('active');
-      if (isOpen) {
-        mobileSearchInput.focus();
-        // Ensure menu is closed when search opens
-        if (typeof closeMenu === 'function') closeMenu();
-      }
-    });
+  const openSearchOverlay = (e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (searchOverlay) {
+      searchOverlay.classList.add('active');
+      setTimeout(() => { if (liveSearchInput) liveSearchInput.focus(); }, 100);
+      document.body.style.overflow = 'hidden';
+      // Close mobile search bar and menu if open
+      if (mobileSearchBar) mobileSearchBar.classList.remove('active');
+      if (navLinks) navLinks.classList.remove('active');
+      if (hamburger) hamburger.classList.remove('active');
+      if (menuOverlay) menuOverlay.classList.remove('active');
+    }
+  };
 
-    // Close search on outside click
-    document.addEventListener('click', (e) => {
-      if (!searchToggle.contains(e.target) && !mobileSearchBar.contains(e.target)) {
-        mobileSearchBar.classList.remove('active');
+  const closeSearchOverlayAction = () => {
+    if (searchOverlay) {
+      searchOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+      if (liveSearchInput) liveSearchInput.value = '';
+      if (searchResultsContainer) {
+        searchResultsContainer.innerHTML = '';
+        searchResultsContainer.classList.remove('active');
       }
+    }
+  };
+
+  // Desktop: clicking anywhere in the .nav-search div (icon or input)
+  if (desktopNavSearch) desktopNavSearch.addEventListener('click', openSearchOverlay);
+  // Mobile: clicking the search icon button
+  if (searchToggle) searchToggle.addEventListener('click', openSearchOverlay);
+  // Mobile: clicking inside the mobile search bar input
+  if (mobileSearchInput) mobileSearchInput.addEventListener('click', openSearchOverlay);
+
+  // Close handlers
+  if (closeSearchModal) closeSearchModal.addEventListener('click', closeSearchOverlayAction);
+  if (searchOverlay) {
+    searchOverlay.addEventListener('click', (e) => {
+      if (e.target === searchOverlay) closeSearchOverlayAction();
     });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
+      closeSearchOverlayAction();
+    }
+  });
+
+  // Debounce & Fetch Logic
+  let searchTimeout = null;
+  if (liveSearchInput) {
+    liveSearchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      if (!query) {
+        searchResultsContainer.innerHTML = '';
+        searchResultsContainer.classList.remove('active');
+        return;
+      }
+
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res = await fetch(`/user/api/search-live?q=${encodeURIComponent(query)}`);
+          if (!res.ok) {
+            console.error('Search API error:', res.status);
+            searchResultsContainer.innerHTML = '<div class="search-no-results">Search unavailable. Please try again.</div>';
+            searchResultsContainer.classList.add('active');
+            return;
+          }
+          const data = await res.json();
+          if (data.success) {
+            renderSearchResults(data.products);
+          }
+        } catch (error) {
+          console.error("Search failed", error);
+          searchResultsContainer.innerHTML = '<div class="search-no-results">Search unavailable. Please try again.</div>';
+          searchResultsContainer.classList.add('active');
+        }
+      }, 300);
+    });
+  }
+
+  function renderSearchResults(products) {
+    if (!products || products.length === 0) {
+      searchResultsContainer.innerHTML = '<div class="search-no-results">No matching products found.</div>';
+      searchResultsContainer.classList.add('active');
+      return;
+    }
+
+    const formatter = new Intl.NumberFormat('en-IN');
+    searchResultsContainer.innerHTML = products.map(p => {
+      const img = (p.images && p.images.length > 0) ? p.images[0] : '/image/default-product.jpg';
+      const brand = p.brand ? p.brand.name : '';
+      const price = p.salePrice || p.price || 0;
+      return `<a href="/user/product/${p._id}" class="search-result-item">
+        <img src="${img}" alt="${p.name}" class="search-result-img" onerror="this.src='/image/default-product.jpg'" />
+        <div class="search-result-info">
+          <span class="search-result-title">${p.name}</span>
+          <span class="search-result-brand">${brand}</span>
+        </div>
+        <span class="search-result-price">₹${formatter.format(price)}</span>
+      </a>`;
+    }).join('');
+    searchResultsContainer.classList.add('active');
   }
 
   /* ── ACTIVE STATES ── */

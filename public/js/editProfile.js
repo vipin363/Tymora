@@ -15,6 +15,12 @@
     toast:         $('toast'),
   };
 
+  // Prevent future dates from being selected in the Date of Birth calendar
+  const dobInput = document.getElementById('dob');
+  if (dobInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dobInput.setAttribute('max', today);
+  }
   
 
   if (els.avatarInput && els.avatarPreview) {
@@ -65,5 +71,44 @@
       }, 3000);
     }
   };
+
+  if (els.editForm) {
+    els.editForm.addEventListener('submit', function (e) {
+      const name = document.getElementById('full-name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      
+      let errorMsg = "";
+      
+      if (!name) {
+        errorMsg = "Full Name is required";
+      } else if (phone) {
+        const phoneRegex = /^[0-9]{10}$/;
+        const allSame = /^(.)\1{9}$/;
+        const fakes = ["1234567890", "0123456789", "1000000000"];
+        
+        if (!phoneRegex.test(phone)) {
+          errorMsg = "Please enter a valid 10-digit phone number.";
+        } else if (allSame.test(phone) || fakes.includes(phone)) {
+          errorMsg = "Please enter a valid phone number. Repeated or invalid patterns are not allowed.";
+        }
+      }
+      let errorDiv = document.querySelector('.error-msg');
+
+      if (errorMsg) {
+        e.preventDefault();
+        if (!errorDiv) {
+          errorDiv = document.createElement('div');
+          errorDiv.className = 'error-msg';
+          els.editForm.insertBefore(errorDiv, els.editForm.querySelector('.form-grid'));
+        }
+        errorDiv.innerText = errorMsg;
+      } else {
+        if (errorDiv) {
+          errorDiv.remove();
+        }
+        showGlobalLoader();
+      }
+    });
+  }
 
 })();

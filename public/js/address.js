@@ -105,10 +105,12 @@
       if (errorBox) errorBox.innerText = "";
 
       // Validation
-      if (!fullName || !phone || !street || !city || !state || !pincode) {
-        if (errorBox) errorBox.innerText = "All fields are required";
-        return;
-      }
+      if (!fullName) { if (errorBox) errorBox.innerText = "Full name is required"; return; }
+      if (!phone) { if (errorBox) errorBox.innerText = "Phone number is required"; return; }
+      if (!street) { if (errorBox) errorBox.innerText = "House name is required"; return; }
+      if (!city) { if (errorBox) errorBox.innerText = "City is required"; return; }
+      if (!state) { if (errorBox) errorBox.innerText = "State is required"; return; }
+      if (!pincode) { if (errorBox) errorBox.innerText = "Pincode is required"; return; }
 
       const nameRegex = /^[A-Za-z\s]+$/;
       if (!nameRegex.test(fullName)) {
@@ -126,6 +128,7 @@
         return;
       }
 
+      showGlobalLoader();
       try {
         const url = editAddressId
           ? `/user/updateAddress/${editAddressId}`
@@ -143,14 +146,30 @@
         const data = await res.json();
         if (!data.success) {
           if (errorBox) errorBox.innerText = data.message;
+          hideGlobalLoader();
           return;
         }
 
         location.reload();
       } catch (err) {
         if (errorBox) errorBox.innerText = "Something went wrong";
+        hideGlobalLoader();
       }
     });
+    
+    const delForm = $("deleteAddressForm");
+    if (delForm) {
+      delForm.addEventListener("submit", function() {
+        showGlobalLoader();
+      });
+    }
+    
+    const defaultForm = $("setDefaultAddressForm");
+    if (defaultForm) {
+      defaultForm.addEventListener("submit", function() {
+        showGlobalLoader();
+      });
+    }
   });
 
 })();

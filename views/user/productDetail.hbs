@@ -1,13 +1,13 @@
 <link href="/userProductDetail.css" rel="stylesheet">
 
-<div class="pd-container">
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  <a href="/user/shop">Shop</a> &nbsp;›&nbsp;
+  <span class="current">{{product.name}}</span>
+</div>
 
-  <!-- BREADCRUMB -->
-  <div class="pd-breadcrumb pd-fade">
-    <a href="/user/home">Home</a><span class="sep">/</span>
-    <a href="/user/shop">Shop</a><span class="sep">/</span>
-    <span class="cur">{{product.name}}</span>
-  </div>
+<div class="pd-container">
 
   <!-- HERO -->
   <section class="pd-hero">
@@ -35,10 +35,14 @@
       <h1 class="pd-name pd-fade">{{product.name}}</h1>
 
       <div class="pd-rating-row pd-fade">
-        <div class="pd-stars" style="color:var(--gold);">{{#times product.ratingRounded}}★{{/times}}{{#times (subtract 5 product.ratingRounded)}}☆{{/times}}</div>
-        <span class="pd-rating-val">{{product.rating}}</span>
-        <div class="pd-rating-sep"></div>
-        <span class="pd-review-count">{{product.reviewCount}} Reviews</span>
+        {{#if product.reviewCount}}
+          <div class="pd-stars" style="color:var(--gold);">{{#times product.ratingRounded}}★{{/times}}{{#times (subtract 5 product.ratingRounded)}}☆{{/times}}</div>
+          <span class="pd-rating-val">{{product.rating}}</span>
+          <div class="pd-rating-sep"></div>
+          <span class="pd-review-count">{{product.reviewCount}} Reviews</span>
+        {{else}}
+          <span class="pd-review-count" style="color:var(--muted);">No reviews yet</span>
+        {{/if}}
       </div>
 
       <!-- Price (updated live by JS) -->
@@ -60,9 +64,13 @@
           <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
           <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
         </svg>
-        <span class="coupon-text">Use code</span>
-        <span class="coupon-code">TYMORA10</span>
-        <span class="coupon-text">for extra 10% off</span>
+        {{#if coupon}}
+          <span class="coupon-text">Use code</span>
+          <span class="coupon-code">{{coupon.code}}</span>
+          <span class="coupon-text">{{coupon.label}}</span>
+        {{else}}
+          <span class="coupon-text" style="color:var(--muted);">No coupon available yet</span>
+        {{/if}}
       </div>
 
       <!-- Description -->
@@ -341,8 +349,8 @@
     <span class="pd-sticky-price" id="pdStickyPrice">₹{{formatCurrency product.price}}</span>
     {{#if product.oldPrice}}<span class="pd-sticky-old">₹{{formatCurrency product.oldPrice}}</span>{{/if}}
   </div>
-  <button class="pd-sticky-btn" onclick="document.getElementById('pdAddToCart').click()">
-    Add to Cart
+  <button class="pd-sticky-btn" id="pdStickyBtn" onclick="document.getElementById('pdAddToCart').click()">
+    {{#if product.inCart}}View in Cart{{else}}Add to Cart{{/if}}
   </button>
 </div>
 

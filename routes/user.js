@@ -9,8 +9,8 @@ import {
   loadAddressPage, addAddress, updateAddress, getAddress, setDefaultAddress, deleteAddress,
   loadshop, loadCollectionPage, loadProductDetail, loadWishlist, toggleWishlist, getWishlistIds, addAllToCart,
   loadCart, loadCheckout, calculateCheckout, addToCart, updateCartItem, removeCartItem, getCartCount, checkProductStatus,
-  placeOrder, verifyPayment, loadOrderSuccess, loadPaymentFailed, getUserOrders, buyNow, cancelOrder, trackOrder, downloadInvoice, requestReturn, loadOrderDetails, loadDeals, loadAboutUs, loadMyCoupons, loadMyWallet, topUpWallet, verifyWalletTopUp, loadReferrals,
-  googleLoginInit, googleRegisterInit, googleCallback
+  placeOrder, verifyPayment, markPaymentFailed, loadOrderSuccess, loadPaymentFailed, getUserOrders, buyNow, cancelOrder, trackOrder, downloadInvoice, requestReturn, loadOrderDetails, loadDeals, loadAboutUs, loadMyCoupons, loadMyWallet, topUpWallet, verifyWalletTopUp, loadReferrals,
+  googleLoginInit, googleRegisterInit, googleCallback, searchLive
 } from '../controller/userController.js';
 import { addReview, editReview, deleteReview, getMyReviews } from '../controller/reviewController.js';
 import { loadOtpPage, verifyOtp, resendOtp, loadForgotOtpPage, verifyForgotOtp } from '../controller/otpController.js';
@@ -25,6 +25,7 @@ import Cart from '../model/cartModel.js';
 router.use(attachCategories);
 
 router.get('/', homePage);
+router.get('/api/search-live', searchLive);
 router.get('/login', isLogin, loadLogin)
 router.post('/login', login)
 
@@ -35,7 +36,7 @@ router.get('/otp', hasOtpSession, loadOtpPage)
 router.post('/verifyOtp', hasOtpSession, verifyOtp)
 router.get('/resendOtp', resendOtp);
 
-router.get('/logout', isAuth, logout)
+router.post('/logout', isAuth, logout)
 
 router.get('/forgotPassword', isLogin, loadForgotPassword);
 router.post('/forgotPassword', forgotPassword);
@@ -63,6 +64,7 @@ router.get('/coupons', isAuth, loadMyCoupons);
 router.get('/wallet', isAuth, loadMyWallet);
 router.post('/wallet/topup', isAuth, topUpWallet);
 router.post('/wallet/verify-topup', isAuth, verifyWalletTopUp);
+router.post('/changeEmail', isAuth, changeEmail);
 router.post('/verifyEmailOtp', isAuth, verifyChangeEmail);
 router.post('/resendEmailOtp', isAuth, resendChangeEmailOtp);
 
@@ -98,6 +100,7 @@ router.get('/checkout', isAuth, loadCheckout);
 router.post('/checkout/calculate', isAuth, calculateCheckout);
 router.post('/checkout/place-order', isAuth, placeOrder);
 router.post('/checkout/verify-payment', isAuth, verifyPayment);
+router.post('/checkout/mark-payment-failed', isAuth, markPaymentFailed);
 
 router.get('/order-success', isAuth, loadOrderSuccess);
 router.get('/payment-failed', isAuth, loadPaymentFailed);
@@ -120,7 +123,7 @@ router.get('/api/product-status/:id', checkProductStatus);
 router.get('/api/related/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
-    const userId = req.session.user?.id;   
+    const userId = req.session.user?.id;
     const TARGET = 4;
 
     const current = await Product.findOne({
@@ -246,8 +249,9 @@ router.get('/api/related/:productId', async (req, res) => {
   }
 });
 
-router.use((req, res) => {
-  res.redirect('/user/register');
-});
+
+
+
+
 
 export default router;

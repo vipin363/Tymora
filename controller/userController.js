@@ -5,6 +5,7 @@ import cloudinary from "../config/cloudinary.js";
 import addressModel from "../model/addressModel.js";
 import { generateAndSaveOtp, verifyOtpFromDb } from "../services/otpService.js";
 import Category from "../model/categoryModel.js";
+import Brand from "../model/brandModel.js";
 import Product from "../model/productModel.js";
 import Variant from "../model/variantModel.js";
 import Wishlist from "../model/wishlistModel.js";
@@ -301,14 +302,14 @@ export const homePage = async (req, res) => {
       date: new Date(r.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" }),
     }));
     // ── Calculate Dynamic Stats ──
-    const happyCustomersCount = await userSchema.countDocuments({ role: "user" });
+    const happyCustomersCount = await userSchema.countDocuments({});
 
-    // Watches sold: Total quantity of items in delivered orders
+    // Watches sold: Total quantity of products in delivered orders
     const watchesSoldResult = await Order.aggregate([
-      { $match: { "items.itemStatus": "delivered" } },
-      { $unwind: "$items" },
-      { $match: { "items.itemStatus": "delivered" } },
-      { $group: { _id: null, totalSold: { $sum: "$items.quantity" } } }
+      { $match: { "products.orderStatus": "Delivered" } },
+      { $unwind: "$products" },
+      { $match: { "products.orderStatus": "Delivered" } },
+      { $group: { _id: null, totalSold: { $sum: "$products.quantity" } } }
     ]);
     const watchesSold = watchesSoldResult.length > 0 ? watchesSoldResult[0].totalSold : 0;
 
@@ -390,7 +391,7 @@ export const forgotPassword = async (req, res) => {
 
     await generateAndSaveOtp({ email, purpose: "forgot_password" });
 
-    req.session.save();
+    await new Promise((resolve) => req.session.save(resolve));
     req.session.changeEmailLink = "/user/forgotPassword";
     return res.redirect("/user/forgotOtp");
   } catch (err) {
@@ -601,7 +602,7 @@ export const updateProfile = async (req, res) => {
 
     const phoneRegex = /^[0-9]{10}$/;
 
-    if (!phoneRegex.test(phone)) {
+    if (phone && !phoneRegex.test(phone)) {
       return res.render("user/editProfile", {
         layout: "main",
         user,
@@ -609,55 +610,49 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-    if (!dob) {
-      return res.render("user/editProfile", {
-        layout: "main",
-        user,
-        message: "Date of Birth is required",
-      });
-    }
-
-    const birthDate = new Date(dob);
+    let birthDate = null;
     const today = new Date();
 
-    if (isNaN(birthDate.getTime())) {
-      return res.render("user/editProfile", {
-        layout: "main",
-        user,
-        message: "Invalid Date of Birth",
-      });
-    }
+    if (dob) {
+      birthDate = new Date(dob);
+      if (isNaN(birthDate.getTime())) {
+        return res.render("user/editProfile", {
+          layout: "main",
+          user,
+          message: "Invalid Date of Birth",
+        });
+      }
 
-    if (birthDate >= today) {
-      return res.render("user/editProfile", {
-        layout: "main",
-        user,
-        message: "Date of Birth must be in the past",
-      });
-    }
+      if (birthDate >= today) {
+        return res.render("user/editProfile", {
+          layout: "main",
+          user,
+          message: "Date of Birth must be in the past",
+        });
+      }
 
-    if (birthDate.getFullYear() === today.getFullYear()) {
-      return res.render("user/editProfile", {
-        layout: "main",
-        user,
-        message: "Birth year cannot be current year",
-      });
-    }
+      if (birthDate.getFullYear() === today.getFullYear()) {
+        return res.render("user/editProfile", {
+          layout: "main",
+          user,
+          message: "Birth year cannot be current year",
+        });
+      }
 
-    let age = today.getFullYear() - birthDate.getFullYear();
-
-    if (age < 13) {
-      return res.render("user/editProfile", {
-        layout: "main",
-        user,
-        message: "Age must be at least 13 years",
-      });
+      let age = today.getFullYear() - birthDate.getFullYear();
+      if (age < 13) {
+        return res.render("user/editProfile", {
+          layout: "main",
+          user,
+          message: "Age must be at least 13 years",
+        });
+      }
     }
 
     let updateData = {
       name: name.trim(),
-      phone: phone.trim(),
-      dob: new Date(dob),
+      phone: phone ? phone.trim() : "",
+      dob: dob ? birthDate : null,
     };
 
     if (removeAvatar === "true") {
@@ -697,18 +692,23 @@ export const changeEmail = async (req, res) => {
 
     await generateAndSaveOtp({ email, purpose: "change_email" });
 
-    req.session.save();
+    await new Promise((resolve) => req.session.save(resolve));
 
     return res.json({ success: true });
   } catch (err) {
-    console.log(err);
-    return res.json({ success: false, message: "Something went wrong" });
+    console.log('changeEmail error:', err);
+    return res.json({ success: false, message: "Something went wrong: " + err.message });
   }
 };
 
 export const verifyChangeEmail = async (req, res) => {
   try {
     const { otp } = req.body;
+
+    if (!req.session.changeEmail) {
+      return res.json({ success: false, message: "Session expired. Please request a new OTP." });
+    }
+
     const result = await verifyOtpFromDb({
       email: req.session.changeEmail,
       otp_code: otp,
@@ -719,14 +719,15 @@ export const verifyChangeEmail = async (req, res) => {
       return res.json({ success: false, message: "Invalid or expired OTP" });
     }
 
-    await userSchema.findByIdAndUpdate(req.session.user.id, {
-      email: req.session.changeEmail,
-    });
+    const newEmail = req.session.changeEmail;
+    await userSchema.findByIdAndUpdate(req.session.user.id, { email: newEmail });
     req.session.changeEmail = null;
+    // Keep session user in sync
+    if (req.session.user) req.session.user.email = newEmail;
     return res.json({ success: true });
   } catch (err) {
-    console.log(err);
-    return res.json({ success: false, message: "Something went wrong" });
+    console.log('verifyChangeEmail error:', err);
+    return res.json({ success: false, message: "Something went wrong: " + err.message });
   }
 };
 
@@ -1803,7 +1804,7 @@ export const loadProductDetail = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    let avgRating = 4.5;
+    let avgRating = 0;
     let reviewCount = productReviews.length;
     let ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
@@ -1820,6 +1821,28 @@ export const loadProductDetail = async (req, res) => {
       userName: r.userId?.name || "Verified Buyer",
       dateFormatted: new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
     }));
+
+    // Fetch one active, globally applicable coupon to showcase on the product page
+    const now = new Date();
+    const showcaseCoupon = await Coupon.findOne({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+      offerType: 'global',
+      $or: [
+        { usageLimit: 0 },
+        { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
+      ]
+    }).sort({ discountValue: -1 }).lean();
+
+    const couponData = showcaseCoupon ? {
+      code: showcaseCoupon.code,
+      discountType: showcaseCoupon.discountType,
+      discountValue: showcaseCoupon.discountValue,
+      label: showcaseCoupon.discountType === 'percentage'
+        ? `Use code for extra ${showcaseCoupon.discountValue}% off`
+        : `Use code for ₹${showcaseCoupon.discountValue} off`,
+    } : null;
 
     res.render("user/productDetail", {
       layout: "main",
@@ -1854,6 +1877,7 @@ export const loadProductDetail = async (req, res) => {
         reviews: formattedReviews,
         ratingBreakdown
       },
+      coupon: couponData,
       variantData: JSON.stringify(variantData),
       relatedProducts,
     });
@@ -2430,9 +2454,7 @@ export const getUserOrders = async (req, res) => {
     const searchQuery = req.query.search || "";
 
     let query = { 
-      userId,
-      paymentStatus: { $ne: 'Failed' },
-      orderStatus: { $ne: 'Payment Pending' }
+      userId
     };
     if (searchQuery) {
       query.$or = [
@@ -2488,6 +2510,13 @@ export const getUserOrders = async (req, res) => {
           isReturned = true; // For "View Return Tracking"
         }
 
+        const isPaymentFailed = order.paymentStatus === 'Failed';
+
+        // Suppress all actions for failed-payment items
+        if (isPaymentFailed) {
+          return { ...item, canCancel: false, canTrack: false, canReturn: false, showReview: false, isReturned: false };
+        }
+
         return {
           ...item,
           canCancel,
@@ -2517,6 +2546,8 @@ export const getUserOrders = async (req, res) => {
 
       const finalAmountPaid = order.totalAmount - totalCancelledRefunds - totalReturnedRefunds;
 
+      const isPaymentFailed = order.paymentStatus === 'Failed';
+
       return {
         ...order,
         orderDateFormatted: fmtDate(order.orderDate),
@@ -2525,7 +2556,8 @@ export const getUserOrders = async (req, res) => {
         totalCancelledRefunds,
         totalReturnedRefunds,
         finalAmountPaid,
-        canDownloadInvoice: finalAmountPaid > 0 && canDownloadInvoice
+        canDownloadInvoice: finalAmountPaid > 0 && canDownloadInvoice,
+        isPaymentFailed
       };
     });
 
@@ -2728,6 +2760,17 @@ export const loadOrderDetails = async (req, res) => {
       if (trackingLevel >= 3) { s3 = true; tWidth = "66%"; }
       if (trackingLevel >= 4) { s4 = true; tWidth = "100%"; }
 
+      // Suppress all actions for failed-payment orders
+      if (order.paymentStatus === 'Failed') {
+        return {
+          ...item,
+          canCancel: false, canTrack: false, canReturn: false,
+          showReview: false, isReturned: false,
+          trackingLevel: 0, trackingStatusText: 'Payment Failed',
+          trackBarWidth: '0%', step1: false, step2: false, step3: false, step4: false
+        };
+      }
+
       return {
         ...item,
         canCancel,
@@ -2782,6 +2825,8 @@ export const loadOrderDetails = async (req, res) => {
       finalAmountPaid = recalculatedAll.finalAmountPaid;
     }
 
+    const isPaymentFailed = order.paymentStatus === 'Failed';
+
     res.render("user/orderDetails", {
       layout: "main",
       order: {
@@ -2793,7 +2838,8 @@ export const loadOrderDetails = async (req, res) => {
         totalCancelledRefunds,
         totalReturnedRefunds,
         finalAmountPaid,
-        canDownloadInvoice: finalAmountPaid > 0 && canDownloadInvoice
+        canDownloadInvoice: finalAmountPaid > 0 && canDownloadInvoice,
+        isPaymentFailed
       }
     });
   } catch (err) {
@@ -3016,6 +3062,11 @@ export const buyNow = async (req, res) => {
       quantity: parseInt(quantity) || 1
     };
 
+    req.session.checkoutSource = {
+      type: "buyNow",
+      productName: product.name
+    };
+
     res.json({ success: true, redirectUrl: "/user/checkout" });
   } catch (err) {
     console.error("buyNow error:", err);
@@ -3153,8 +3204,11 @@ export const loadCheckout = async (req, res) => {
       return true;
     });
 
+    const checkoutSource = req.session.checkoutSource || { type: "cart" };
+
     await res.render('user/checkout', {
       layout: 'main',
+      checkoutSource,
       cartItems,
       subtotal: subtotal,
       youSaved: totalDiscount,
@@ -3168,7 +3222,8 @@ export const loadCheckout = async (req, res) => {
       totalAmount,
       walletBalance,
       availableCoupons,
-      availableOffers
+      availableOffers,
+      checkoutState: req.session.checkoutState || null
     });
 
   } catch (err) {
@@ -3428,6 +3483,15 @@ export const placeOrder = async (req, res) => {
     if (paymentMethod === 'Online') {
       paymentMethod = 'Razorpay';
     }
+
+    req.session.checkoutState = {
+      addressId,
+      paymentMethod,
+      deliveryType,
+      couponCode,
+      offerId
+    };
+
     // Validate buyNow product stock and activity
     if (req.session.buyNow) {
       const { productId, variantId, quantity } = req.session.buyNow;
@@ -3891,11 +3955,7 @@ export const verifyPayment = async (req, res) => {
       return res.json({ success: true, alreadyProcessed: true });
     }
 
-    //  Push 'Pending' into the tracking timeline for each product
-    await Order.updateOne(
-      { _id: order._id },
-      { $push: { "products.$[].trackingTimeline": { status: "Pending", message: "Order placed successfully" } } }
-    );
+
 
     //  Atomic stock decrement with oversell protection
     for (const p of order.products) {
@@ -3942,12 +4002,38 @@ export const verifyPayment = async (req, res) => {
   }
 };
 
+// Called by the frontend (fire-and-forget) when Razorpay modal is dismissed or payment is declined.
+// This is the primary path that writes paymentStatus = 'Failed' to the DB.
+export const markPaymentFailed = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const userId = req.session.user?.id;
+    if (!orderId || !userId) return res.json({ success: false });
+
+    await Order.findOneAndUpdate(
+      { orderId, userId, paymentStatus: { $ne: 'Paid' } },
+      { paymentStatus: 'Failed' }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('markPaymentFailed error:', err);
+    return res.json({ success: false });
+  }
+};
+
 export const loadPaymentFailed = async (req, res) => {
   try {
     const { orderId, reason } = req.query;
     const userId = req.session.user?.id;
 
     if (!orderId || !userId) return res.redirect("/user/home");
+
+    // Safety net: if the payment was never explicitly marked as Failed
+    // (e.g. direct URL access), mark it now.
+    await Order.findOneAndUpdate(
+      { orderId, userId, paymentStatus: { $ne: 'Paid' } },
+      { paymentStatus: 'Failed' }
+    );
 
     const order = await Order.findOne({ orderId, userId }).lean();
     if (!order) return res.redirect("/user/home");
@@ -3969,6 +4055,7 @@ export const loadPaymentFailed = async (req, res) => {
     res.redirect('/user/home');
   }
 };
+
 
 export const loadOrderSuccess = async (req, res) => {
 
@@ -4245,5 +4332,61 @@ export const verifyWalletTopUp = async (req, res) => {
   } catch (err) {
     console.error('verifyWalletTopUp error:', err);
     res.status(500).json({ success: false, message: 'Error verifying payment.' });
+  }
+};
+
+export const searchLive = async (req, res) => {
+  try {
+    const query = req.query.q?.trim();
+    if (!query) {
+      return res.json({ success: true, products: [] });
+    }
+
+    const regex = new RegExp(query, 'i');
+
+    const categories = await Category.find({
+      name: regex,
+      is_visible: true,
+      deleted_at: null
+    }).select('_id');
+    const categoryIds = categories.map(c => c._id);
+
+    const brands = await Brand.find({ name: regex }).select('_id');
+    const brandIds = brands.map(b => b._id);
+
+    let products = await Product.find({
+      status: 'active',
+      deleted_at: null,
+      $or: [
+        { name: regex },
+        { category: { $in: categoryIds } },
+        { brand: { $in: brandIds } }
+      ]
+    })
+      .populate('category', 'name')
+      .populate('brand', 'name')
+      .lean();
+
+    // Sort priority: startsWith > containing > newest
+    const lowerQuery = query.toLowerCase();
+    products.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      
+      const aStarts = aName.startsWith(lowerQuery) ? 1 : 0;
+      const bStarts = bName.startsWith(lowerQuery) ? 1 : 0;
+      
+      if (aStarts !== bStarts) {
+        return bStarts - aStarts; 
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    products = products.slice(0, 8);
+
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error("searchLive error:", error);
+    res.status(500).json({ success: false, message: "Search failed" });
   }
 };

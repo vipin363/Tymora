@@ -106,6 +106,11 @@ app.use('/admin', adminRoute);
 app.use('/user', userRoute);
 app.use('/', userRoute);
 
+// Global 404 Error Handler
+app.use((req, res, next) => {
+    res.status(404).render('user/404', { layout: false });
+});
+
 await connectDB();
 
 // Background cleanup for abandoned Razorpay orders (runs every 15 minutes)

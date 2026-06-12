@@ -427,6 +427,7 @@ function updateCartBtn(v) {
   const label   = document.getElementById('pdCartBtnLabel');
   const cartBtn = document.getElementById('pdAddToCart');
   const buyBtn  = document.getElementById('pdBuyNow');
+  const stickyBtn = document.getElementById('pdStickyBtn');
   if (!label || !cartBtn) return;
 
   const inCart = !!window.__cartState[v.id];
@@ -442,6 +443,12 @@ function updateCartBtn(v) {
       buyBtn.style.opacity = '0.5';
       buyBtn.style.cursor  = 'not-allowed';
     }
+    if (stickyBtn) {
+      stickyBtn.textContent = 'Out of Stock';
+      stickyBtn.disabled = true;
+      stickyBtn.style.opacity = '0.5';
+      stickyBtn.style.cursor = 'not-allowed';
+    }
   } else if (inCart) {
     label.textContent     = 'View in Cart';
     cartBtn.disabled      = false;
@@ -453,6 +460,12 @@ function updateCartBtn(v) {
       buyBtn.style.opacity = '';
       buyBtn.style.cursor  = '';
     }
+    if (stickyBtn) {
+      stickyBtn.textContent = 'View in Cart';
+      stickyBtn.disabled = false;
+      stickyBtn.style.opacity = '';
+      stickyBtn.style.cursor = '';
+    }
   } else {
     label.textContent     = 'Add to Cart';
     cartBtn.disabled      = false;
@@ -463,6 +476,12 @@ function updateCartBtn(v) {
       buyBtn.disabled      = false;
       buyBtn.style.opacity = '';
       buyBtn.style.cursor  = '';
+    }
+    if (stickyBtn) {
+      stickyBtn.textContent = 'Add to Cart';
+      stickyBtn.disabled = false;
+      stickyBtn.style.opacity = '';
+      stickyBtn.style.cursor = '';
     }
   }
 }

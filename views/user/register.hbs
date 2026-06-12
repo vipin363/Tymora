@@ -398,8 +398,23 @@ console.log("Submit fired");
 
 	msg.innerText = "";
 
-	if(name === "" || email === "" || password === "" || confirmPassword === ""){
-		msg.innerText = "Please fill all fields";
+	if(name === ""){
+		msg.innerText = "Name is required";
+		e.preventDefault();
+		return;
+	}
+	if(email === ""){
+		msg.innerText = "Email is required";
+		e.preventDefault();
+		return;
+	}
+	if(password === ""){
+		msg.innerText = "Password is required";
+		e.preventDefault();
+		return;
+	}
+	if(confirmPassword === ""){
+		msg.innerText = "Confirm password is required";
 		e.preventDefault();
 		return;
 	}

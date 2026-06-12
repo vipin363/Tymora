@@ -1,24 +1,24 @@
-import Admin from "../model/adminModel.js";
-import PDFDocument from "pdfkit";
-import ExcelJS from "exceljs";
-import User from "../model/userModel.js";
-import Address from "../model/addressModel.js";
-import bcrypt from "bcryptjs";
-import { generateAndSaveOtp } from "../services/otpService.js";
-import Category from "../model/categoryModel.js";
-import { v2 as cloudinary } from "cloudinary";
-import Product from "../model/productModel.js";
-import Brand from "../model/brandModel.js";
-import Variant from "../model/variantModel.js";
-import Material from "../model/materialModel.js";
-import SavedColor from "../model/savedColorModel.js";
-import Order from "../model/orderModel.js";
-import Settings from "../model/settingsModel.js";
-import WalletTransaction from "../model/walletTransactionModel.js";
-import Referral from "../model/referralModel.js";
-import Notification from "../model/notificationModel.js";
-import mongoose from "mongoose";
-import { calculateRefundAmount } from "../utils/refundCalculator.js";
+import Admin from '../model/adminModel.js';
+import PDFDocument from 'pdfkit';
+import ExcelJS from 'exceljs';
+import User from '../model/userModel.js';
+import Address from '../model/addressModel.js';
+import bcrypt from 'bcryptjs';
+import { generateAndSaveOtp } from '../services/otpService.js';
+import Category from '../model/categoryModel.js';
+import { v2 as cloudinary } from 'cloudinary';
+import Product from '../model/productModel.js';
+import Brand from '../model/brandModel.js';
+import Variant from '../model/variantModel.js';
+import Material from '../model/materialModel.js';
+import SavedColor from '../model/savedColorModel.js';
+import Order from '../model/orderModel.js';
+import Settings from '../model/settingsModel.js';
+import WalletTransaction from '../model/walletTransactionModel.js';
+import Referral from '../model/referralModel.js';
+import Notification from '../model/notificationModel.js';
+import mongoose from 'mongoose';
+import { calculateRefundAmount } from '../utils/refundCalculator.js';
 // auth and user management
 
 function calcDiscount(originalPrice, salePrice) {
@@ -28,110 +28,205 @@ function calcDiscount(originalPrice, salePrice) {
   return Math.max(0, Math.round(((op - sp) / op) * 100));
 }
 
-const cleanSpaces = (str) => typeof str === 'string' ? str.trim().replace(/\s+/g, ' ') : '';
+const cleanSpaces = (str) =>
+  typeof str === 'string' ? str.trim().replace(/\s+/g, ' ') : '';
 
 const validateProductName = async (name, excludeProductId = null) => {
   const cleanName = cleanSpaces(name);
-  if (!cleanName) return { valid: false, msg: "Product name is required." };
-  if (cleanName.length < 3 || cleanName.length > 100) return { valid: false, msg: "Product name must be between 3 and 100 characters." };
-  if (!/[a-zA-Z]/.test(cleanName)) return { valid: false, msg: "Product name must contain at least one alphabetic character." };
-  if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanName)) return { valid: false, msg: "Product name cannot contain special characters." };
-  
-  let query = { name: { $regex: new RegExp(`^${cleanName}$`, 'i') }, deleted_at: null };
+  if (!cleanName) return { valid: false, msg: 'Product name is required.' };
+  if (cleanName.length < 3 || cleanName.length > 100)
+    return {
+      valid: false,
+      msg: 'Product name must be between 3 and 100 characters.',
+    };
+  if (!/[a-zA-Z]/.test(cleanName))
+    return {
+      valid: false,
+      msg: 'Product name must contain at least one alphabetic character.',
+    };
+  if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanName))
+    return {
+      valid: false,
+      msg: 'Product name cannot contain special characters.',
+    };
+
+  let query = {
+    name: { $regex: new RegExp(`^${cleanName}$`, 'i') },
+    deleted_at: null,
+  };
   if (excludeProductId) query._id = { $ne: excludeProductId };
   const existing = await Product.findOne(query);
-  if (existing) return { valid: false, msg: "A product with this name already exists." };
-  
+  if (existing)
+    return { valid: false, msg: 'A product with this name already exists.' };
+
   return { valid: true, value: cleanName };
 };
 
 const validateDescription = (desc) => {
   const cleanDesc = cleanSpaces(desc);
-  if (!cleanDesc) return { valid: false, msg: "Description is required." };
-  if (cleanDesc.length < 20) return { valid: false, msg: "Description must contain at least 20 characters." };
-  if (cleanDesc.length > 2000) return { valid: false, msg: "Description cannot exceed 2000 characters." };
-  if (!/[a-zA-Z]/.test(cleanDesc)) return { valid: false, msg: "Description must contain meaningful text." };
+  if (!cleanDesc) return { valid: false, msg: 'Description is required.' };
+  if (cleanDesc.length < 20)
+    return {
+      valid: false,
+      msg: 'Description must contain at least 20 characters.',
+    };
+  if (cleanDesc.length > 2000)
+    return { valid: false, msg: 'Description cannot exceed 2000 characters.' };
+  if (!/[a-zA-Z]/.test(cleanDesc))
+    return { valid: false, msg: 'Description must contain meaningful text.' };
   return { valid: true, value: cleanDesc };
 };
 
 const validateCategoryBrand = async (categoryId, brandId, brandName) => {
-  if (!categoryId) return { valid: false, msg: "Please select a valid category." };
-  const category = await Category.findOne({ _id: categoryId, is_visible: true, deleted_at: null });
-  if (!category) return { valid: false, msg: "Please select a valid category." };
+  if (!categoryId)
+    return { valid: false, msg: 'Please select a valid category.' };
+  const category = await Category.findOne({
+    _id: categoryId,
+    is_visible: true,
+    deleted_at: null,
+  });
+  if (!category)
+    return { valid: false, msg: 'Please select a valid category.' };
 
   let finalBrandId = brandId;
-  if (brandId === "other") {
-    if (!brandName || !brandName.trim()) return { valid: false, msg: "Please select a valid brand." };
+  if (brandId === 'other') {
+    if (!brandName || !brandName.trim())
+      return { valid: false, msg: 'Please select a valid brand.' };
     const cleanBrand = cleanSpaces(brandName);
-    const existingBrand = await Brand.findOne({ name: { $regex: new RegExp(`^${cleanBrand}$`, 'i') } });
+    const existingBrand = await Brand.findOne({
+      name: { $regex: new RegExp(`^${cleanBrand}$`, 'i') },
+    });
     if (existingBrand) finalBrandId = existingBrand._id;
   } else {
-    if (!brandId) return { valid: false, msg: "Please select a valid brand." };
+    if (!brandId) return { valid: false, msg: 'Please select a valid brand.' };
     const brand = await Brand.findById(brandId);
-    if (!brand) return { valid: false, msg: "Please select a valid brand." };
+    if (!brand) return { valid: false, msg: 'Please select a valid brand.' };
   }
-  return { valid: true, categoryId, finalBrandId, newBrandName: brandId === "other" ? cleanSpaces(brandName) : null };
+  return {
+    valid: true,
+    categoryId,
+    finalBrandId,
+    newBrandName: brandId === 'other' ? cleanSpaces(brandName) : null,
+  };
 };
 
 const validateVariantInput = async (data, productId, variantId = null) => {
-  
-  const { variantName: _variantName, name: _name, sku, strapColor, dialColor, caseColor, size, strapMaterial, caseMaterial, originalPrice, salePrice, stock } = data;
+  const {
+    variantName: _variantName,
+    name: _name,
+    sku,
+    strapColor,
+    dialColor,
+    caseColor,
+    size,
+    strapMaterial,
+    caseMaterial,
+    originalPrice,
+    salePrice,
+    stock,
+  } = data;
   const variantName = _variantName || _name;
-  
-  const cleanVariantName = cleanSpaces(variantName);
-  if (!cleanVariantName) return { valid: false, msg: "Variant name is required." };
-  if (cleanVariantName.length < 3 || cleanVariantName.length > 100) return { valid: false, msg: "Variant name must be between 3 and 100 characters." };
-  if (!/[a-zA-Z]/.test(cleanVariantName)) return { valid: false, msg: "Variant name cannot contain only numbers or symbols." };
-  if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanVariantName)) return { valid: false, msg: "Variant name cannot contain special characters." };
 
-  if (!sku) return { valid: false, msg: "SKU is required." };
-  if (!/^[a-zA-Z0-9\-]+$/.test(sku)) return { valid: false, msg: "SKU contains invalid characters." };
+  const cleanVariantName = cleanSpaces(variantName);
+  if (!cleanVariantName)
+    return { valid: false, msg: 'Variant name is required.' };
+  if (cleanVariantName.length < 3 || cleanVariantName.length > 100)
+    return {
+      valid: false,
+      msg: 'Variant name must be between 3 and 100 characters.',
+    };
+  if (!/[a-zA-Z]/.test(cleanVariantName))
+    return {
+      valid: false,
+      msg: 'Variant name cannot contain only numbers or symbols.',
+    };
+  if (!/^[a-zA-Z0-9\s\&\'\(\)\-]+$/.test(cleanVariantName))
+    return {
+      valid: false,
+      msg: 'Variant name cannot contain special characters.',
+    };
+
+  if (!sku) return { valid: false, msg: 'SKU is required.' };
+  if (!/^[a-zA-Z0-9\-]+$/.test(sku))
+    return { valid: false, msg: 'SKU contains invalid characters.' };
   let skuQuery = { sku: sku };
   if (variantId) skuQuery._id = { $ne: variantId };
   const existingSku = await Variant.findOne(skuQuery);
-  if (existingSku) return { valid: false, msg: "SKU already exists." };
+  if (existingSku) return { valid: false, msg: 'SKU already exists.' };
 
   const validateMaterial = (mat, fieldName) => {
     const clean = cleanSpaces(mat);
     if (!clean) return { valid: false, msg: `${fieldName} name is required.` };
-    if (clean.length < 2 || clean.length > 50) return { valid: false, msg: `${fieldName} name must be between 2 and 50 characters.` };
-    if (!/[a-zA-Z]/.test(clean)) return { valid: false, msg: `${fieldName} name must contain alphabetic characters.` };
+    if (clean.length < 2 || clean.length > 50)
+      return {
+        valid: false,
+        msg: `${fieldName} name must be between 2 and 50 characters.`,
+      };
+    if (!/[a-zA-Z]/.test(clean))
+      return {
+        valid: false,
+        msg: `${fieldName} name must contain alphabetic characters.`,
+      };
     return { valid: true, value: clean };
   };
-  const strapMatCheck = validateMaterial(strapMaterial, "Strap material");
+  const strapMatCheck = validateMaterial(strapMaterial, 'Strap material');
   if (!strapMatCheck.valid) return strapMatCheck;
-  const caseMatCheck = validateMaterial(caseMaterial, "Case material");
+  const caseMatCheck = validateMaterial(caseMaterial, 'Case material');
   if (!caseMatCheck.valid) return caseMatCheck;
 
   const validateColor = (col, fieldName) => {
     const clean = cleanSpaces(col);
     if (!clean) return { valid: false, msg: `${fieldName} is required.` };
-    if (!/^[a-zA-Z\s]+$/.test(clean) && !/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(clean)) return { valid: false, msg: `${fieldName} must be a valid color name or hex code.` };
+    if (
+      !/^[a-zA-Z\s]+$/.test(clean) &&
+      !/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(clean)
+    )
+      return {
+        valid: false,
+        msg: `${fieldName} must be a valid color name or hex code.`,
+      };
     return { valid: true, value: clean };
   };
-  const strapColorCheck = validateColor(strapColor, "Strap color");
+  const strapColorCheck = validateColor(strapColor, 'Strap color');
   if (!strapColorCheck.valid) return strapColorCheck;
-  const dialColorCheck = validateColor(dialColor, "Dial color");
+  const dialColorCheck = validateColor(dialColor, 'Dial color');
   if (!dialColorCheck.valid) return dialColorCheck;
-  const caseColorCheck = validateColor(caseColor, "Case color");
+  const caseColorCheck = validateColor(caseColor, 'Case color');
   if (!caseColorCheck.valid) return caseColorCheck;
 
   const cleanSize = cleanSpaces(size);
-  if (!cleanSize) return { valid: false, msg: "Size is required." };
-  if (!/^\d+mm$/i.test(cleanSize)) return { valid: false, msg: "Please enter a valid watch size (e.g., 42mm)." };
+  if (!cleanSize) return { valid: false, msg: 'Size is required.' };
+  if (!/^\d+mm$/i.test(cleanSize))
+    return {
+      valid: false,
+      msg: 'Please enter a valid watch size (e.g., 42mm).',
+    };
 
   const mrp = parseFloat(originalPrice);
-  if (isNaN(mrp) || mrp <= 0) return { valid: false, msg: "MRP must be greater than zero." };
-  if (!/^\d+(\.\d{1,2})?$/.test(mrp.toString())) return { valid: false, msg: "MRP can have a maximum of two decimal places." };
+  if (isNaN(mrp) || mrp <= 0)
+    return { valid: false, msg: 'MRP must be greater than zero.' };
+  if (!/^\d+(\.\d{1,2})?$/.test(mrp.toString()))
+    return {
+      valid: false,
+      msg: 'MRP can have a maximum of two decimal places.',
+    };
 
   const sp = parseFloat(salePrice);
-  if (isNaN(sp) || sp <= 0) return { valid: false, msg: "Sale price must be greater than zero." };
-  if (!/^\d+(\.\d{1,2})?$/.test(sp.toString())) return { valid: false, msg: "Sale price can have a maximum of two decimal places." };
-  if (sp > mrp) return { valid: false, msg: "Sale price cannot be greater than MRP." };
+  if (isNaN(sp) || sp <= 0)
+    return { valid: false, msg: 'Sale price must be greater than zero.' };
+  if (!/^\d+(\.\d{1,2})?$/.test(sp.toString()))
+    return {
+      valid: false,
+      msg: 'Sale price can have a maximum of two decimal places.',
+    };
+  if (sp > mrp)
+    return { valid: false, msg: 'Sale price cannot be greater than MRP.' };
 
   const stockNum = parseFloat(stock);
-  if (isNaN(stockNum) || stockNum < 0) return { valid: false, msg: "Stock cannot be negative." };
-  if (!Number.isInteger(stockNum)) return { valid: false, msg: "Stock must be a whole number." };
+  if (isNaN(stockNum) || stockNum < 0)
+    return { valid: false, msg: 'Stock cannot be negative.' };
+  if (!Number.isInteger(stockNum))
+    return { valid: false, msg: 'Stock must be a whole number.' };
 
   let dupQuery = {
     product: productId,
@@ -141,42 +236,51 @@ const validateVariantInput = async (data, productId, variantId = null) => {
     caseColor: caseColorCheck.value,
     strapMaterial: strapMatCheck.value,
     caseMaterial: caseMatCheck.value,
-    deleted_at: null
+    deleted_at: null,
   };
   if (variantId) dupQuery._id = { $ne: variantId };
   if (productId) {
     const dupVariant = await Variant.findOne(dupQuery);
-    if (dupVariant) return { valid: false, msg: "A variant with the same size, colors, and materials already exists." };
+    if (dupVariant)
+      return {
+        valid: false,
+        msg: 'A variant with the same size, colors, and materials already exists.',
+      };
   }
 
-  return { 
-    valid: true, 
-    values: { 
-      variantName: cleanVariantName, 
-      sku, 
-      strapColor: strapColorCheck.value, 
-      dialColor: dialColorCheck.value, 
-      caseColor: caseColorCheck.value, 
-      size: cleanSize, 
-      strapMaterial: strapMatCheck.value, 
-      caseMaterial: caseMatCheck.value, 
-      originalPrice: mrp, 
-      salePrice: sp, 
-      stock: stockNum 
-    } 
+  return {
+    valid: true,
+    values: {
+      variantName: cleanVariantName,
+      sku,
+      strapColor: strapColorCheck.value,
+      dialColor: dialColorCheck.value,
+      caseColor: caseColorCheck.value,
+      size: cleanSize,
+      strapMaterial: strapMatCheck.value,
+      caseMaterial: caseMatCheck.value,
+      originalPrice: mrp,
+      salePrice: sp,
+      stock: stockNum,
+    },
   };
 };
 
 const validateImages = (allImages) => {
-  if (allImages.length < 3) return { valid: false, msg: "Please upload at least 3 images." };
+  if (allImages.length < 3)
+    return { valid: false, msg: 'Please upload at least 3 images.' };
   for (const img of allImages) {
-    if (!/\.(jpg|jpeg|png|webp)$/i.test(img)) return { valid: false, msg: "Only JPG, JPEG, PNG, and WEBP images are allowed." };
+    if (!/\.(jpg|jpeg|png|webp)$/i.test(img))
+      return {
+        valid: false,
+        msg: 'Only JPG, JPEG, PNG, and WEBP images are allowed.',
+      };
   }
   return { valid: true };
 };
 
 export const loadLogin = (req, res) => {
-  res.render("admin/login", { layout: "auth",  layout: "auth" });
+  res.render('admin/login', { layout: 'auth', layout: 'auth' });
 };
 
 export const login = async (req, res) => {
@@ -186,41 +290,44 @@ export const login = async (req, res) => {
     const admin = await Admin.findOne({ email, isAdmin: true });
 
     if (!admin) {
-      return res.render("admin/login", { layout: "auth", 
-        error: "Invalid email or password",
-        email: "",
+      return res.render('admin/login', {
+        layout: 'auth',
+        error: 'Invalid email or password',
+        email: '',
       });
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return res.render("admin/login", { layout: "auth", 
-        error: "Invalid email or password",
-        email: "",
+      return res.render('admin/login', {
+        layout: 'auth',
+        error: 'Invalid email or password',
+        email: '',
       });
     }
     req.session.admin = { id: admin._id };
 
-    res.redirect("/admin/dashBoard");
+    res.redirect('/admin/dashBoard');
   } catch (err) {
     console.log(err);
-    res.render("admin/login", { layout: "auth",  error: "Something went wrong" });
+    res.render('admin/login', {
+      layout: 'auth',
+      error: 'Something went wrong',
+    });
   }
 };
 
 export const loadDashboard = (req, res) => {
-  res.render("admin/dashBoard", { layout: "admin", 
-    activePage: "dashboard",
-  });
+  res.render('admin/dashBoard', { layout: 'admin', activePage: 'dashboard' });
 };
 
 export const logout = (req, res) => {
   req.session.admin = null;
-  res.redirect("/admin/login");
+  res.redirect('/admin/login');
 };
 
 export const loadForgotPassword = (req, res) => {
-  res.render("admin/forgotPassword", { layout: "auth",  layout: "auth" });
+  res.render('admin/forgotPassword', { layout: 'auth', layout: 'auth' });
 };
 
 export const forgotPassword = async (req, res) => {
@@ -228,27 +335,34 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.render("admin/forgotPassword", { layout: "auth",  error: "Email required" });
+      return res.render('admin/forgotPassword', {
+        layout: 'auth',
+        error: 'Email required',
+      });
     }
 
     const admin = await Admin.findOne({ email, isAdmin: true });
 
     if (!admin) {
-      return res.render("admin/forgotPassword", { layout: "auth", 
-        error: "Email not registered",
+      return res.render('admin/forgotPassword', {
+        layout: 'auth',
+        error: 'Email not registered',
       });
     }
 
     req.session.resetEmail = email;
 
-    await generateAndSaveOtp({ email, purpose: "forgot_password" });
+    await generateAndSaveOtp({ email, purpose: 'forgot_password' });
 
     await req.session.save();
 
-    res.redirect("/admin/otp");
+    res.redirect('/admin/otp');
   } catch (err) {
     console.log(err);
-    res.render("admin/forgotPassword", { layout: "auth",  error: "Something went wrong" });
+    res.render('admin/forgotPassword', {
+      layout: 'auth',
+      error: 'Something went wrong',
+    });
   }
 };
 
@@ -259,32 +373,35 @@ export const resetAdminPassword = async (req, res) => {
     const email = req.session.resetEmail;
 
     if (!email || !req.session.resetVerified) {
-      return res.redirect("/admin/forgotPassword");
+      return res.redirect('/admin/forgotPassword');
     }
 
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
-      return res.redirect("/admin/login");
+      return res.redirect('/admin/login');
     }
 
     if (!newPassword || !confirmPassword) {
-      return res.render("admin/resetPassword", { layout: "auth", 
-        error: "All fields required",
+      return res.render('admin/resetPassword', {
+        layout: 'auth',
+        error: 'All fields required',
       });
     }
 
     if (newPassword !== confirmPassword) {
-      return res.render("admin/resetPassword", { layout: "auth", 
-        error: "Passwords do not match",
+      return res.render('admin/resetPassword', {
+        layout: 'auth',
+        error: 'Passwords do not match',
       });
     }
 
     const isSame = await bcrypt.compare(newPassword, admin.password);
 
     if (isSame) {
-      return res.render("admin/resetPassword", { layout: "auth", 
-        error: "New password must be different from old password",
+      return res.render('admin/resetPassword', {
+        layout: 'auth',
+        error: 'New password must be different from old password',
       });
     }
 
@@ -297,40 +414,43 @@ export const resetAdminPassword = async (req, res) => {
 
     req.session.resetVerified = null;
 
-    res.redirect("/admin/login");
+    res.redirect('/admin/login');
   } catch (err) {
     console.log(err);
-    res.render("admin/resetPassword", { layout: "auth",  error: "Something went wrong" });
+    res.render('admin/resetPassword', {
+      layout: 'auth',
+      error: 'Something went wrong',
+    });
   }
 };
 
 export const loadUsers = async (req, res) => {
   try {
-    const search = req.query.search || "";
-    const sortOption = req.query.sort || "latest";
-    const statusFilter = req.query.status || "all";
+    const search = req.query.search || '';
+    const sortOption = req.query.sort || 'latest';
+    const statusFilter = req.query.status || 'all';
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
 
     const query = {
       $or: [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
       ],
     };
 
-    if (statusFilter === "blocked") {
+    if (statusFilter === 'blocked') {
       query.isBlocked = true;
-    } else if (statusFilter === "active") {
+    } else if (statusFilter === 'active') {
       query.isBlocked = false;
     }
 
     let sortQuery = {};
 
-    if (sortOption === "latest") {
+    if (sortOption === 'latest') {
       sortQuery = { createdAt: -1 };
-    } else if (sortOption === "oldest") {
+    } else if (sortOption === 'oldest') {
       sortQuery = { createdAt: 1 };
     }
 
@@ -346,48 +466,68 @@ export const loadUsers = async (req, res) => {
     const totalPages = Math.ceil(totalUsers / limit);
 
     const totalSpendingAgg = await Order.aggregate([
-      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+      {
+        $match: {
+          paymentStatus: { $ne: 'Failed' },
+          orderStatus: { $ne: 'Payment Pending' },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
     ]);
-    const totalCustomerSpending = totalSpendingAgg[0] ? totalSpendingAgg[0].total : 0;
+    const totalCustomerSpending = totalSpendingAgg[0]
+      ? totalSpendingAgg[0].total
+      : 0;
 
     // Fetch order stats per user
     const userIds = users.map((u) => u._id);
     const orderStats = await Order.aggregate([
-      { $match: { userId: { $in: userIds } } },
+      {
+        $match: {
+          userId: { $in: userIds },
+          paymentStatus: { $ne: 'Failed' },
+          orderStatus: { $ne: 'Payment Pending' },
+        },
+      },
       {
         $group: {
-          _id: "$userId",
+          _id: '$userId',
           totalOrders: { $sum: 1 },
-          totalSpending: { $sum: "$totalAmount" },
+          totalSpending: { $sum: '$totalAmount' },
         },
       },
     ]);
     const statsMap = {};
-    orderStats.forEach((s) => { statsMap[s._id.toString()] = s; });
+    orderStats.forEach((s) => {
+      statsMap[s._id.toString()] = s;
+    });
 
     const formattedUsers = users.map((u) => {
-      const os = statsMap[u._id.toString()] || { totalOrders: 0, totalSpending: 0 };
+      const os = statsMap[u._id.toString()] || {
+        totalOrders: 0,
+        totalSpending: 0,
+      };
       return {
         _id: u._id,
         name: u.name,
         email: u.email,
-        phone: u.phone || "-",
+        phone: u.phone || '-',
         avatar: u.avatar || null,
-        initials: u.name?.charAt(0).toUpperCase() || "U",
-        status: u.isBlocked ? "blocked" : "active",
+        initials: u.name?.charAt(0).toUpperCase() || 'U',
+        status: u.isBlocked ? 'blocked' : 'active',
         joined: u.createdAt?.toDateString(),
         totalOrders: os.totalOrders,
         totalSpending: os.totalSpending,
       };
     });
 
-    res.render("admin/userManagement", { layout: "admin", 
+    res.render('admin/userManagement', {
+      layout: 'admin',
       users: formattedUsers,
       currentPage: page,
       totalPages,
       search,
       sort: sortOption,
-      activePage: "users",
+      activePage: 'users',
       stats: {
         totalUsers,
         activeUsers,
@@ -397,70 +537,123 @@ export const loadUsers = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect("/admin/dashBoard");
+    res.redirect('/admin/dashBoard');
   }
 };
 
 //  EXPORT USERS PDF
 export const exportUsersPdf = async (req, res) => {
   try {
-    const search = req.query.search || "";
-    const sortOption = req.query.sort || "latest";
-    const statusFilter = req.query.status || "all";
+    const search = req.query.search || '';
+    const sortOption = req.query.sort || 'latest';
+    const statusFilter = req.query.status || 'all';
 
     const query = {
       $or: [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
       ],
     };
-    if (statusFilter === "blocked") query.isBlocked = true;
-    else if (statusFilter === "active") query.isBlocked = false;
+    if (statusFilter === 'blocked') query.isBlocked = true;
+    else if (statusFilter === 'active') query.isBlocked = false;
 
-    let sortQuery = sortOption === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+    let sortQuery =
+      sortOption === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
 
     const users = await User.find(query).sort(sortQuery).lean();
-    const userIds = users.map(u => u._id);
+    const userIds = users.map((u) => u._id);
     const orderStats = await Order.aggregate([
-      { $match: { userId: { $in: userIds } } },
-      { $group: { _id: "$userId", totalOrders: { $sum: 1 }, totalSpending: { $sum: "$totalAmount" } } }
+      {
+        $match: {
+          userId: { $in: userIds },
+          paymentStatus: { $ne: 'Failed' },
+          orderStatus: { $ne: 'Payment Pending' },
+        },
+      },
+      {
+        $group: {
+          _id: '$userId',
+          totalOrders: { $sum: 1 },
+          totalSpending: { $sum: '$totalAmount' },
+        },
+      },
     ]);
     const statsMap = {};
-    orderStats.forEach(s => { statsMap[s._id.toString()] = s; });
+    orderStats.forEach((s) => {
+      statsMap[s._id.toString()] = s;
+    });
 
-    const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' });
-    res.setHeader('Content-disposition', 'attachment; filename=users_export.pdf');
+    const doc = new PDFDocument({
+      margin: 30,
+      size: 'A4',
+      layout: 'landscape',
+    });
+    res.setHeader(
+      'Content-disposition',
+      'attachment; filename=users_export.pdf'
+    );
     res.setHeader('Content-type', 'application/pdf');
     doc.pipe(res);
 
-    doc.fontSize(18).font('Helvetica-Bold').text('User Management Report', { align: 'center' });
-    doc.fontSize(9).font('Helvetica').text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc
+      .fontSize(18)
+      .font('Helvetica-Bold')
+      .text('User Management Report', { align: 'center' });
+    doc
+      .fontSize(9)
+      .font('Helvetica')
+      .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
     if (search) doc.text(`Search: "${search}"`, { align: 'center' });
-    if (statusFilter !== 'all') doc.text(`Status: ${statusFilter}`, { align: 'center' });
+    if (statusFilter !== 'all')
+      doc.text(`Status: ${statusFilter}`, { align: 'center' });
     doc.moveDown(1.5);
 
     const cols = [30, 180, 370, 470, 530, 600, 680];
-    const headers = ['Name', 'Email', 'Phone', 'Orders', 'Spending', 'Status', 'Joined'];
+    const headers = [
+      'Name',
+      'Email',
+      'Phone',
+      'Orders',
+      'Spending',
+      'Status',
+      'Joined',
+    ];
     doc.fontSize(9).font('Helvetica-Bold');
-    headers.forEach((h, i) => doc.text(h, cols[i], doc.y, { continued: i < headers.length - 1 }));
+    headers.forEach((h, i) =>
+      doc.text(h, cols[i], doc.y, { continued: i < headers.length - 1 })
+    );
     doc.text('');
-    doc.moveTo(30, doc.y + 3).lineTo(790, doc.y + 3).stroke();
+    doc
+      .moveTo(30, doc.y + 3)
+      .lineTo(790, doc.y + 3)
+      .stroke();
     doc.moveDown(0.5);
 
     doc.font('Helvetica').fontSize(8);
-    users.forEach(u => {
+    users.forEach((u) => {
       if (doc.y > 530) doc.addPage();
-      const os = statsMap[u._id.toString()] || { totalOrders: 0, totalSpending: 0 };
+      const os = statsMap[u._id.toString()] || {
+        totalOrders: 0,
+        totalSpending: 0,
+      };
       const y = doc.y;
-      const name = u.name?.length > 20 ? u.name.substring(0, 18) + '...' : (u.name || '-');
-      const email = u.email?.length > 28 ? u.email.substring(0, 26) + '...' : (u.email || '-');
+      const name =
+        u.name?.length > 20 ? u.name.substring(0, 18) + '...' : u.name || '-';
+      const email =
+        u.email?.length > 28
+          ? u.email.substring(0, 26) + '...'
+          : u.email || '-';
       doc.text(name, cols[0], y);
       doc.text(email, cols[1], y);
       doc.text(u.phone || '-', cols[2], y);
       doc.text(String(os.totalOrders), cols[3], y);
       doc.text(`Rs.${os.totalSpending.toFixed(0)}`, cols[4], y);
       doc.text(u.isBlocked ? 'Blocked' : 'Active', cols[5], y);
-      doc.text(u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-', cols[6], y);
+      doc.text(
+        u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-',
+        cols[6],
+        y
+      );
       doc.moveDown(1);
     });
 
@@ -471,32 +664,47 @@ export const exportUsersPdf = async (req, res) => {
   }
 };
 
-// EXPORT USERS EXCEL 
+// EXPORT USERS EXCEL
 export const exportUsersExcel = async (req, res) => {
   try {
-    const search = req.query.search || "";
-    const sortOption = req.query.sort || "latest";
-    const statusFilter = req.query.status || "all";
+    const search = req.query.search || '';
+    const sortOption = req.query.sort || 'latest';
+    const statusFilter = req.query.status || 'all';
 
     const query = {
       $or: [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
       ],
     };
-    if (statusFilter === "blocked") query.isBlocked = true;
-    else if (statusFilter === "active") query.isBlocked = false;
+    if (statusFilter === 'blocked') query.isBlocked = true;
+    else if (statusFilter === 'active') query.isBlocked = false;
 
-    let sortQuery = sortOption === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+    let sortQuery =
+      sortOption === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
 
     const users = await User.find(query).sort(sortQuery).lean();
-    const userIds = users.map(u => u._id);
+    const userIds = users.map((u) => u._id);
     const orderStats = await Order.aggregate([
-      { $match: { userId: { $in: userIds } } },
-      { $group: { _id: "$userId", totalOrders: { $sum: 1 }, totalSpending: { $sum: "$totalAmount" } } }
+      {
+        $match: {
+          userId: { $in: userIds },
+          paymentStatus: { $ne: 'Failed' },
+          orderStatus: { $ne: 'Payment Pending' },
+        },
+      },
+      {
+        $group: {
+          _id: '$userId',
+          totalOrders: { $sum: 1 },
+          totalSpending: { $sum: '$totalAmount' },
+        },
+      },
     ]);
     const statsMap = {};
-    orderStats.forEach(s => { statsMap[s._id.toString()] = s; });
+    orderStats.forEach((s) => {
+      statsMap[s._id.toString()] = s;
+    });
 
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Users');
@@ -511,8 +719,11 @@ export const exportUsersExcel = async (req, res) => {
     ];
     sheet.getRow(1).font = { bold: true };
 
-    users.forEach(u => {
-      const os = statsMap[u._id.toString()] || { totalOrders: 0, totalSpending: 0 };
+    users.forEach((u) => {
+      const os = statsMap[u._id.toString()] || {
+        totalOrders: 0,
+        totalSpending: 0,
+      };
       sheet.addRow({
         name: u.name || '-',
         email: u.email || '-',
@@ -524,8 +735,14 @@ export const exportUsersExcel = async (req, res) => {
       });
     });
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=users_export.xlsx');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=users_export.xlsx'
+    );
     await workbook.xlsx.write(res);
     res.end();
   } catch (err) {
@@ -537,27 +754,27 @@ export const exportUsersExcel = async (req, res) => {
 export const blockUser = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.params.id, { isBlocked: true });
-    res.json({ success: true, message: "User blocked successfully" });
+    res.json({ success: true, message: 'User blocked successfully' });
   } catch (err) {
-    res.json({ success: false, message: "Something went wrong" });
+    res.json({ success: false, message: 'Something went wrong' });
   }
 };
 
 export const unblockUser = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.params.id, { isBlocked: false });
-    res.json({ success: true, message: "User unblocked successfully" });
+    res.json({ success: true, message: 'User unblocked successfully' });
   } catch (err) {
-    res.json({ success: false, message: "Something went wrong" });
+    res.json({ success: false, message: 'Something went wrong' });
   }
 };
 
 export const deleteUser = async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: "User deleted successfully" });
+    res.json({ success: true, message: 'User deleted successfully' });
   } catch (err) {
-    res.json({ success: false, message: "Something went wrong" });
+    res.json({ success: false, message: 'Something went wrong' });
   }
 };
 
@@ -571,58 +788,70 @@ export const loadUserProfile = async (req, res) => {
       _id: u._id,
       name: u.name,
       email: u.email,
-      phone: u.phone || "-",
+      phone: u.phone || '-',
       avatar: u.avatar || null,
-      initials: u.name?.charAt(0).toUpperCase() || "U",
-      status: u.isBlocked ? "blocked" : "active",
+      initials: u.name?.charAt(0).toUpperCase() || 'U',
+      status: u.isBlocked ? 'blocked' : 'active',
       joined: u.createdAt?.toDateString(),
     }));
 
     const user = await User.findById(userId);
-    if (!user) return res.redirect("/admin/users");
+    if (!user) return res.redirect('/admin/users');
 
     const defaultAddress = await Address.findOne({ userId, isDefault: true });
 
     // Fetch order history for this user
-    const orderHistory = await Order.find({ userId: userId })
+    const orderHistory = await Order.find({
+      userId: userId,
+      paymentStatus: { $ne: 'Failed' },
+      orderStatus: { $ne: 'Payment Pending' },
+    })
       .sort({ createdAt: -1 })
       .lean();
 
     // Aggregate spending stats
     const spendingAgg = await Order.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          paymentStatus: { $ne: 'Failed' },
+          orderStatus: { $ne: 'Payment Pending' },
+        },
+      },
       {
         $group: {
           _id: null,
           totalOrders: { $sum: 1 },
-          totalSpending: { $sum: "$totalAmount" },
+          totalSpending: { $sum: '$totalAmount' },
         },
       },
     ]);
     const spending = spendingAgg[0] || { totalOrders: 0, totalSpending: 0 };
-    const avgOrder = spending.totalOrders > 0
-      ? (spending.totalSpending / spending.totalOrders)
-      : 0;
+    const avgOrder =
+      spending.totalOrders > 0
+        ? spending.totalSpending / spending.totalOrders
+        : 0;
 
     // Format order history for the view
     const formattedOrders = orderHistory.map((order) => ({
       orderId: order.orderId || order._id.toString().slice(-8).toUpperCase(),
-      orderDate: order.orderDate?.toDateString?.() || order.createdAt?.toDateString(),
+      orderDate:
+        order.orderDate?.toDateString?.() || order.createdAt?.toDateString(),
       amount: order.totalAmount || 0,
-      status: order.orderStatus || "Pending",
+      status: order.orderStatus || 'Pending',
     }));
 
     const selectedUser = {
       _id: user._id,
       name: user.name,
       email: user.email,
-      phone: user.phone || "-",
+      phone: user.phone || '-',
       address: defaultAddress
         ? `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state}, ${defaultAddress.pincode}`
-        : "No default address",
+        : 'No default address',
       avatar: user.avatar,
       initials: user.name?.charAt(0).toUpperCase(),
-      status: user.isBlocked ? "blocked" : "active",
+      status: user.isBlocked ? 'blocked' : 'active',
       joined: user.createdAt?.toDateString(),
       totalOrders: spending.totalOrders,
       totalSpending: spending.totalSpending,
@@ -630,14 +859,15 @@ export const loadUserProfile = async (req, res) => {
       orders: formattedOrders,
     };
 
-    res.render("admin/userManagement", { layout: "admin", 
+    res.render('admin/userManagement', {
+      layout: 'admin',
       users: formattedUsers,
       selectedUser,
-      activePage: "users",
+      activePage: 'users',
     });
   } catch (error) {
     console.log(error);
-    res.redirect("/admin/users");
+    res.redirect('/admin/users');
   }
 };
 
@@ -645,21 +875,21 @@ export const loadUserProfile = async (req, res) => {
 
 export const loadCategoryManagement = async (req, res) => {
   try {
-    const search = req.query.search || "";
-    const status = req.query.status || "";
+    const search = req.query.search || '';
+    const status = req.query.status || '';
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
 
     let query = {};
-    if (status === "trash") {
+    if (status === 'trash') {
       query.deleted_at = { $ne: null };
     } else {
       query.deleted_at = null;
-      if (status === "visible") query.is_visible = true;
-      if (status === "hidden") query.is_visible = false;
+      if (status === 'visible') query.is_visible = true;
+      if (status === 'hidden') query.is_visible = false;
     }
-    if (search) query.name = { $regex: search, $options: "i" };
+    if (search) query.name = { $regex: search, $options: 'i' };
 
     const categories = await Category.find(query)
       .sort({ created_at: -1 })
@@ -681,23 +911,24 @@ export const loadCategoryManagement = async (req, res) => {
 
     const productAgg = await Category.aggregate([
       { $match: { deleted_at: null } },
-      { $group: { _id: null, total: { $sum: "$quantity_available" } } },
+      { $group: { _id: null, total: { $sum: '$quantity_available' } } },
     ]);
     const totalProducts = productAgg[0]?.total || 0;
 
     const formatted = categories.map((c) => ({
       _id: c._id,
       name: c.name,
-      description: c.short_description || "",
+      description: c.short_description || '',
       productCount: c.quantity_available,
       isVisible: c.is_visible,
       image: c.image_url,
       isTrashed: !!c.deleted_at,
-      deletedAt: c.deleted_at?.toDateString() || "",
+      deletedAt: c.deleted_at?.toDateString() || '',
     }));
 
-    res.render("admin/categoryManagement", { layout: "admin", 
-      activePage: "categoryManagement",
+    res.render('admin/categoryManagement', {
+      layout: 'admin',
+      activePage: 'categoryManagement',
       categories: formatted,
       currentPage: page,
       totalPages: Math.ceil(total / limit) || 1,
@@ -713,7 +944,7 @@ export const loadCategoryManagement = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect("/admin/dashboard");
+    res.redirect('/admin/dashboard');
   }
 };
 
@@ -722,20 +953,20 @@ export const addCategory = async (req, res) => {
     const { name, description, quantity } = req.body;
 
     const existing = await Category.findOne({
-      name: { $regex: `^${name.trim()}$`, $options: "i" },
+      name: { $regex: `^${name.trim()}$`, $options: 'i' },
     });
     if (existing) {
       const msg = existing.deleted_at
-        ? "A deleted category with this name exists in trash. Restore it instead."
-        : "A category with this name already exists.";
+        ? 'A deleted category with this name exists in trash. Restore it instead.'
+        : 'Category name already exists.';
       return res.json({ success: false, message: msg });
     }
 
     const category = new Category({
       name: name.trim(),
-      short_description: description || "",
+      short_description: description || '',
       quantity_available: parseInt(quantity) || 0,
-      image_url: req.file ? req.file.path : "",
+      image_url: req.file ? req.file.path : '',
       is_visible: true,
     });
 
@@ -752,11 +983,11 @@ export const addCategory = async (req, res) => {
       },
     });
   } catch (err) {
-    console.log("addCategory error:", err);
+    console.log('addCategory error:', err);
     if (err.code === 11000) {
-      res.json({ success: false, message: "Category already exists." });
+      res.json({ success: false, message: 'Category already exists.' });
     } else {
-      res.json({ success: false, message: "Failed to save category." });
+      res.json({ success: false, message: 'Failed to save category.' });
     }
   }
 };
@@ -767,65 +998,77 @@ export const editCategory = async (req, res) => {
     const slug = name
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
 
     const updateData = {
       name: name.trim(),
-      short_description: description || "",
+      short_description: description || '',
       slug,
       quantity_available: parseInt(quantity) || 0,
     };
+
+    // Uniqueness validation (excluding current category)
+    const existing = await Category.findOne({
+      name: { $regex: `^${name.trim()}$`, $options: 'i' },
+      _id: { $ne: req.params.id },
+    });
+    if (existing) {
+      const msg = existing.deleted_at
+        ? 'A deleted category with this name exists in trash. Restore it instead.'
+        : 'Category name already exists.';
+      return res.json({ success: false, message: msg });
+    }
 
     if (req.file) {
       const existing = await Category.findById(req.params.id);
       if (existing?.image_url) {
         const publicId = existing.image_url
-          .split("/")
+          .split('/')
           .slice(-2)
-          .join("/")
-          .replace(/\.[^.]+$/, "");
+          .join('/')
+          .replace(/\.[^.]+$/, '');
         try {
           await cloudinary.uploader.destroy(publicId);
         } catch (e) {
-          console.log("Cloudinary delete err:", e);
+          console.log('Cloudinary delete err:', e);
         }
       }
       updateData.image_url = req.file.path;
-    } else if (removeImage === "true") {
+    } else if (removeImage === 'true') {
       const existing = await Category.findById(req.params.id);
       if (existing?.image_url) {
         const publicId = existing.image_url
-          .split("/")
+          .split('/')
           .slice(-2)
-          .join("/")
-          .replace(/\.[^.]+$/, "");
+          .join('/')
+          .replace(/\.[^.]+$/, '');
         try {
           await cloudinary.uploader.destroy(publicId);
         } catch (e) {
-          console.log("Cloudinary delete err:", e);
+          console.log('Cloudinary delete err:', e);
         }
       }
-      updateData.image_url = "";
+      updateData.image_url = '';
     }
 
     const updated = await Category.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true },
+      { new: true }
     );
 
     res.json({
       success: true,
-      image_url: updated.image_url || "",
+      image_url: updated.image_url || '',
       quantity: updated.quantity_available,
       name: updated.name,
       short_description: updated.short_description,
       slug: updated.slug,
     });
   } catch (err) {
-    console.log("editCategory error:", err);
-    res.json({ success: false, message: "Failed to update category." });
+    console.log('editCategory error:', err);
+    res.json({ success: false, message: 'Failed to update category.' });
   }
 };
 
@@ -837,8 +1080,8 @@ export const deleteCategory = async (req, res) => {
     });
     res.json({ success: true });
   } catch (err) {
-    console.log("deleteCategory error:", err);
-    res.json({ success: false, message: "Failed to delete category." });
+    console.log('deleteCategory error:', err);
+    res.json({ success: false, message: 'Failed to delete category.' });
   }
 };
 
@@ -847,10 +1090,10 @@ export const permanentDeleteCategory = async (req, res) => {
     const cat = await Category.findById(req.params.id);
     if (cat?.image_url) {
       const publicId = cat.image_url
-        .split("/")
+        .split('/')
         .slice(-2)
-        .join("/")
-        .replace(/\.[^.]+$/, "");
+        .join('/')
+        .replace(/\.[^.]+$/, '');
       try {
         await cloudinary.uploader.destroy(publicId);
       } catch (e) {
@@ -860,7 +1103,7 @@ export const permanentDeleteCategory = async (req, res) => {
     await Category.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (err) {
-    res.json({ success: false, message: "Failed to permanently delete." });
+    res.json({ success: false, message: 'Failed to permanently delete.' });
   }
 };
 
@@ -872,7 +1115,7 @@ export const restoreCategory = async (req, res) => {
     });
     res.json({ success: true });
   } catch (err) {
-    res.json({ success: false, message: "Failed to restore category." });
+    res.json({ success: false, message: 'Failed to restore category.' });
   }
 };
 
@@ -884,13 +1127,13 @@ export const loadTrash = async (req, res) => {
     const formatted = trashed.map((c) => ({
       _id: c._id,
       name: c.name,
-      description: c.short_description || "",
-      image: c.image_url || "",
+      description: c.short_description || '',
+      image: c.image_url || '',
       deletedAt: c.deleted_at?.toDateString(),
     }));
     res.json({ success: true, categories: formatted });
   } catch (err) {
-    res.json({ success: false, message: "Failed to load trash." });
+    res.json({ success: false, message: 'Failed to load trash.' });
   }
 };
 
@@ -910,7 +1153,7 @@ export const getCategoryStats = async (req, res) => {
     });
     const productAgg = await Category.aggregate([
       { $match: { deleted_at: null } },
-      { $group: { _id: null, total: { $sum: "$quantity_available" } } },
+      { $group: { _id: null, total: { $sum: '$quantity_available' } } },
     ]);
     const totalProducts = productAgg[0]?.total || 0;
     res.json({ success: true, total, visible, hidden, trashed, totalProducts });
@@ -921,11 +1164,11 @@ export const getCategoryStats = async (req, res) => {
 
 export const loadProductManagement = async (req, res) => {
   try {
-    const search = req.query.search || "";
-    const sort = req.query.sort || "latest";
-    const status = req.query.status || "all";
-    const categoryFilter = req.query.category || "all";
-    const brandFilter = req.query.brand || "all";
+    const search = req.query.search || '';
+    const sort = req.query.sort || 'latest';
+    const status = req.query.status || 'all';
+    const categoryFilter = req.query.category || 'all';
+    const brandFilter = req.query.brand || 'all';
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -934,18 +1177,18 @@ export const loadProductManagement = async (req, res) => {
 
     if (search) {
       const variantsBySkuSearch = await Variant.find({
-        sku: { $regex: search, $options: "i" },
+        sku: { $regex: search, $options: 'i' },
         deleted_at: null,
-      }).distinct("product");
+      }).distinct('product');
 
       const brandMatches = await Brand.find({
-        name: { $regex: search, $options: "i" },
+        name: { $regex: search, $options: 'i' },
       });
       const brandIds = brandMatches.map((b) => b._id);
 
       const orClauses = [
-        { name: { $regex: search, $options: "i" } },
-        { sku: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: 'i' } },
+        { sku: { $regex: search, $options: 'i' } },
         { brand: { $in: brandIds } },
         { _id: { $in: variantsBySkuSearch } },
       ];
@@ -956,19 +1199,19 @@ export const loadProductManagement = async (req, res) => {
 
       query.$or = orClauses;
     }
-    if (status !== "all") query.status = status;
-    if (categoryFilter !== "all") query.category = categoryFilter;
-    if (brandFilter !== "all") query.brand = brandFilter;
+    if (status !== 'all') query.status = status;
+    if (categoryFilter !== 'all') query.category = categoryFilter;
+    if (brandFilter !== 'all') query.brand = brandFilter;
 
     let sortQuery = {};
-    if (sort === "latest") sortQuery = { createdAt: -1 };
-    else if (sort === "oldest") sortQuery = { createdAt: 1 };
-    else if (sort === "price_asc") sortQuery = { price: 1 };
-    else if (sort === "price_desc") sortQuery = { price: -1 };
+    if (sort === 'latest') sortQuery = { createdAt: -1 };
+    else if (sort === 'oldest') sortQuery = { createdAt: 1 };
+    else if (sort === 'price_asc') sortQuery = { price: 1 };
+    else if (sort === 'price_desc') sortQuery = { price: -1 };
 
     const products = await Product.find(query)
-      .populate("category", "name")
-      .populate("brand", "name")
+      .populate('category', 'name')
+      .populate('brand', 'name')
       .sort(sortQuery)
       .skip(skip)
       .limit(limit);
@@ -977,11 +1220,11 @@ export const loadProductManagement = async (req, res) => {
     const totalProducts = await Product.countDocuments({ deleted_at: null });
     const activeProducts = await Product.countDocuments({
       deleted_at: null,
-      status: "active",
+      status: 'active',
     });
     const inactiveProducts = await Product.countDocuments({
       deleted_at: null,
-      status: "inactive",
+      status: 'inactive',
     });
     const outOfStock = await Product.countDocuments({
       deleted_at: null,
@@ -998,15 +1241,15 @@ export const loadProductManagement = async (req, res) => {
     const brands = await Brand.find().sort({ name: 1 });
 
     const formatted = products.map((p) => {
-      let stockStatus = "IN_STOCK";
-      if (p.stock === 0) stockStatus = "OUT_OF_STOCK";
-      else if (p.stock <= 10) stockStatus = "LOW_STOCK";
+      let stockStatus = 'IN_STOCK';
+      if (p.stock === 0) stockStatus = 'OUT_OF_STOCK';
+      else if (p.stock <= 10) stockStatus = 'LOW_STOCK';
 
       return {
         _id: p._id,
         name: p.name,
-        category: p.category?.name || "-",
-        brand: p.brand?.name || "-",
+        category: p.category?.name || '-',
+        brand: p.brand?.name || '-',
         originalPrice: p.originalPrice ?? p.price ?? 0,
         salePrice: p.salePrice ?? p.price ?? 0,
         discountPercentage: p.discountPercentage ?? p.discount ?? 0,
@@ -1015,12 +1258,13 @@ export const loadProductManagement = async (req, res) => {
         stockStatus,
         status: p.status,
         images: p.images,
-        sku: p.sku || "",
+        sku: p.sku || '',
         initials: p.name?.charAt(0).toUpperCase(),
       };
     });
 
-    res.render("admin/productManagement", { layout: "admin", 
+    res.render('admin/productManagement', {
+      layout: 'admin',
       products: formatted,
       categories,
       brands,
@@ -1031,7 +1275,7 @@ export const loadProductManagement = async (req, res) => {
       status,
       category: categoryFilter,
       brand: brandFilter,
-      activePage: "products",
+      activePage: 'products',
       stats: {
         totalProducts,
         activeProducts,
@@ -1042,7 +1286,7 @@ export const loadProductManagement = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect("/admin/dashboard");
+    res.redirect('/admin/dashboard');
   }
 };
 
@@ -1075,27 +1319,43 @@ export const addProduct = async (req, res) => {
     } = req.body;
 
     const nameCheck = await validateProductName(name);
-    if (!nameCheck.valid) return res.json({ success: false, message: nameCheck.msg });
-    
+    if (!nameCheck.valid)
+      return res.json({ success: false, message: nameCheck.msg });
+
     const descCheck = validateDescription(description);
-    if (!descCheck.valid) return res.json({ success: false, message: descCheck.msg });
-    
-    const catBrandCheck = await validateCategoryBrand(category, brand, newBrand);
-    if (!catBrandCheck.valid) return res.json({ success: false, message: catBrandCheck.msg });
-    
+    if (!descCheck.valid)
+      return res.json({ success: false, message: descCheck.msg });
+
+    const catBrandCheck = await validateCategoryBrand(
+      category,
+      brand,
+      newBrand
+    );
+    if (!catBrandCheck.valid)
+      return res.json({ success: false, message: catBrandCheck.msg });
+
     const variantCheck = await validateVariantInput(req.body, null, null);
-    if (!variantCheck.valid) return res.json({ success: false, message: variantCheck.msg });
+    if (!variantCheck.valid)
+      return res.json({ success: false, message: variantCheck.msg });
 
     const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
-    const existingArr = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
+    const existingArr = Array.isArray(existingImages)
+      ? existingImages
+      : existingImages
+        ? [existingImages]
+        : [];
     const allImages = [...existingArr, ...uploadedImages];
     const imageCheck = validateImages(allImages);
-    if (!imageCheck.valid) return res.json({ success: false, message: imageCheck.msg });
+    if (!imageCheck.valid)
+      return res.json({ success: false, message: imageCheck.msg });
 
     let brandId = catBrandCheck.finalBrandId;
-    if (catBrandCheck.newBrandName && brand === "other") {
-      let existing = await Brand.findOne({ name: { $regex: new RegExp(`^${catBrandCheck.newBrandName}$`, 'i') } });
-      if (!existing) existing = await Brand.create({ name: catBrandCheck.newBrandName });
+    if (catBrandCheck.newBrandName && brand === 'other') {
+      let existing = await Brand.findOne({
+        name: { $regex: new RegExp(`^${catBrandCheck.newBrandName}$`, 'i') },
+      });
+      if (!existing)
+        existing = await Brand.create({ name: catBrandCheck.newBrandName });
       brandId = existing._id;
     }
 
@@ -1108,11 +1368,11 @@ export const addProduct = async (req, res) => {
       category: catBrandCheck.categoryId,
       brand: brandId,
       description: descCheck.value,
-      gender: gender || "unisex",
+      gender: gender || 'unisex',
       images: allImages,
-      status: status || "active",
-      featured: featured === "true" || featured === true,
-      dealOfTheDay: dealOfTheDay === "true" || dealOfTheDay === true,
+      status: status || 'active',
+      featured: featured === 'true' || featured === true,
+      dealOfTheDay: dealOfTheDay === 'true' || dealOfTheDay === true,
       originalPrice: vVals.originalPrice,
       salePrice: vVals.salePrice,
       discountPercentage: discountPct,
@@ -1139,8 +1399,8 @@ export const addProduct = async (req, res) => {
       price: parseFloat(salePrice),
       stock: parseInt(stock) || 0,
       images: allImages,
-      status: status || "active",
-      offerProduct: offerProduct === "true" || offerProduct === true,
+      status: status || 'active',
+      offerProduct: offerProduct === 'true' || offerProduct === true,
       isDefault: true,
     });
 
@@ -1155,14 +1415,14 @@ export const addProduct = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Product and default variant created successfully.",
+      message: 'Product and default variant created successfully.',
       productId: product._id,
     });
   } catch (err) {
     console.log(err);
     res.json({
       success: false,
-      message: err.message || "Failed to add product.",
+      message: err.message || 'Failed to add product.',
     });
   }
 };
@@ -1182,28 +1442,38 @@ export const editProduct = async (req, res) => {
     } = req.body;
 
     const currentProduct = await Product.findById(req.params.id);
-    if (!currentProduct) return res.json({ success: false, message: "Product not found." });
+    if (!currentProduct)
+      return res.json({ success: false, message: 'Product not found.' });
 
     const nameCheck = await validateProductName(name, req.params.id);
-    if (!nameCheck.valid) return res.json({ success: false, message: nameCheck.msg });
-    
+    if (!nameCheck.valid)
+      return res.json({ success: false, message: nameCheck.msg });
+
     const descCheck = validateDescription(description);
-    if (!descCheck.valid) return res.json({ success: false, message: descCheck.msg });
-    
-    const catBrandCheck = await validateCategoryBrand(category, brand, newBrand);
-    if (!catBrandCheck.valid) return res.json({ success: false, message: catBrandCheck.msg });
+    if (!descCheck.valid)
+      return res.json({ success: false, message: descCheck.msg });
+
+    const catBrandCheck = await validateCategoryBrand(
+      category,
+      brand,
+      newBrand
+    );
+    if (!catBrandCheck.valid)
+      return res.json({ success: false, message: catBrandCheck.msg });
 
     let brandId = catBrandCheck.finalBrandId;
-    if (catBrandCheck.newBrandName && brand === "other") {
-      let existing = await Brand.findOne({ name: { $regex: new RegExp(`^${catBrandCheck.newBrandName}$`, 'i') } });
-      if (!existing) existing = await Brand.create({ name: catBrandCheck.newBrandName });
+    if (catBrandCheck.newBrandName && brand === 'other') {
+      let existing = await Brand.findOne({
+        name: { $regex: new RegExp(`^${catBrandCheck.newBrandName}$`, 'i') },
+      });
+      if (!existing)
+        existing = await Brand.create({ name: catBrandCheck.newBrandName });
       brandId = existing._id;
     }
 
-
-    const wasActive = currentProduct.status === "active";
-    const goingActive = status === "active";
-    const goingInactive = status === "inactive";
+    const wasActive = currentProduct.status === 'active';
+    const goingActive = status === 'active';
+    const goingInactive = status === 'inactive';
 
     if (wasActive && goingInactive) {
       const variants = await Variant.find({
@@ -1213,7 +1483,7 @@ export const editProduct = async (req, res) => {
       for (const v of variants) {
         await Variant.findByIdAndUpdate(v._id, {
           variantStatusBeforeInactive: v.status,
-          status: "inactive",
+          status: 'inactive',
         });
       }
     }
@@ -1224,7 +1494,7 @@ export const editProduct = async (req, res) => {
         deleted_at: null,
       });
       for (const v of variants) {
-        const restoreStatus = v.variantStatusBeforeInactive || "active";
+        const restoreStatus = v.variantStatusBeforeInactive || 'active';
         await Variant.findByIdAndUpdate(v._id, {
           status: restoreStatus,
           variantStatusBeforeInactive: null,
@@ -1236,28 +1506,28 @@ export const editProduct = async (req, res) => {
       name: name.trim(),
       category,
       brand: brandId,
-      description: description || "",
-      gender: gender || "unisex",
-      status: status || "active",
-      featured: featured === "true" || featured === true,
-      dealOfTheDay: dealOfTheDay === "true" || dealOfTheDay === true,
+      description: description || '',
+      gender: gender || 'unisex',
+      status: status || 'active',
+      featured: featured === 'true' || featured === true,
+      dealOfTheDay: dealOfTheDay === 'true' || dealOfTheDay === true,
     };
 
     await Product.findByIdAndUpdate(req.params.id, updateData);
 
-    res.json({ success: true, message: "Product updated." });
+    res.json({ success: true, message: 'Product updated.' });
   } catch (err) {
     console.log(err);
-    res.json({ success: false, message: "Failed to update product." });
+    res.json({ success: false, message: 'Failed to update product.' });
   }
 };
 
 export const getProductJson = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category", "name _id")
-      .populate("brand", "name _id");
-    if (!product) return res.json({ success: false, message: "Not found" });
+      .populate('category', 'name _id')
+      .populate('brand', 'name _id');
+    if (!product) return res.json({ success: false, message: 'Not found' });
 
     let defaultVariant = null;
     if (product.defaultVariant) {
@@ -1295,7 +1565,7 @@ export const getProductJson = async (req, res) => {
       discount: defaultVariant?.discountPercentage ?? product.discount ?? 0,
       price: defaultVariant?.salePrice ?? product.salePrice ?? 0,
       stock: defaultVariant?.stock ?? product.stock,
-      sku: defaultVariant?.sku || product.sku || "",
+      sku: defaultVariant?.sku || product.sku || '',
       offerProduct: defaultVariant?.offerProduct || false,
     });
   } catch (err) {
@@ -1308,26 +1578,26 @@ export const softDeleteProduct = async (req, res) => {
   try {
     await Product.findByIdAndUpdate(req.params.id, {
       deleted_at: new Date(),
-      status: "inactive",
+      status: 'inactive',
     });
     res.json({ success: true });
   } catch (err) {
-    res.json({ success: false, message: "Failed to delete." });
+    res.json({ success: false, message: 'Failed to delete.' });
   }
 };
 
 export const loadProductTrash = async (req, res) => {
   try {
     const trashed = await Product.find({ deleted_at: { $ne: null } })
-      .populate("category", "name")
-      .populate("brand", "name")
+      .populate('category', 'name')
+      .populate('brand', 'name')
       .sort({ deleted_at: -1 });
     const formatted = trashed.map((p) => ({
       _id: p._id,
       name: p.name,
-      category: p.category?.name || "-",
-      brand: p.brand?.name || "-",
-      image: p.images?.[0] || "",
+      category: p.category?.name || '-',
+      brand: p.brand?.name || '-',
+      image: p.images?.[0] || '',
       deletedAt: p.deleted_at?.toDateString(),
       initials: p.name?.charAt(0).toUpperCase(),
     }));
@@ -1341,11 +1611,11 @@ export const restoreProduct = async (req, res) => {
   try {
     const result = await Product.findByIdAndUpdate(
       req.params.id,
-      { $set: { deleted_at: null, status: "active" } },
-      { new: true },
+      { $set: { deleted_at: null, status: 'active' } },
+      { new: true }
     );
     if (!result)
-      return res.json({ success: false, message: "Product not found" });
+      return res.json({ success: false, message: 'Product not found' });
     res.json({ success: true });
   } catch (err) {
     console.log(err);
@@ -1371,9 +1641,9 @@ export const permanentDeleteProduct = async (req, res) => {
 export const getProductDetail = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category", "name")
-      .populate("brand", "name");
-    if (!product) return res.redirect("/admin/products");
+      .populate('category', 'name')
+      .populate('brand', 'name');
+    if (!product) return res.redirect('/admin/products');
 
     let defaultVariant = null;
     if (product.defaultVariant) {
@@ -1403,31 +1673,31 @@ export const getProductDetail = async (req, res) => {
     const brands = await Brand.find().sort({ name: 1 });
 
     const allProducts = await Product.find({ deleted_at: null })
-      .populate("category", "name")
-      .populate("brand", "name");
+      .populate('category', 'name')
+      .populate('brand', 'name');
     const formatted = allProducts.map((p) => {
-      let stockStatus = "IN_STOCK";
-      if (p.stock === 0) stockStatus = "OUT_OF_STOCK";
-      else if (p.stock <= 10) stockStatus = "LOW_STOCK";
+      let stockStatus = 'IN_STOCK';
+      if (p.stock === 0) stockStatus = 'OUT_OF_STOCK';
+      else if (p.stock <= 10) stockStatus = 'LOW_STOCK';
       return {
         _id: p._id,
         name: p.name,
-        category: p.category?.name || "-",
-        brand: p.brand?.name || "-",
+        category: p.category?.name || '-',
+        brand: p.brand?.name || '-',
         price: p.price,
         stock: p.stock,
         stockStatus,
         status: p.status,
         images: p.images,
-        sku: p.sku || "",
+        sku: p.sku || '',
         initials: p.name?.charAt(0).toUpperCase(),
       };
     });
 
     const dvStock = defaultVariant?.stock ?? product.stock ?? 0;
-    let stockStatus = "IN_STOCK";
-    if (dvStock === 0) stockStatus = "OUT_OF_STOCK";
-    else if (dvStock <= 10) stockStatus = "LOW_STOCK";
+    let stockStatus = 'IN_STOCK';
+    if (dvStock === 0) stockStatus = 'OUT_OF_STOCK';
+    else if (dvStock <= 10) stockStatus = 'LOW_STOCK';
 
     const selectedProduct = {
       _id: product._id,
@@ -1449,7 +1719,7 @@ export const getProductDetail = async (req, res) => {
       price: defaultVariant?.salePrice ?? product.salePrice ?? 0, // legacy
       stock: dvStock,
       stockStatus,
-      sku: defaultVariant?.sku || product.sku || "",
+      sku: defaultVariant?.sku || product.sku || '',
       images: defaultVariant?.images?.length
         ? defaultVariant.images
         : product.images,
@@ -1468,11 +1738,11 @@ export const getProductDetail = async (req, res) => {
     const totalProducts = await Product.countDocuments({ deleted_at: null });
     const activeProducts = await Product.countDocuments({
       deleted_at: null,
-      status: "active",
+      status: 'active',
     });
     const inactiveProducts = await Product.countDocuments({
       deleted_at: null,
-      status: "inactive",
+      status: 'inactive',
     });
     const outOfStock = await Product.countDocuments({
       deleted_at: null,
@@ -1482,19 +1752,20 @@ export const getProductDetail = async (req, res) => {
       deleted_at: { $ne: null },
     });
 
-    res.render("admin/productManagement", { layout: "admin", 
+    res.render('admin/productManagement', {
+      layout: 'admin',
       products: formatted,
       selectedProduct,
       categories,
       brands,
       currentPage: 1,
       totalPages: 1,
-      search: "",
-      sort: "latest",
-      status: "all",
-      category: "all",
-      brand: "all",
-      activePage: "products",
+      search: '',
+      sort: 'latest',
+      status: 'all',
+      category: 'all',
+      brand: 'all',
+      activePage: 'products',
       stats: {
         totalProducts,
         activeProducts,
@@ -1505,7 +1776,7 @@ export const getProductDetail = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect("/admin/products");
+    res.redirect('/admin/products');
   }
 };
 
@@ -1518,11 +1789,11 @@ export const setDefaultVariant = async (req, res) => {
     const variant = await Variant.findByIdAndUpdate(
       variantId,
       { isDefault: true },
-      { new: true },
+      { new: true }
     );
 
     if (!variant)
-      return res.json({ success: false, message: "Variant not found." });
+      return res.json({ success: false, message: 'Variant not found.' });
 
     await Product.findByIdAndUpdate(productId, {
       images: variant.images,
@@ -1535,7 +1806,7 @@ export const setDefaultVariant = async (req, res) => {
       defaultVariant: variant._id,
     });
 
-    res.json({ success: true, message: "Default variant updated." });
+    res.json({ success: true, message: 'Default variant updated.' });
   } catch (err) {
     console.log(err);
     res.json({ success: false, message: err.message });
@@ -1589,15 +1860,25 @@ export const addVariant = async (req, res) => {
     } = req.body;
 
     const variantCheck = await validateVariantInput(req.body, productId, null);
-    if (!variantCheck.valid) return res.json({ success: false, message: variantCheck.msg });
+    if (!variantCheck.valid)
+      return res.json({ success: false, message: variantCheck.msg });
 
     const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
-    const existingArr = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
+    const existingArr = Array.isArray(existingImages)
+      ? existingImages
+      : existingImages
+        ? [existingImages]
+        : [];
     const allImages = [...existingArr, ...uploadedImages];
     const imageCheck = validateImages(allImages);
-    if (!imageCheck.valid) return res.json({ success: false, message: imageCheck.msg });
+    if (!imageCheck.valid)
+      return res.json({ success: false, message: imageCheck.msg });
 
-    const existingDefault = await Variant.findOne({ product: productId, isDefault: true, deleted_at: null });
+    const existingDefault = await Variant.findOne({
+      product: productId,
+      isDefault: true,
+      deleted_at: null,
+    });
     const shouldBeDefault = !existingDefault;
 
     const vVals = variantCheck.values;
@@ -1619,8 +1900,8 @@ export const addVariant = async (req, res) => {
       price: parseFloat(salePrice),
       stock: parseInt(stock) || 0,
       images: allImages,
-      status: status || "active",
-      offerProduct: offerProduct === "true" || offerProduct === true,
+      status: status || 'active',
+      offerProduct: offerProduct === 'true' || offerProduct === true,
       isDefault: shouldBeDefault,
     });
 
@@ -1637,7 +1918,7 @@ export const addVariant = async (req, res) => {
       });
     }
 
-    res.json({ success: true, variant, message: "Variant added." });
+    res.json({ success: true, variant, message: 'Variant added.' });
   } catch (err) {
     res.json({ success: false, message: err.message });
   }
@@ -1664,16 +1945,27 @@ export const editVariant = async (req, res) => {
     } = req.body;
 
     const existingVariant = await Variant.findById(variantId);
-    if (!existingVariant) return res.json({ success: false, message: "Variant not found." });
+    if (!existingVariant)
+      return res.json({ success: false, message: 'Variant not found.' });
 
-    const variantCheck = await validateVariantInput(req.body, existingVariant.product, variantId);
-    if (!variantCheck.valid) return res.json({ success: false, message: variantCheck.msg });
+    const variantCheck = await validateVariantInput(
+      req.body,
+      existingVariant.product,
+      variantId
+    );
+    if (!variantCheck.valid)
+      return res.json({ success: false, message: variantCheck.msg });
 
     const uploadedImages = req.files ? req.files.map((f) => f.path) : [];
-    const existingArr = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
+    const existingArr = Array.isArray(existingImages)
+      ? existingImages
+      : existingImages
+        ? [existingImages]
+        : [];
     const allImages = [...existingArr, ...uploadedImages];
     const imageCheck = validateImages(allImages);
-    if (!imageCheck.valid) return res.json({ success: false, message: imageCheck.msg });
+    if (!imageCheck.valid)
+      return res.json({ success: false, message: imageCheck.msg });
 
     const vVals = variantCheck.values;
     const discountPct = calcDiscount(vVals.originalPrice, vVals.salePrice);
@@ -1696,11 +1988,11 @@ export const editVariant = async (req, res) => {
           price: vVals.salePrice,
           stock: vVals.stock,
           images: allImages,
-          status: status || "active",
-          offerProduct: offerProduct === "true" || offerProduct === true,
+          status: status || 'active',
+          offerProduct: offerProduct === 'true' || offerProduct === true,
         },
       },
-      { new: true, runValidators: false },
+      { new: true, runValidators: false }
     );
 
     if (updated.isDefault) {
@@ -1715,7 +2007,7 @@ export const editVariant = async (req, res) => {
       });
     }
 
-    res.json({ success: true, variant: updated, message: "Variant updated." });
+    res.json({ success: true, variant: updated, message: 'Variant updated.' });
   } catch (err) {
     res.json({ success: false, message: err.message });
   }
@@ -1724,7 +2016,7 @@ export const editVariant = async (req, res) => {
 export const getVariantJson = async (req, res) => {
   try {
     const variant = await Variant.findById(req.params.variantId);
-    if (!variant) return res.json({ success: false, message: "Not found" });
+    if (!variant) return res.json({ success: false, message: 'Not found' });
     res.json({ success: true, variant });
   } catch (err) {
     res.json({ success: false });
@@ -1735,7 +2027,7 @@ export const softDeleteVariant = async (req, res) => {
   try {
     const variant = await Variant.findById(req.params.variantId);
     if (!variant)
-      return res.json({ success: false, message: "Variant not found" });
+      return res.json({ success: false, message: 'Variant not found' });
 
     const wasDefault = variant.isDefault;
 
@@ -1789,7 +2081,7 @@ export const getVariantTrash = async (req, res) => {
 export const restoreVariant = async (req, res) => {
   try {
     const variant = await Variant.findById(req.params.variantId);
-    if (!variant) return res.json({ success: false, message: "Not found" });
+    if (!variant) return res.json({ success: false, message: 'Not found' });
 
     await Variant.findByIdAndUpdate(req.params.variantId, {
       deleted_at: null,
@@ -1848,13 +2140,13 @@ export const addMaterial = async (req, res) => {
   try {
     const { name, type } = req.body;
     const existing = await Material.findOne({
-      name: { $regex: `^${name.trim()}$`, $options: "i" },
+      name: { $regex: `^${name.trim()}$`, $options: 'i' },
     });
     if (existing)
-      return res.json({ success: false, message: "Material already exists." });
+      return res.json({ success: false, message: 'Material already exists.' });
     const material = await Material.create({
       name: name.trim(),
-      type: type || "both",
+      type: type || 'both',
     });
     res.json({ success: true, material });
   } catch (err) {
@@ -1882,7 +2174,7 @@ export const saveColor = async (req, res) => {
     } else {
       color = await SavedColor.create({
         hex: hex.toUpperCase(),
-        name: name || "",
+        name: name || '',
       });
     }
     res.json({ success: true, color });
@@ -1894,20 +2186,20 @@ export const saveColor = async (req, res) => {
 export const generateProductSku = async (req, res) => {
   try {
     const { brand, model, collection } = req.query;
-    const b = (brand || "").replace(/\s+/g, "").toUpperCase().slice(0, 3);
-    const m = (model || "").replace(/\s+/g, "").toUpperCase().slice(0, 4);
-    const c = (collection || "").replace(/\s+/g, "").toUpperCase().slice(0, 3);
-    let base = [b, m, c].filter(Boolean).join("-");
+    const b = (brand || '').replace(/\s+/g, '').toUpperCase().slice(0, 3);
+    const m = (model || '').replace(/\s+/g, '').toUpperCase().slice(0, 4);
+    const c = (collection || '').replace(/\s+/g, '').toUpperCase().slice(0, 3);
+    let base = [b, m, c].filter(Boolean).join('-');
     if (!base)
       return res.json({
         success: false,
-        message: "Provide at least brand/model",
+        message: 'Provide at least brand/model',
       });
 
     let sku = base;
     let counter = 1;
     while (await Product.findOne({ sku })) {
-      sku = `${base}-${String(counter).padStart(2, "0")}`;
+      sku = `${base}-${String(counter).padStart(2, '0')}`;
       counter++;
     }
     res.json({ success: true, sku });
@@ -1930,10 +2222,10 @@ export const generateVariantSku = async (req, res) => {
     } = req.query;
 
     const short = (str, len) =>
-      (str || "")
-        .replace(/\s+/g, "")
+      (str || '')
+        .replace(/\s+/g, '')
         .toUpperCase()
-        .replace(/[^A-Z0-9]/g, "")
+        .replace(/[^A-Z0-9]/g, '')
         .slice(0, len);
 
     const base = [
@@ -1947,14 +2239,14 @@ export const generateVariantSku = async (req, res) => {
       short(size, 3),
     ]
       .filter(Boolean)
-      .join("-");
+      .join('-');
 
-    if (!base) return res.json({ success: false, message: "Not enough data" });
+    if (!base) return res.json({ success: false, message: 'Not enough data' });
 
     let sku = base;
     let counter = 1;
     while (await Variant.findOne({ sku })) {
-      sku = `${base}-${String(counter).padStart(2, "0")}`;
+      sku = `${base}-${String(counter).padStart(2, '0')}`;
       counter++;
     }
     res.json({ success: true, sku });
@@ -1963,26 +2255,41 @@ export const generateVariantSku = async (req, res) => {
   }
 };
 
-
-
 // ADMIN ORDER MANAGEMENT
 
-
 const STATUS_FLOW = [
-  "Pending","Confirmed","Packed","Quality Checked","Shipped",
-  "Out for Delivery","Delivered",
-  "Return Requested","Return Approved","Pickup Scheduled",
-  "Return Picked","Refund Processed","Return Rejected","Returned"
+  'Pending',
+  'Confirmed',
+  'Packed',
+  'Quality Checked',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+  'Return Requested',
+  'Return Approved',
+  'Pickup Scheduled',
+  'Return Picked',
+  'Refund Processed',
+  'Return Rejected',
+  'Returned',
 ];
 
-
-const FINALIZED_STATUSES = ["Cancelled","Delivered","Refund Processed","Return Rejected","Returned"];
-
+const FINALIZED_STATUSES = [
+  'Cancelled',
+  'Delivered',
+  'Refund Processed',
+  'Return Rejected',
+  'Returned',
+];
 
 function getNextAllowedStatus(currentStatus) {
   const forwardChain = [
-    "Pending", "Confirmed", "Packed",
-    "Shipped", "Out for Delivery", "Delivered"
+    'Pending',
+    'Confirmed',
+    'Packed',
+    'Shipped',
+    'Out for Delivery',
+    'Delivered',
   ];
   const idx = forwardChain.indexOf(currentStatus);
   if (idx === -1 || idx === forwardChain.length - 1) return null;
@@ -1991,11 +2298,11 @@ function getNextAllowedStatus(currentStatus) {
 
 // Validation map: each status that CAN be set must be preceded by exactly these statuses
 const REQUIRED_PREV_STATUS = {
-  "Confirmed":        ["Pending"],
-  "Packed":           ["Confirmed"],
-  "Shipped":          ["Packed"],
-  "Out for Delivery": ["Shipped"],
-  "Delivered":        ["Out for Delivery"]
+  Confirmed: ['Pending'],
+  Packed: ['Confirmed'],
+  Shipped: ['Packed'],
+  'Out for Delivery': ['Shipped'],
+  Delivered: ['Out for Delivery'],
 };
 
 export const loadAdminOrders = async (req, res) => {
@@ -2003,30 +2310,30 @@ export const loadAdminOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 8;
     const skip = (page - 1) * limit;
-    const search = req.query.search || "";
-    const sort = req.query.sort || "latest";
-    const statusFilter = req.query.status || "all";
-    const paymentFilter = req.query.payment || "all";
+    const search = req.query.search || '';
+    const sort = req.query.sort || 'latest';
+    const statusFilter = req.query.status || 'all';
+    const paymentFilter = req.query.payment || 'all';
 
     let query = {
       $and: [
         { paymentStatus: { $ne: 'Failed' } },
-        { orderStatus: { $ne: 'Payment Pending' } }
-      ]
+        { orderStatus: { $ne: 'Payment Pending' } },
+      ],
     };
     if (search) {
       query.$or = [
-        { orderId: { $regex: search, $options: "i" } },
-        { "products.productName": { $regex: search, $options: "i" } }
+        { orderId: { $regex: search, $options: 'i' } },
+        { 'products.productName': { $regex: search, $options: 'i' } },
       ];
     }
-    if (paymentFilter !== "all") query.paymentMethod = paymentFilter;
-    if (statusFilter !== "all") query["products.orderStatus"] = statusFilter;
+    if (paymentFilter !== 'all') query.paymentMethod = paymentFilter;
+    if (statusFilter !== 'all') query['products.orderStatus'] = statusFilter;
 
     let sortQuery = { createdAt: -1 };
-    if (sort === "oldest") sortQuery = { createdAt: 1 };
-    else if (sort === "amount_high") sortQuery = { totalAmount: -1 };
-    else if (sort === "amount_low") sortQuery = { totalAmount: 1 };
+    if (sort === 'oldest') sortQuery = { createdAt: 1 };
+    else if (sort === 'amount_high') sortQuery = { totalAmount: -1 };
+    else if (sort === 'amount_low') sortQuery = { totalAmount: 1 };
 
     const totalOrders = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit) || 1;
@@ -2035,13 +2342,20 @@ export const loadAdminOrders = async (req, res) => {
       .sort(sortQuery)
       .skip(skip)
       .limit(limit)
-      .populate("userId", "image email avatar")
+      .populate('userId', 'image email avatar')
       .lean();
 
-    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
+    const fmtDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })
+        : '-';
 
-    const formatted = orders.map(o => {
-      const statuses = o.products.map(p => p.orderStatus);
+    const formatted = orders.map((o) => {
+      const statuses = o.products.map((p) => p.orderStatus);
       const uniqueStatuses = [...new Set(statuses)];
       let summaryStatus = o.orderStatus; // fallback
       let hasMixedStatus = false;
@@ -2050,10 +2364,10 @@ export const loadAdminOrders = async (req, res) => {
       if (uniqueStatuses.length > 1) {
         hasMixedStatus = true;
         const counts = {};
-        statuses.forEach(s => counts[s] = (counts[s] || 0) + 1);
-        mixedStatuses = Object.keys(counts).map(k => ({
+        statuses.forEach((s) => (counts[s] = (counts[s] || 0) + 1));
+        mixedStatuses = Object.keys(counts).map((k) => ({
           status: k,
-          count: counts[k]
+          count: counts[k],
         }));
       } else if (uniqueStatuses.length === 1) {
         summaryStatus = uniqueStatuses[0];
@@ -2062,27 +2376,46 @@ export const loadAdminOrders = async (req, res) => {
       return {
         ...o,
         orderDateFormatted: fmtDate(o.orderDate),
-        customerName: o.shippingAddress?.fullName || "-",
-        customerEmail: o.userId?.email || "-",
-        userImage: o.userId?.avatar || o.userId?.image || "/image/useravathar.png",
+        customerName: o.shippingAddress?.fullName || '-',
+        customerEmail: o.userId?.email || '-',
+        userImage:
+          o.userId?.avatar || o.userId?.image || '/image/useravathar.png',
         productCount: o.products?.length || 0,
         summaryStatus,
         hasMixedStatus,
-        mixedStatuses
+        mixedStatuses,
       };
     });
 
     const totalRevenue = await Order.aggregate([
-      { $match: { orderStatus: { $nin: ["Cancelled"] } } },
-      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+      {
+        $match: {
+          orderStatus: { $nin: ['Cancelled', 'Payment Pending'] },
+          paymentStatus: { $ne: 'Failed' },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
     ]);
 
-    const pendingCount = await Order.countDocuments({ "products.orderStatus": "Pending" });
-    const deliveredCount = await Order.countDocuments({ "products.orderStatus": "Delivered" });
-    const cancelledCount = await Order.countDocuments({ "products.orderStatus": "Cancelled" });
+    const pendingCount = await Order.countDocuments({
+      'products.orderStatus': 'Pending',
+      paymentStatus: { $ne: 'Failed' },
+      orderStatus: { $ne: 'Payment Pending' },
+    });
+    const deliveredCount = await Order.countDocuments({
+      'products.orderStatus': 'Delivered',
+      paymentStatus: { $ne: 'Failed' },
+      orderStatus: { $ne: 'Payment Pending' },
+    });
+    const cancelledCount = await Order.countDocuments({
+      'products.orderStatus': 'Cancelled',
+      paymentStatus: { $ne: 'Failed' },
+      orderStatus: { $ne: 'Payment Pending' },
+    });
 
-    res.render("admin/orderManagement", { layout: "admin", 
-      activePage: "orders",
+    res.render('admin/orderManagement', {
+      layout: 'admin',
+      activePage: 'orders',
       orders: formatted,
       currentPage: page,
       totalPages,
@@ -2091,16 +2424,19 @@ export const loadAdminOrders = async (req, res) => {
       status: statusFilter,
       payment: paymentFilter,
       stats: {
-        totalOrders: await Order.countDocuments(),
+        totalOrders: await Order.countDocuments({
+          paymentStatus: { $ne: 'Failed' },
+          orderStatus: { $ne: 'Payment Pending' },
+        }),
         pendingCount,
         deliveredCount,
         cancelledCount,
-        totalRevenue: totalRevenue[0]?.total || 0
-      }
+        totalRevenue: totalRevenue[0]?.total || 0,
+      },
     });
   } catch (err) {
-    console.error("loadAdminOrders error:", err);
-    res.redirect("/admin/dashboard");
+    console.error('loadAdminOrders error:', err);
+    res.redirect('/admin/dashboard');
   }
 };
 
@@ -2108,51 +2444,74 @@ export const loadAdminOrderDetail = async (req, res) => {
   try {
     const { orderId } = req.params;
     const order = await Order.findOne({ orderId }).lean();
-    if (!order) return res.redirect("/admin/orders");
+    if (!order) return res.redirect('/admin/orders');
 
     const user = await User.findById(order.userId).lean();
 
-    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "-";
-    const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+    const fmtDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '-';
+    const fmtTime = (d) =>
+      d
+        ? new Date(d).toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
 
     // Map per-item timelines and allowed next statuses
-    const formattedProducts = order.products.map(item => {
+    const formattedProducts = order.products.map((item) => {
       const allowedNextStatuses = [];
-      if (!FINALIZED_STATUSES.includes(item.orderStatus) && item.orderStatus !== "Cancelled") {
+      if (
+        !FINALIZED_STATUSES.includes(item.orderStatus) &&
+        item.orderStatus !== 'Cancelled'
+      ) {
         const nextStatus = getNextAllowedStatus(item.orderStatus);
         if (nextStatus) allowedNextStatuses.push(nextStatus);
       }
 
       const tl = item.trackingTimeline || [];
-      const formattedTimeline = tl.map(t => ({
-        ...t,
-        dateFormatted: fmtDate(t.timestamp),
-        timeFormatted: fmtTime(t.timestamp)
-      })).reverse();
+      const formattedTimeline = tl
+        .map((t) => ({
+          ...t,
+          dateFormatted: fmtDate(t.timestamp),
+          timeFormatted: fmtTime(t.timestamp),
+        }))
+        .reverse();
 
       return {
         ...item,
         allowedNextStatuses,
-        formattedTimeline
+        formattedTimeline,
       };
     });
 
     let totalCancelledRefunds = 0;
     let totalReturnedRefunds = 0;
 
-    formattedProducts.forEach(item => {
-      if (item.orderStatus === "Cancelled" && item.refundAmountProcessed) {
+    formattedProducts.forEach((item) => {
+      if (item.orderStatus === 'Cancelled' && item.refundAmountProcessed) {
         totalCancelledRefunds += item.refundAmountProcessed;
       }
-      if (["Returned", "Refund Processed"].includes(item.orderStatus) && item.refundAmountProcessed) {
+      if (
+        ['Returned', 'Refund Processed'].includes(item.orderStatus) &&
+        item.refundAmountProcessed
+      ) {
         totalReturnedRefunds += item.refundAmountProcessed;
       }
     });
 
-    const finalAmountPaid = order.totalAmount - totalCancelledRefunds - totalReturnedRefunds;
+    const finalAmountPaid =
+      order.totalAmount - totalCancelledRefunds - totalReturnedRefunds;
 
-    res.render("admin/adminOrderDetail", { layout: "admin", 
-      activePage: "orders",
+    res.render('admin/adminOrderDetail', {
+      layout: 'admin',
+      activePage: 'orders',
       order: {
         ...order,
         subtotalSalePrice: order.subtotalMrp - (order.discount || 0),
@@ -2161,13 +2520,15 @@ export const loadAdminOrderDetail = async (req, res) => {
         estimatedDeliveryFormatted: fmtDate(order.estimatedDelivery),
         totalCancelledRefunds,
         totalReturnedRefunds,
-        finalAmountPaid
+        finalAmountPaid,
       },
-      user: user ? { name: user.name, email: user.email, phone: user.phone || "-" } : null
+      user: user
+        ? { name: user.name, email: user.email, phone: user.phone || '-' }
+        : null,
     });
   } catch (err) {
-    console.error("loadAdminOrderDetail error:", err);
-    res.redirect("/admin/orders");
+    console.error('loadAdminOrderDetail error:', err);
+    res.redirect('/admin/orders');
   }
 };
 
@@ -2176,21 +2537,31 @@ export const updateOrderStatus = async (req, res) => {
     const { newStatus } = req.body;
     const { orderId } = req.params;
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
     const currentStatus = order.orderStatus;
 
     // Block updates on finalized orders
-    if (FINALIZED_STATUSES.includes(currentStatus) || currentStatus === "Cancelled") {
-      return res.status(400).json({ success: false, message: "Cannot update a finalized order." });
+    if (
+      FINALIZED_STATUSES.includes(currentStatus) ||
+      currentStatus === 'Cancelled'
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Cannot update a finalized order.' });
     }
 
     // Validate the requested new status is known
     if (!STATUS_FLOW.includes(newStatus)) {
-      return res.status(400).json({ success: false, message: "Invalid status." });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid status.' });
     }
 
-    if (newStatus !== "Cancelled") {
+    if (newStatus !== 'Cancelled') {
       // ── Strict sequential validation ──
       // The new status MUST be exactly the next step after current
       const allowedNext = getNextAllowedStatus(currentStatus);
@@ -2200,57 +2571,70 @@ export const updateOrderStatus = async (req, res) => {
         if (requiredPrev && !requiredPrev.includes(currentStatus)) {
           return res.status(400).json({
             success: false,
-            message: `Cannot set status to "${newStatus}" — order must be "${requiredPrev.join('" or "')}" first.`
+            message: `Cannot set status to "${newStatus}" — order must be "${requiredPrev.join('" or "')}" first.`,
           });
         }
         return res.status(400).json({
           success: false,
           message: allowedNext
             ? `Next allowed status is "${allowedNext}". You cannot skip steps.`
-            : "No further status change is allowed for this order."
+            : 'No further status change is allowed for this order.',
         });
       }
     }
 
     order.orderStatus = newStatus;
-    
+
     // Automatic COD Payment Fix
-    if (newStatus === "Delivered" && order.paymentMethod === "COD") {
-      order.paymentStatus = "Paid";
+    if (newStatus === 'Delivered' && order.paymentMethod === 'COD') {
+      order.paymentStatus = 'Paid';
     }
-    
+
     // Sync the new status and tracking timeline to all active products
     const timelineEntry = {
       status: newStatus,
       message: `Status updated to ${newStatus} by admin`,
       timestamp: new Date(),
-      completed: true
+      completed: true,
     };
-    
+
     for (let item of order.products) {
-      if (!["Cancelled", "Return Requested", "Return Approved", "Pickup Scheduled", "Return Picked", "Refund Processed", "Return Rejected", "Returned"].includes(item.orderStatus)) {
+      if (
+        ![
+          'Cancelled',
+          'Return Requested',
+          'Return Approved',
+          'Pickup Scheduled',
+          'Return Picked',
+          'Refund Processed',
+          'Return Rejected',
+          'Returned',
+        ].includes(item.orderStatus)
+      ) {
         item.orderStatus = newStatus;
         if (!item.trackingTimeline) item.trackingTimeline = [];
         item.trackingTimeline.push(timelineEntry);
       }
     }
 
-    if (newStatus === "Cancelled") {
+    if (newStatus === 'Cancelled') {
       for (const item of order.products) {
-        await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+        await Variant.findByIdAndUpdate(item.variantId, {
+          $inc: { stock: item.quantity },
+        });
       }
     }
 
-    if (newStatus === "Delivered") {
+    if (newStatus === 'Delivered') {
       // Referral Program Release Logic (First Delivered Order)
       const userOrders = await Order.find({ userId: order.userId }).lean();
       let hasPriorDelivery = false;
       for (const uOrder of userOrders) {
         if (uOrder._id.toString() !== order._id.toString()) {
-           if (uOrder.products.some(p => p.orderStatus === "Delivered")) {
-              hasPriorDelivery = true;
-              break;
-           }
+          if (uOrder.products.some((p) => p.orderStatus === 'Delivered')) {
+            hasPriorDelivery = true;
+            break;
+          }
         }
       }
 
@@ -2258,48 +2642,85 @@ export const updateOrderStatus = async (req, res) => {
         const session = await mongoose.startSession();
         try {
           session.startTransaction();
-          const pendingReferral = await Referral.findOne({ referredUser: order.userId, rewardStatus: "PENDING" }).session(session);
+          const pendingReferral = await Referral.findOne({
+            referredUser: order.userId,
+            rewardStatus: 'PENDING',
+          }).session(session);
           if (pendingReferral) {
-             pendingReferral.rewardStatus = "COMPLETED";
-             pendingReferral.rewardReleaseDate = new Date();
-             pendingReferral.firstDeliveredOrderId = order.orderId;
-             await pendingReferral.save({ session });
+            pendingReferral.rewardStatus = 'COMPLETED';
+            pendingReferral.rewardReleaseDate = new Date();
+            pendingReferral.firstDeliveredOrderId = order.orderId;
+            await pendingReferral.save({ session });
 
-             if (pendingReferral.referrerRewardAmount > 0) {
-               await User.findByIdAndUpdate(pendingReferral.referrer, { $inc: { walletBalance: pendingReferral.referrerRewardAmount } }, { session });
-               await WalletTransaction.create([{
-                 userId: pendingReferral.referrer,
-                 type: "Credit",
-                 amount: pendingReferral.referrerRewardAmount,
-                 description: "Referral reward received after referred user's first delivered order."
-               }], { session });
-               await Notification.create([{
-                 userId: pendingReferral.referrer,
-                 message: `You received ₹${pendingReferral.referrerRewardAmount} referral reward.`,
-                 type: 'Reward'
-               }], { session });
-             }
+            if (pendingReferral.referrerRewardAmount > 0) {
+              await User.findByIdAndUpdate(
+                pendingReferral.referrer,
+                {
+                  $inc: { walletBalance: pendingReferral.referrerRewardAmount },
+                },
+                { session }
+              );
+              await WalletTransaction.create(
+                [
+                  {
+                    userId: pendingReferral.referrer,
+                    type: 'Credit',
+                    amount: pendingReferral.referrerRewardAmount,
+                    description:
+                      "Referral reward received after referred user's first delivered order.",
+                  },
+                ],
+                { session }
+              );
+              await Notification.create(
+                [
+                  {
+                    userId: pendingReferral.referrer,
+                    message: `You received ₹${pendingReferral.referrerRewardAmount} referral reward.`,
+                    type: 'Reward',
+                  },
+                ],
+                { session }
+              );
+            }
 
-             if (pendingReferral.referredRewardAmount > 0) {
-               await User.findByIdAndUpdate(order.userId, { $inc: { walletBalance: pendingReferral.referredRewardAmount } }, { session });
-               await WalletTransaction.create([{
-                 userId: order.userId,
-                 type: "Credit",
-                 amount: pendingReferral.referredRewardAmount,
-                 description: "Referral signup reward unlocked after first delivered order."
-               }], { session });
-               await Notification.create([{
-                 userId: order.userId,
-                 message: `You received ₹${pendingReferral.referredRewardAmount} referral reward.`,
-                 type: 'Reward'
-               }], { session });
-             }
-             await session.commitTransaction();
+            if (pendingReferral.referredRewardAmount > 0) {
+              await User.findByIdAndUpdate(
+                order.userId,
+                {
+                  $inc: { walletBalance: pendingReferral.referredRewardAmount },
+                },
+                { session }
+              );
+              await WalletTransaction.create(
+                [
+                  {
+                    userId: order.userId,
+                    type: 'Credit',
+                    amount: pendingReferral.referredRewardAmount,
+                    description:
+                      'Referral signup reward unlocked after first delivered order.',
+                  },
+                ],
+                { session }
+              );
+              await Notification.create(
+                [
+                  {
+                    userId: order.userId,
+                    message: `You received ₹${pendingReferral.referredRewardAmount} referral reward.`,
+                    type: 'Reward',
+                  },
+                ],
+                { session }
+              );
+            }
+            await session.commitTransaction();
           } else {
-             await session.abortTransaction();
+            await session.abortTransaction();
           }
         } catch (error) {
-          console.error("Referral Transaction Error:", error);
+          console.error('Referral Transaction Error:', error);
           await session.abortTransaction();
         } finally {
           session.endSession();
@@ -2308,10 +2729,13 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
-    res.json({ success: true, message: `Order status updated to "${newStatus}" successfully.` });
+    res.json({
+      success: true,
+      message: `Order status updated to "${newStatus}" successfully.`,
+    });
   } catch (err) {
-    console.error("updateOrderStatus error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('updateOrderStatus error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -2319,27 +2743,45 @@ export const updateItemStatus = async (req, res) => {
   try {
     const { newStatus } = req.body;
     const { orderId, itemId } = req.params;
-    
+
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
     const item = order.products.id(itemId);
-    if (!item) return res.status(404).json({ success: false, message: "Item not found in order" });
+    if (!item)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Item not found in order' });
 
     const currentStatus = item.orderStatus;
 
-    if (FINALIZED_STATUSES.includes(currentStatus) || currentStatus === "Cancelled") {
-      return res.status(400).json({ success: false, message: "Cannot update a finalized item." });
+    if (
+      FINALIZED_STATUSES.includes(currentStatus) ||
+      currentStatus === 'Cancelled'
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Cannot update a finalized item.' });
     }
 
     if (!STATUS_FLOW.includes(newStatus)) {
-      return res.status(400).json({ success: false, message: "Invalid status." });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid status.' });
     }
 
-    if (newStatus !== "Cancelled") {
+    if (newStatus !== 'Cancelled') {
       const allowedNext = getNextAllowedStatus(currentStatus);
       if (newStatus !== allowedNext) {
-        return res.status(400).json({ success: false, message: `Cannot skip steps. Next allowed is "${allowedNext}".` });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: `Cannot skip steps. Next allowed is "${allowedNext}".`,
+          });
       }
     }
 
@@ -2350,20 +2792,28 @@ export const updateItemStatus = async (req, res) => {
       status: newStatus,
       message: `Status updated to ${newStatus} by admin`,
       timestamp: new Date(),
-      completed: true
+      completed: true,
     });
 
-    if (newStatus === "Cancelled") {
+    if (newStatus === 'Cancelled') {
       // 1. Restore Stock
-      await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
-      
+      await Variant.findByIdAndUpdate(item.variantId, {
+        $inc: { stock: item.quantity },
+      });
+
       // 2. Refund to Wallet if Paid online
-      if (order.paymentStatus === "Paid" && order.paymentMethod !== "COD") {
-        const refundData = await calculateRefundAmount(order, item._id.toString(), item.quantity);
+      if (order.paymentStatus === 'Paid' && order.paymentMethod !== 'COD') {
+        const refundData = await calculateRefundAmount(
+          order,
+          item._id.toString(),
+          item.quantity
+        );
         let refundAmount = refundData.refundAmount;
-        
-        const willBeAllCancelled = order.products.every(p => 
-          p._id.toString() === item._id.toString() || p.orderStatus === "Cancelled"
+
+        const willBeAllCancelled = order.products.every(
+          (p) =>
+            p._id.toString() === item._id.toString() ||
+            p.orderStatus === 'Cancelled'
         );
 
         if (willBeAllCancelled && order.deliveryCharge > 0) {
@@ -2372,25 +2822,29 @@ export const updateItemStatus = async (req, res) => {
 
         if (refundAmount > 0) {
           item.refundAmountProcessed = refundAmount;
-          item.refundStatus = "Processed";
-          await User.findByIdAndUpdate(order.userId, { $inc: { walletBalance: refundAmount } });
+          item.refundStatus = 'Processed';
+          await User.findByIdAndUpdate(order.userId, {
+            $inc: { walletBalance: refundAmount },
+          });
           await WalletTransaction.create({
-             userId: order.userId,
-             type: 'Credit',
-             amount: refundAmount,
-             description: `Refund for Cancelled Product (${item.productName})${willBeAllCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
-             orderId: order.orderId,
-             status: 'Success'
+            userId: order.userId,
+            type: 'Credit',
+            amount: refundAmount,
+            description: `Refund for Cancelled Product (${item.productName})${willBeAllCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
+            orderId: order.orderId,
+            status: 'Success',
           });
         }
       }
     }
 
     // Auto-complete COD payment if all non-cancelled items are Delivered
-    if (newStatus === "Delivered") {
-      if (order.paymentMethod === "COD") {
-        const allDone = order.products.every(p => p.orderStatus === "Delivered" || p.orderStatus === "Cancelled");
-        if (allDone) order.paymentStatus = "Paid";
+    if (newStatus === 'Delivered') {
+      if (order.paymentMethod === 'COD') {
+        const allDone = order.products.every(
+          (p) => p.orderStatus === 'Delivered' || p.orderStatus === 'Cancelled'
+        );
+        if (allDone) order.paymentStatus = 'Paid';
       }
 
       // Referral Program Release Logic (First Delivered Order)
@@ -2398,13 +2852,17 @@ export const updateItemStatus = async (req, res) => {
       let hasPriorDelivery = false;
       for (const uOrder of userOrders) {
         if (uOrder._id.toString() === order._id.toString()) {
-           const previouslyDelivered = order.products.filter(p => p.orderStatus === "Delivered" && p._id.toString() !== itemId).length > 0;
-           if (previouslyDelivered) hasPriorDelivery = true;
+          const previouslyDelivered =
+            order.products.filter(
+              (p) =>
+                p.orderStatus === 'Delivered' && p._id.toString() !== itemId
+            ).length > 0;
+          if (previouslyDelivered) hasPriorDelivery = true;
         } else {
-           if (uOrder.products.some(p => p.orderStatus === "Delivered")) {
-              hasPriorDelivery = true;
-              break;
-           }
+          if (uOrder.products.some((p) => p.orderStatus === 'Delivered')) {
+            hasPriorDelivery = true;
+            break;
+          }
         }
       }
 
@@ -2412,48 +2870,85 @@ export const updateItemStatus = async (req, res) => {
         const session = await mongoose.startSession();
         try {
           session.startTransaction();
-          const pendingReferral = await Referral.findOne({ referredUser: order.userId, rewardStatus: "PENDING" }).session(session);
+          const pendingReferral = await Referral.findOne({
+            referredUser: order.userId,
+            rewardStatus: 'PENDING',
+          }).session(session);
           if (pendingReferral) {
-             pendingReferral.rewardStatus = "COMPLETED";
-             pendingReferral.rewardReleaseDate = new Date();
-             pendingReferral.firstDeliveredOrderId = order.orderId;
-             await pendingReferral.save({ session });
+            pendingReferral.rewardStatus = 'COMPLETED';
+            pendingReferral.rewardReleaseDate = new Date();
+            pendingReferral.firstDeliveredOrderId = order.orderId;
+            await pendingReferral.save({ session });
 
-             if (pendingReferral.referrerRewardAmount > 0) {
-               await User.findByIdAndUpdate(pendingReferral.referrer, { $inc: { walletBalance: pendingReferral.referrerRewardAmount } }, { session });
-               await WalletTransaction.create([{
-                 userId: pendingReferral.referrer,
-                 type: "Credit",
-                 amount: pendingReferral.referrerRewardAmount,
-                 description: "Referral reward received after referred user's first delivered order."
-               }], { session });
-               await Notification.create([{
-                 userId: pendingReferral.referrer,
-                 message: `You received ₹${pendingReferral.referrerRewardAmount} referral reward.`,
-                 type: 'Reward'
-               }], { session });
-             }
+            if (pendingReferral.referrerRewardAmount > 0) {
+              await User.findByIdAndUpdate(
+                pendingReferral.referrer,
+                {
+                  $inc: { walletBalance: pendingReferral.referrerRewardAmount },
+                },
+                { session }
+              );
+              await WalletTransaction.create(
+                [
+                  {
+                    userId: pendingReferral.referrer,
+                    type: 'Credit',
+                    amount: pendingReferral.referrerRewardAmount,
+                    description:
+                      "Referral reward received after referred user's first delivered order.",
+                  },
+                ],
+                { session }
+              );
+              await Notification.create(
+                [
+                  {
+                    userId: pendingReferral.referrer,
+                    message: `You received ₹${pendingReferral.referrerRewardAmount} referral reward.`,
+                    type: 'Reward',
+                  },
+                ],
+                { session }
+              );
+            }
 
-             if (pendingReferral.referredRewardAmount > 0) {
-               await User.findByIdAndUpdate(order.userId, { $inc: { walletBalance: pendingReferral.referredRewardAmount } }, { session });
-               await WalletTransaction.create([{
-                 userId: order.userId,
-                 type: "Credit",
-                 amount: pendingReferral.referredRewardAmount,
-                 description: "Referral signup reward unlocked after first delivered order."
-               }], { session });
-               await Notification.create([{
-                 userId: order.userId,
-                 message: `You received ₹${pendingReferral.referredRewardAmount} referral reward.`,
-                 type: 'Reward'
-               }], { session });
-             }
-             await session.commitTransaction();
+            if (pendingReferral.referredRewardAmount > 0) {
+              await User.findByIdAndUpdate(
+                order.userId,
+                {
+                  $inc: { walletBalance: pendingReferral.referredRewardAmount },
+                },
+                { session }
+              );
+              await WalletTransaction.create(
+                [
+                  {
+                    userId: order.userId,
+                    type: 'Credit',
+                    amount: pendingReferral.referredRewardAmount,
+                    description:
+                      'Referral signup reward unlocked after first delivered order.',
+                  },
+                ],
+                { session }
+              );
+              await Notification.create(
+                [
+                  {
+                    userId: order.userId,
+                    message: `You received ₹${pendingReferral.referredRewardAmount} referral reward.`,
+                    type: 'Reward',
+                  },
+                ],
+                { session }
+              );
+            }
+            await session.commitTransaction();
           } else {
-             await session.abortTransaction();
+            await session.abortTransaction();
           }
         } catch (error) {
-          console.error("Referral Transaction Error:", error);
+          console.error('Referral Transaction Error:', error);
           await session.abortTransaction();
         } finally {
           session.endSession();
@@ -2462,18 +2957,24 @@ export const updateItemStatus = async (req, res) => {
     }
 
     // Derive parent order status (e.g. if all items Cancelled, order is Cancelled)
-    const allCancelled = order.products.every(p => p.orderStatus === "Cancelled");
-    const allDeliveredOrCancelled = order.products.every(p => p.orderStatus === "Delivered" || p.orderStatus === "Cancelled");
-    
-    if (allCancelled) order.orderStatus = "Cancelled";
-    else if (allDeliveredOrCancelled) order.orderStatus = "Delivered";
+    const allCancelled = order.products.every(
+      (p) => p.orderStatus === 'Cancelled'
+    );
+    const allDeliveredOrCancelled = order.products.every(
+      (p) => p.orderStatus === 'Delivered' || p.orderStatus === 'Cancelled'
+    );
+
+    if (allCancelled) order.orderStatus = 'Cancelled';
+    else if (allDeliveredOrCancelled) order.orderStatus = 'Delivered';
 
     await order.save();
-    res.json({ success: true, message: `Item status updated to "${newStatus}"` });
-
+    res.json({
+      success: true,
+      message: `Item status updated to "${newStatus}"`,
+    });
   } catch (err) {
-    console.error("updateItemStatus error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('updateItemStatus error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -2484,10 +2985,14 @@ export const loadSettings = async (req, res) => {
       settings = {
         standardShippingFee: 0,
         fastShippingFee: 50,
-        returnPeriodDays: 7
+        returnPeriodDays: 7,
       };
     }
-    res.render('admin/settings', { layout: 'admin',  activePage: 'settings', settings });
+    res.render('admin/settings', {
+      layout: 'admin',
+      activePage: 'settings',
+      settings,
+    });
   } catch (err) {
     console.log(err);
     res.redirect('/admin/dashboard');
@@ -2501,19 +3006,21 @@ export const updateSettings = async (req, res) => {
     if (!settings) {
       settings = new Settings({});
     }
-    
+
     if (action === 'referral') {
-      const { referralProgramEnabled, referrerReward, referredReward } = req.body;
+      const { referralProgramEnabled, referrerReward, referredReward } =
+        req.body;
       settings.referralProgramEnabled = referralProgramEnabled;
       settings.referrerReward = parseFloat(referrerReward) || 0;
       settings.referredReward = parseFloat(referredReward) || 0;
     } else {
-      const { standardShippingFee, fastShippingFee, returnPeriodDays } = req.body;
+      const { standardShippingFee, fastShippingFee, returnPeriodDays } =
+        req.body;
       settings.standardShippingFee = parseFloat(standardShippingFee) || 0;
       settings.fastShippingFee = parseFloat(fastShippingFee) || 0;
       settings.returnPeriodDays = parseInt(returnPeriodDays) || 7;
     }
-    
+
     await settings.save();
     res.json({ success: true, message: 'Settings updated successfully.' });
   } catch (err) {
@@ -2527,22 +3034,27 @@ export const loadAdminReturns = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 8;
     const skip = (page - 1) * limit;
-    const search = req.query.search || "";
-    const statusFilter = req.query.status || "all";
+    const search = req.query.search || '';
+    const statusFilter = req.query.status || 'all';
 
     let query = {
       orderStatus: {
         $in: [
-          'Return Requested', 'Return Approved', 'Pickup Scheduled',
-          'Return Picked', 'Refund Processed', 'Return Rejected', 'Returned'
-        ]
-      }
+          'Return Requested',
+          'Return Approved',
+          'Pickup Scheduled',
+          'Return Picked',
+          'Refund Processed',
+          'Return Rejected',
+          'Returned',
+        ],
+      },
     };
 
     if (search) {
-      query.orderId = { $regex: search, $options: "i" };
+      query.orderId = { $regex: search, $options: 'i' };
     }
-    if (statusFilter !== "all") {
+    if (statusFilter !== 'all') {
       query.orderStatus = statusFilter;
     }
 
@@ -2553,31 +3065,41 @@ export const loadAdminReturns = async (req, res) => {
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("userId", "name email")
+      .populate('userId', 'name email')
       .lean();
 
-    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
+    const fmtDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })
+        : '-';
 
-    const formatted = returnsList.map(o => ({
+    const formatted = returnsList.map((o) => ({
       ...o,
       orderDateFormatted: fmtDate(o.orderDate),
       updatedDateFormatted: fmtDate(o.updatedAt),
-      customerName: o.shippingAddress?.fullName || o.userId?.name || "-",
-      customerEmail: o.userId?.email || "-",
+      customerName: o.shippingAddress?.fullName || o.userId?.name || '-',
+      customerEmail: o.userId?.email || '-',
       productCount: o.products?.length || 0,
-      firstProductName: o.products?.[0]?.productName || "-",
+      firstProductName: o.products?.[0]?.productName || '-',
       // Return details
-      returnReason: o.returnReason || "No reason provided",
-      refundMethod: o.products?.find(p => p.refundMethod)?.refundMethod || "Original Payment Method",
-      returnRejectionReason: o.returnRejectionReason || "",
-      returnPickupStatus: o.returnPickupStatus || "Pending",
-      returnRefundStatus: o.returnRefundStatus || "Pending",
-      returnInspectionStatus: o.returnInspectionStatus || "Pending",
-      returnInspectionDecision: o.returnInspectionDecision || ""
+      returnReason: o.returnReason || 'No reason provided',
+      refundMethod:
+        o.products?.find((p) => p.refundMethod)?.refundMethod ||
+        'Original Payment Method',
+      returnRejectionReason: o.returnRejectionReason || '',
+      returnPickupStatus: o.returnPickupStatus || 'Pending',
+      returnRefundStatus: o.returnRefundStatus || 'Pending',
+      returnInspectionStatus: o.returnInspectionStatus || 'Pending',
+      returnInspectionDecision: o.returnInspectionDecision || '',
     }));
 
-    res.render("admin/returnManagement", { layout: "admin", 
-      activePage: "returns",
+    res.render('admin/returnManagement', {
+      layout: 'admin',
+      activePage: 'returns',
       returns: formatted,
       currentPage: page,
       totalPages,
@@ -2585,8 +3107,8 @@ export const loadAdminReturns = async (req, res) => {
       status: statusFilter,
     });
   } catch (err) {
-    console.error("loadAdminReturns error:", err);
-    res.redirect("/admin/dashboard");
+    console.error('loadAdminReturns error:', err);
+    res.redirect('/admin/dashboard');
   }
 };
 
@@ -2594,35 +3116,47 @@ export const approveReturn = async (req, res) => {
   try {
     const { orderId } = req.params;
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
-    if (order.orderStatus !== "Return Requested") {
-      return res.status(400).json({ success: false, message: "Only Return Requested orders can be approved." });
+    if (order.orderStatus !== 'Return Requested') {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Only Return Requested orders can be approved.',
+        });
     }
 
-    order.orderStatus = "Return Approved";
-    order.returnPickupStatus = "Scheduled"; // Automatically updates pickup status
-    
+    order.orderStatus = 'Return Approved';
+    order.returnPickupStatus = 'Scheduled'; // Automatically updates pickup status
+
     // Sync to products
     for (let item of order.products) {
-      if (item.orderStatus === "Return Requested") {
-        item.orderStatus = "Return Approved";
-        item.returnStatus = "Approved";
+      if (item.orderStatus === 'Return Requested') {
+        item.orderStatus = 'Return Approved';
+        item.returnStatus = 'Approved';
         if (!item.trackingTimeline) item.trackingTimeline = [];
         item.trackingTimeline.push({
-          status: "Return Approved",
-          message: "Your return request has been approved by the admin. Pickup is scheduled.",
+          status: 'Return Approved',
+          message:
+            'Your return request has been approved by the admin. Pickup is scheduled.',
           timestamp: new Date(),
-          completed: true
+          completed: true,
         });
       }
     }
 
     await order.save();
-    res.json({ success: true, message: "Return request approved. Pickup status updated to Scheduled." });
+    res.json({
+      success: true,
+      message: 'Return request approved. Pickup status updated to Scheduled.',
+    });
   } catch (err) {
-    console.error("approveReturn error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('approveReturn error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -2632,92 +3166,124 @@ export const rejectReturn = async (req, res) => {
     const { reason } = req.body;
 
     if (!reason || reason.trim().length < 5) {
-      return res.status(400).json({ success: false, message: "Please provide a valid rejection reason (min 5 chars)." });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Please provide a valid rejection reason (min 5 chars).',
+        });
     }
 
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
-    if (order.orderStatus !== "Return Requested") {
-      return res.status(400).json({ success: false, message: "Only Return Requested orders can be rejected." });
+    if (order.orderStatus !== 'Return Requested') {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Only Return Requested orders can be rejected.',
+        });
     }
 
-    order.orderStatus = "Return Rejected";
+    order.orderStatus = 'Return Rejected';
     order.returnRejectionReason = reason;
 
     // Sync to products
     for (let item of order.products) {
-      if (item.orderStatus === "Return Requested") {
-        item.orderStatus = "Return Rejected";
-        item.returnStatus = "Rejected";
+      if (item.orderStatus === 'Return Requested') {
+        item.orderStatus = 'Return Rejected';
+        item.returnStatus = 'Rejected';
         item.returnRejectionReason = reason;
         if (!item.trackingTimeline) item.trackingTimeline = [];
         item.trackingTimeline.push({
-          status: "Return Rejected",
+          status: 'Return Rejected',
           message: `Return request rejected. Reason: ${reason}`,
           timestamp: new Date(),
-          completed: true
+          completed: true,
         });
       }
     }
 
     await order.save();
-    res.json({ success: true, message: "Return request rejected." });
+    res.json({ success: true, message: 'Return request rejected.' });
   } catch (err) {
-    console.error("rejectReturn error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('rejectReturn error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
 export const updatePickupStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { pickupStatus } = req.body; 
+    const { pickupStatus } = req.body;
 
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
-    if (!["Return Approved", "Pickup Scheduled", "Return Picked"].includes(order.orderStatus)) {
-      return res.status(400).json({ success: false, message: "Cannot update pickup status for this order." });
+    if (
+      !['Return Approved', 'Pickup Scheduled', 'Return Picked'].includes(
+        order.orderStatus
+      )
+    ) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Cannot update pickup status for this order.',
+        });
     }
 
     order.returnPickupStatus = pickupStatus;
-    
+
     // Sync to products
     const timelineEntry = {
       timestamp: new Date(),
-      completed: true
+      completed: true,
     };
-    
-    if (pickupStatus === "Picked") {
-      order.orderStatus = "Return Picked";
-      timelineEntry.status = "Return Picked";
-      timelineEntry.message = "Returned product picked up and received at sorting facility.";
-    } else if (pickupStatus === "Scheduled") {
-      order.orderStatus = "Pickup Scheduled";
-      timelineEntry.status = "Pickup Scheduled";
-      timelineEntry.message = "Return pickup has been scheduled.";
+
+    if (pickupStatus === 'Picked') {
+      order.orderStatus = 'Return Picked';
+      timelineEntry.status = 'Return Picked';
+      timelineEntry.message =
+        'Returned product picked up and received at sorting facility.';
+    } else if (pickupStatus === 'Scheduled') {
+      order.orderStatus = 'Pickup Scheduled';
+      timelineEntry.status = 'Pickup Scheduled';
+      timelineEntry.message = 'Return pickup has been scheduled.';
     }
 
     for (let item of order.products) {
-      if (item.orderStatus === "Return Approved" || item.orderStatus === "Pickup Scheduled") {
-        if (pickupStatus === "Picked") {
-          item.orderStatus = "Return Picked";
-          item.returnStatus = "Picked";
-        } else if (pickupStatus === "Scheduled") {
-          item.orderStatus = "Pickup Scheduled";
+      if (
+        item.orderStatus === 'Return Approved' ||
+        item.orderStatus === 'Pickup Scheduled'
+      ) {
+        if (pickupStatus === 'Picked') {
+          item.orderStatus = 'Return Picked';
+          item.returnStatus = 'Picked';
+        } else if (pickupStatus === 'Scheduled') {
+          item.orderStatus = 'Pickup Scheduled';
         }
-        
+
         if (!item.trackingTimeline) item.trackingTimeline = [];
         item.trackingTimeline.push(timelineEntry);
       }
     }
 
     await order.save();
-    res.json({ success: true, message: `Pickup status updated to ${pickupStatus}.` });
+    res.json({
+      success: true,
+      message: `Pickup status updated to ${pickupStatus}.`,
+    });
   } catch (err) {
-    console.error("updatePickupStatus error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('updatePickupStatus error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -2727,56 +3293,74 @@ export const inspectReturn = async (req, res) => {
     const { decision } = req.body; // 'Restock' or 'Damaged'
 
     if (!['Restock', 'Damaged'].includes(decision)) {
-      return res.status(400).json({ success: false, message: "Invalid inspection decision." });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid inspection decision.' });
     }
 
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
-    if (order.orderStatus !== "Return Picked") {
-      return res.status(400).json({ success: false, message: "Inspection can only be performed after return is Picked up." });
+    if (order.orderStatus !== 'Return Picked') {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message:
+            'Inspection can only be performed after return is Picked up.',
+        });
     }
 
-    order.returnInspectionStatus = "Inspected";
+    order.returnInspectionStatus = 'Inspected';
     order.returnInspectionDecision = decision;
-    order.orderStatus = "Returned"; // Mark return as completed
+    order.orderStatus = 'Returned'; // Mark return as completed
 
     const isRestocked = decision === 'Restock';
     const message = `Return inspection completed. Decision: ${isRestocked ? 'Restocked to inventory' : 'Marked as damaged'}`;
 
     for (let item of order.products) {
-      if (item.orderStatus === "Return Picked") {
-        item.orderStatus = "Returned";
-        item.returnStatus = "Returned";
-        item.returnInspectionStatus = "Inspected";
+      if (item.orderStatus === 'Return Picked') {
+        item.orderStatus = 'Returned';
+        item.returnStatus = 'Returned';
+        item.returnInspectionStatus = 'Inspected';
         item.returnInspectionDecision = decision;
-        
+
         // Also trigger a mock refund logic mark here for completeness based on user requirements
-        item.refundStatus = "Processed";
-        
+        item.refundStatus = 'Processed';
+
         if (!item.trackingTimeline) item.trackingTimeline = [];
         item.trackingTimeline.push({
-          status: "Returned",
+          status: 'Returned',
           message,
           timestamp: new Date(),
-          completed: true
+          completed: true,
         });
 
         if (isRestocked) {
-          await Variant.findByIdAndUpdate(item.variantId, { $$inc: { stock: item.quantity } });
+          await Variant.findByIdAndUpdate(item.variantId, {
+            $$inc: { stock: item.quantity },
+          });
           const variant = await Variant.findById(item.variantId);
           if (variant && variant.isDefault) {
-            await Product.findByIdAndUpdate(item.productId, { stock: variant.stock });
+            await Product.findByIdAndUpdate(item.productId, {
+              stock: variant.stock,
+            });
           }
         }
       }
     }
 
     await order.save();
-    res.json({ success: true, message: `Inspection completed successfully. Decision: ${decision}.` });
+    res.json({
+      success: true,
+      message: `Inspection completed successfully. Decision: ${decision}.`,
+    });
   } catch (err) {
-    console.error("inspectReturn error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('inspectReturn error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -2786,21 +3370,33 @@ export const updateRefundStatus = async (req, res) => {
     const { refundStatus } = req.body; // e.g. 'Processed'
 
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
-    if (!["Returned", "Return Picked", "Refund Processed"].includes(order.orderStatus)) {
-      return res.status(400).json({ success: false, message: "Refund can only be processed after pickup/inspection." });
+    if (
+      !['Returned', 'Return Picked', 'Refund Processed'].includes(
+        order.orderStatus
+      )
+    ) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: 'Refund can only be processed after pickup/inspection.',
+        });
     }
 
     order.returnRefundStatus = refundStatus;
-    if (refundStatus === "Processed") {
-      order.orderStatus = "Refund Processed";
-      order.paymentStatus = "Refunded";
+    if (refundStatus === 'Processed') {
+      order.orderStatus = 'Refund Processed';
+      order.paymentStatus = 'Refunded';
       order.trackingTimeline.push({
-        status: "Refund Processed",
+        status: 'Refund Processed',
         message: `Refund of ₹${order.totalAmount} processed successfully to user account.`,
         timestamp: new Date(),
-        completed: true
+        completed: true,
       });
 
       // Credit the user's wallet
@@ -2812,10 +3408,13 @@ export const updateRefundStatus = async (req, res) => {
     }
 
     await order.save();
-    res.json({ success: true, message: `Refund status updated to ${refundStatus}.` });
+    res.json({
+      success: true,
+      message: `Refund status updated to ${refundStatus}.`,
+    });
   } catch (err) {
-    console.error("updateRefundStatus error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('updateRefundStatus error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -2825,37 +3424,79 @@ export const updateItemReturnAction = async (req, res) => {
     const { action, reason, newStatus } = req.body;
 
     const order = await Order.findOne({ orderId });
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found' });
 
     const item = order.products.id(itemId);
-    if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+    if (!item)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Item not found' });
 
     const STATUS_META = {
-      'Return Approved':  { returnStatus: 'Approved',  msg: 'Return approved. Pickup scheduled.' },
-      'Pickup Scheduled': { returnStatus: 'Scheduled', msg: 'Pickup has been scheduled.' },
-      'Return Picked':    { returnStatus: 'Picked',    msg: 'Item picked up by courier.' },
-      'Return Rejected':  { returnStatus: 'Rejected',  msg: 'Return rejected by admin.' },
-      'Returned':         { returnStatus: 'Returned',  msg: 'Item returned and restocked.' },
-      'Refund Processed': { returnStatus: 'Refunded',  msg: 'Refund processed to customer wallet.' },
+      'Return Approved': {
+        returnStatus: 'Approved',
+        msg: 'Return approved. Pickup scheduled.',
+      },
+      'Pickup Scheduled': {
+        returnStatus: 'Scheduled',
+        msg: 'Pickup has been scheduled.',
+      },
+      'Return Picked': {
+        returnStatus: 'Picked',
+        msg: 'Item picked up by courier.',
+      },
+      'Return Rejected': {
+        returnStatus: 'Rejected',
+        msg: 'Return rejected by admin.',
+      },
+      Returned: {
+        returnStatus: 'Returned',
+        msg: 'Item returned and restocked.',
+      },
+      'Refund Processed': {
+        returnStatus: 'Refunded',
+        msg: 'Refund processed to customer wallet.',
+      },
     };
 
     if (action === 'approve') {
-      item.orderStatus  = 'Return Approved';
+      item.orderStatus = 'Return Approved';
       item.returnStatus = 'Approved';
-      item.trackingTimeline.push({ status: 'Return Approved', message: 'Return request approved by admin. Pickup is scheduled.', timestamp: new Date(), completed: true });
+      item.trackingTimeline.push({
+        status: 'Return Approved',
+        message: 'Return request approved by admin. Pickup is scheduled.',
+        timestamp: new Date(),
+        completed: true,
+      });
       order.orderStatus = 'Return Approved';
       await order.save();
-      return res.json({ success: true, message: 'Return approved successfully.' });
+      return res.json({
+        success: true,
+        message: 'Return approved successfully.',
+      });
     }
 
     if (action === 'reject') {
       if (!reason || reason.trim().length < 5)
-        return res.status(400).json({ success: false, message: 'Please provide a valid rejection reason (min 5 chars).' });
-      item.orderStatus           = 'Return Rejected';
-      item.returnStatus          = 'Rejected';
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: 'Please provide a valid rejection reason (min 5 chars).',
+          });
+      item.orderStatus = 'Return Rejected';
+      item.returnStatus = 'Rejected';
       item.returnRejectionReason = reason;
-      item.trackingTimeline.push({ status: 'Return Rejected', message: 'Return rejected. Reason: ' + reason, timestamp: new Date(), completed: true });
-      order.orderStatus           = 'Return Rejected';
+      item.trackingTimeline.push({
+        status: 'Return Rejected',
+        message: 'Return rejected. Reason: ' + reason,
+        timestamp: new Date(),
+        completed: true,
+      });
+      order.orderStatus = 'Return Rejected';
       order.returnRejectionReason = reason;
       await order.save();
       return res.json({ success: true, message: 'Return rejected.' });
@@ -2863,58 +3504,78 @@ export const updateItemReturnAction = async (req, res) => {
 
     if (action === 'status') {
       const meta = STATUS_META[newStatus];
-      if (!meta) return res.status(400).json({ success: false, message: 'Invalid status.' });
+      if (!meta)
+        return res
+          .status(400)
+          .json({ success: false, message: 'Invalid status.' });
 
       let trackingMsg = meta.msg;
 
       if (newStatus === 'Returned') {
         const condition = req.body.returnCondition;
         if (condition === 'Stock') {
-          await Variant.findByIdAndUpdate(item.variantId, { $inc: { stock: item.quantity } });
+          await Variant.findByIdAndUpdate(item.variantId, {
+            $inc: { stock: item.quantity },
+          });
           trackingMsg = 'Item returned and restocked.';
         } else if (condition === 'Repair') {
           trackingMsg = 'Item returned and sent for repair.';
         }
 
         // Automatic Refund Processing
-        const refundData = await calculateRefundAmount(order, item._id.toString(), item.quantity);
+        const refundData = await calculateRefundAmount(
+          order,
+          item._id.toString(),
+          item.quantity
+        );
         let refundAmount = refundData.refundAmount;
 
-        const willBeAllReturnedOrCancelled = order.products.every(p => 
-          p._id.toString() === item._id.toString() || p.orderStatus === "Returned" || p.orderStatus === "Cancelled"
+        const willBeAllReturnedOrCancelled = order.products.every(
+          (p) =>
+            p._id.toString() === item._id.toString() ||
+            p.orderStatus === 'Returned' ||
+            p.orderStatus === 'Cancelled'
         );
 
         if (willBeAllReturnedOrCancelled && order.deliveryCharge > 0) {
           refundAmount += order.deliveryCharge;
         }
 
-        if (order.paymentStatus === "Paid" && refundAmount > 0) {
+        if (order.paymentStatus === 'Paid' && refundAmount > 0) {
           item.refundAmountProcessed = refundAmount;
-          item.refundStatus = "Processed";
+          item.refundStatus = 'Processed';
           const user = await User.findById(order.userId);
           if (user) {
-             user.walletBalance = (user.walletBalance || 0) + refundAmount;
-             await user.save();
-             const newTxn = new WalletTransaction({
-               userId: order.userId,
-               type: 'Credit',
-               amount: refundAmount,
-               description: `Refund for Returned Product (${item.productName})${willBeAllReturnedOrCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
-               orderId: order.orderId,
-               status: 'Success'
-             });
-             await newTxn.save();
+            user.walletBalance = (user.walletBalance || 0) + refundAmount;
+            await user.save();
+            const newTxn = new WalletTransaction({
+              userId: order.userId,
+              type: 'Credit',
+              amount: refundAmount,
+              description: `Refund for Returned Product (${item.productName})${willBeAllReturnedOrCancelled ? ' + Shipping' : ''}${refundData.thresholdBroken ? ' (Discount Revoked)' : ''}`,
+              orderId: order.orderId,
+              status: 'Success',
+            });
+            await newTxn.save();
           }
         }
       }
 
-      item.orderStatus  = newStatus;
+      item.orderStatus = newStatus;
       item.returnStatus = meta.returnStatus;
-      item.trackingTimeline.push({ status: newStatus, message: trackingMsg, timestamp: new Date(), completed: true });
+      item.trackingTimeline.push({
+        status: newStatus,
+        message: trackingMsg,
+        timestamp: new Date(),
+        completed: true,
+      });
       order.orderStatus = newStatus;
 
       await order.save();
-      return res.json({ success: true, message: 'Status updated to ' + newStatus + '.' });
+      return res.json({
+        success: true,
+        message: 'Status updated to ' + newStatus + '.',
+      });
     }
 
     return res.status(400).json({ success: false, message: 'Invalid action.' });

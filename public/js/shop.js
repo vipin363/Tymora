@@ -217,13 +217,38 @@
     });
   }
 
- 
   const filterToggle = document.getElementById('filterToggle');
   const filterPanel  = document.getElementById('filterPanel');
   if (filterToggle && filterPanel) {
     filterToggle.addEventListener('click', () => {
       filterPanel.classList.toggle('open');
       filterToggle.classList.toggle('active');
+    });
+  }
+
+  // ── CUSTOM SORT DROPDOWN INTERACTION ──
+  const customSortDropdown = document.getElementById('customSortDropdown');
+  const customSortTrigger  = document.getElementById('customSortTrigger');
+  const sortInput          = document.getElementById('sortInput');
+  const shopForm           = document.getElementById('shopForm');
+
+  if (customSortDropdown && customSortTrigger && sortInput && shopForm) {
+    customSortTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      customSortDropdown.classList.toggle('active');
+    });
+
+    customSortDropdown.querySelectorAll('.custom-sort-option').forEach(opt => {
+      opt.addEventListener('click', function () {
+        sortInput.value = this.dataset.value;
+        shopForm.submit();
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!customSortDropdown.contains(e.target)) {
+        customSortDropdown.classList.remove('active');
+      }
     });
   }
 

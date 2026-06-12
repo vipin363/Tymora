@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Page Not Found | TYMORA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --gold: #c9a84c;
+      --gold-dark: #8c7335;
+      --white: #ffffff;
+      --muted: #a1a1aa;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .glow {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(201, 168, 76, 0.15) 0%, rgba(10, 10, 10, 0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: -1;
+    }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 10rem;
+      font-weight: 600;
+      line-height: 1;
+      background: linear-gradient(to right, #fff, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: 2rem;
+      font-weight: 300;
+      margin-bottom: 16px;
+    }
+    p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+    .btn {
+      display: inline-block;
+      background-color: var(--gold);
+      color: #000;
+      text-decoration: none;
+      padding: 14px 36px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(201, 168, 76, 0.2);
+    }
+    .btn:hover {
+      background-color: var(--white);
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <h1>404</h1>
+  <h2>Time Lost</h2>
+  <p>The page you are looking for has either been moved or no longer exists. Let's get you back on track.</p>
+  <a href="/user/home" class="btn">Return to Home</a>
+</body>
+</html>

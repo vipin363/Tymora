@@ -284,3 +284,4 @@ function showToast(msg, type = 'gold') {
     setTimeout(() => toast.remove(), 350);
   }, 2800);
 }
+

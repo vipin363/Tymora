@@ -1,7 +1,17 @@
 <link href="/checkout.css" rel="stylesheet">
 
-<div class="checkout-wrapper">
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  {{#ifEquals checkoutSource.type "buyNow"}}
+    <a href="/user/shop">Shop</a> &nbsp;›&nbsp;
+    <span class="current" style="color:var(--muted); font-weight:normal;">Product Details</span> &nbsp;›&nbsp;
+  {{else}}
+    <a href="/user/cart">Cart</a> &nbsp;›&nbsp;
+  {{/ifEquals}}
+  <span class="current">Checkout</span>
+</div>
 
+<div class="checkout-wrapper">
   <div class="page-heading">
     <h1>Secure Checkout</h1>
     <p>Complete your luxury watch purchase securely</p>
@@ -650,19 +660,29 @@
   });
 
   applyOfferBtn?.addEventListener('click', async () => {
-    const selectedId = offersSelect?.value;
-    if (!selectedId) { showMsg(offerMsg, 'Please select an offer first.', true); return; }
-    currentOfferId = selectedId;
-    currentCoupon  = '';
-    await fetchUpdatedTotals({ applyOffer: true });
+    showGlobalLoader();
+    try {
+      const selectedId = offersSelect?.value;
+      if (!selectedId) { showMsg(offerMsg, 'Please select an offer first.', true); return; }
+      currentOfferId = selectedId;
+      currentCoupon  = '';
+      await fetchUpdatedTotals({ applyOffer: true });
+    } finally {
+      hideGlobalLoader();
+    }
   });
 
   removeOfferBtn?.addEventListener('click', async () => {
-    currentOfferId = '';
-    appliedOfferBar.style.display = 'none';
-    clearMsg(offerMsg);
-    if (offersSelect) offersSelect.value = '';
-    await fetchUpdatedTotals();
+    showGlobalLoader();
+    try {
+      currentOfferId = '';
+      appliedOfferBar.style.display = 'none';
+      clearMsg(offerMsg);
+      if (offersSelect) offersSelect.value = '';
+      await fetchUpdatedTotals();
+    } finally {
+      hideGlobalLoader();
+    }
   });
 
   // ── Coupon interactions ───────────────────────────────────────────────────
@@ -677,20 +697,30 @@
   });
 
   applyCouponBtn?.addEventListener('click', async () => {
-    const code = (couponInput?.value || '').trim().toUpperCase();
-    if (!code) { showMsg(couponMsg, 'Please enter or select a coupon code.', true); return; }
-    currentCoupon  = code;
-    currentOfferId = '';
-    await fetchUpdatedTotals({ applyCoupon: true });
+    showGlobalLoader();
+    try {
+      const code = (couponInput?.value || '').trim().toUpperCase();
+      if (!code) { showMsg(couponMsg, 'Please enter or select a coupon code.', true); return; }
+      currentCoupon  = code;
+      currentOfferId = '';
+      await fetchUpdatedTotals({ applyCoupon: true });
+    } finally {
+      hideGlobalLoader();
+    }
   });
 
   removeCouponBtn?.addEventListener('click', async () => {
-    currentCoupon = '';
-    appliedCouponBar.style.display = 'none';
-    clearMsg(couponMsg);
-    if (couponInput)    couponInput.value    = '';
-    if (couponsSelect)  couponsSelect.value  = '';
-    await fetchUpdatedTotals();
+    showGlobalLoader();
+    try {
+      currentCoupon = '';
+      appliedCouponBar.style.display = 'none';
+      clearMsg(couponMsg);
+      if (couponInput)    couponInput.value    = '';
+      if (couponsSelect)  couponsSelect.value  = '';
+      await fetchUpdatedTotals();
+    } finally {
+      hideGlobalLoader();
+    }
   });
 
   // ── Delivery tiers ────────────────────────────────────────────────────────
@@ -779,29 +809,37 @@
 
   // ── Place Order ───────────────────────────────────────────────────────────
   placeOrderBtn.addEventListener('click', async () => {
+    showGlobalLoader();
     paymentErrorContainer.style.display = 'none';
     if (!selectedPaymentMethod) {
       paymentErrorContainer.textContent = 'Please select a payment method.';
       paymentErrorContainer.style.display = 'block';
+      hideGlobalLoader();
       return;
     }
     let paymentDetails = {};
     if (selectedPaymentMethod === 'Online') {
       if (!document.getElementById('online-confirm').checked) {
         document.getElementById('online-error').textContent = 'Please acknowledge the redirect to Razorpay.';
-        document.getElementById('online-error').style.display = 'block'; return;
+        document.getElementById('online-error').style.display = 'block';
+        hideGlobalLoader();
+        return;
       }
       paymentDetails = { provider: 'Razorpay' };
     } else if (selectedPaymentMethod === 'Wallet') {
-      if (!validateWalletBalance()) return;
+      if (!validateWalletBalance()) { hideGlobalLoader(); return; }
       if (!document.getElementById('wallet-confirm').checked) {
         document.getElementById('wallet-confirm-error').textContent = 'Please confirm wallet payment.';
-        document.getElementById('wallet-confirm-error').style.display = 'block'; return;
+        document.getElementById('wallet-confirm-error').style.display = 'block';
+        hideGlobalLoader();
+        return;
       } else { document.getElementById('wallet-confirm-error').style.display = 'none'; }
     } else if (selectedPaymentMethod === 'COD') {
       if (!document.getElementById('cod-confirm').checked) {
         document.getElementById('cod-error').textContent = 'Please confirm Cash on Delivery to proceed.';
-        document.getElementById('cod-error').style.display = 'block'; return;
+        document.getElementById('cod-error').style.display = 'block';
+        hideGlobalLoader();
+        return;
       }
     }
 
@@ -828,11 +866,7 @@
             key: data.key, amount: data.razorpayOrder.amount, currency: 'INR',
             name: 'TYMORA', description: 'Order Payment', order_id: data.razorpayOrder.id,
             handler: async function (response) {
-              const overlay = document.createElement('div');
-              Object.assign(overlay.style, { position:'fixed', top:'0', left:'0', width:'100vw', height:'100vh', backgroundColor:'rgba(0,0,0,0.9)', zIndex:'99999', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--gold)' });
-              overlay.innerHTML = '<div style="font-size:2rem;" class="spinner">↻</div><div style="font-family:\'Playfair Display\',serif;font-size:1.5rem;">Securing your order...</div><div style="font-size:0.9rem;color:var(--muted);margin-top:10px;">Please do not refresh.</div>';
-              document.body.appendChild(overlay);
-              document.head.insertAdjacentHTML('beforeend', '<style>@keyframes spin{100%{transform:rotate(360deg)}}.spinner{animation:spin 2s linear infinite}</style>');
+              showGlobalLoader();
               try {
                 const vr = await fetch('/user/checkout/verify-payment', {
                   method:'POST', headers:{'Content-Type':'application/json'},
@@ -843,26 +877,44 @@
                   ? `/user/order-success?orderId=${data.orderId}`
                   : `/user/payment-failed?orderId=${data.orderId}&reason=verification_failed`;
               } catch(e) { window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=network_error`; }
+              finally { hideGlobalLoader(); }
             },
             theme: { color: '#c9a84c' },
-            modal: { ondismiss: () => window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=cancelled` }
+            modal: { 
+              ondismiss: async () => {
+                showGlobalLoader();
+                try {
+                  await fetch('/user/checkout/mark-payment-failed', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: data.orderId })
+                  });
+                } catch (err) { console.error('Failed to mark payment as failed'); }
+                finally { hideGlobalLoader(); }
+                window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=cancelled`;
+              } 
+            }
           };
           const rzp = new Razorpay(options);
-          rzp.on('payment.failed', () => window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=declined`);
+          rzp.on('payment.failed', async (response) => {
+            showGlobalLoader();
+            try {
+              await fetch('/user/checkout/mark-payment-failed', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: data.orderId, error: response.error })
+              });
+            } catch (err) { console.error('Failed to mark payment as failed'); }
+            finally { hideGlobalLoader(); }
+            window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=declined`;
+          });
           rzp.open();
+          hideGlobalLoader();
         } else {
-          const overlay = document.createElement('div');
-          Object.assign(overlay.style, { position:'fixed', top:'0', left:'0', width:'100vw', height:'100vh', backgroundColor:'rgba(0,0,0,0.9)', zIndex:'99999', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--gold)' });
-          overlay.innerHTML = '<div style="font-size:2rem;" class="spinner">↻</div><div style="font-family:\'Playfair Display\',serif;font-size:1.5rem;">Securing your order...</div>';
-          document.body.appendChild(overlay);
-          document.head.insertAdjacentHTML('beforeend', '<style>@keyframes spin{100%{transform:rotate(360deg)}}.spinner{animation:spin 2s linear infinite}</style>');
           window.location.href = `/user/order-success?orderId=${data.orderId}`;
         }
       } else {
+        hideGlobalLoader();
         const placeOrderError = document.getElementById('place-order-error-msg');
         if (data.message && (data.message.includes('unavailable') || data.message.includes('out of stock'))) {
-           // Show the specific server message and lock it so AJAX recalculations
-           // cannot overwrite it with a generic fallback.
            if (placeOrderError) {
              placeOrderError.textContent = data.message.endsWith('.')
                ? data.message + ' Return to cart and remove the product to continue.'
@@ -874,8 +926,6 @@
            placeOrderBtn.style.opacity = '0.5';
            placeOrderBtn.style.cursor = 'not-allowed';
            placeOrderBtn.textContent = 'PLACE ORDER >';
-           // Do NOT call fetchUpdatedTotals() here — doing so triggers updateSummaryDOM
-           // which would overwrite the specific error message with a generic one.
         } else {
            paymentErrorContainer.textContent = data.message || 'Failed to place order. Please try again.';
            paymentErrorContainer.style.display = 'block';
@@ -884,6 +934,7 @@
         }
       }
     } catch (err) {
+      hideGlobalLoader();
       console.error(err);
       paymentErrorContainer.textContent = 'Something went wrong. Please try again.';
       paymentErrorContainer.style.display = 'block';
@@ -893,6 +944,49 @@
   });
 
   // ── Init ─────────────────────────────────────────────────────────────────
+  {{#if checkoutState}}
+    (function() {
+      const p_deliveryType = "{{checkoutState.deliveryType}}";
+      const p_paymentMethod = "{{checkoutState.paymentMethod}}";
+      const p_couponCode = "{{checkoutState.couponCode}}";
+      const p_offerId = "{{checkoutState.offerId}}";
+
+      if (p_deliveryType === 'Fast') {
+        const fastTier = document.getElementById('tier-fast');
+        const normTier = document.getElementById('tier-normal');
+        if (fastTier && normTier) {
+          fastTier.classList.add('selected'); 
+          normTier.classList.remove('selected');
+          fastTier.querySelector('.radio-circle').innerHTML = '<div class="radio-inner"></div>';
+          normTier.querySelector('.radio-circle').innerHTML = '';
+          deliveryCharge = 50;
+        }
+      }
+      if (p_paymentMethod) {
+        const tab = document.querySelector(`.payment-tab[data-method="${p_paymentMethod}"]`);
+        if (tab) {
+          paymentTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          selectedPaymentMethod = p_paymentMethod;
+          paymentSections.forEach(sec => sec.style.display = 'none');
+          if (selectedPaymentMethod !== 'COD') { codCharge = 0; document.getElementById('cod-confirm').checked = false; }
+          else { codCharge = 30; }
+          if (selectedPaymentMethod === 'Online') document.getElementById('online-form').style.display = 'block';
+          if (selectedPaymentMethod === 'Wallet') { document.getElementById('wallet-form').style.display = 'block'; validateWalletBalance(); }
+          if (selectedPaymentMethod === 'COD')    document.getElementById('cod-info-card').style.display = 'block';
+        }
+      }
+      if (p_couponCode) {
+        currentCoupon = p_couponCode;
+        const cIn = document.getElementById('coupon-input');
+        if (cIn) cIn.value = p_couponCode;
+      }
+      if (p_offerId) {
+        currentOfferId = p_offerId;
+      }
+    })();
+  {{/if}}
+
   fetchUpdatedTotals();
 
   // Animations

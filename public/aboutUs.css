@@ -285,8 +285,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-sans);
 
 @media (max-width: 768px) {
   .about-hero-content h1 { font-size: 2.4rem; }
+  .about-hero-bg img { object-position: center 25%; }
   .story-grid { grid-template-columns: 1fr; gap: 40px; }
-  .story-image img { height: 320px; }
+  .story-image img { height: 320px; object-position: center 25%; }
   .story-img-badge { right: 0; bottom: 0; }
   .mission-grid { grid-template-columns: 1fr; }
   .why-grid { grid-template-columns: 1fr 1fr; }

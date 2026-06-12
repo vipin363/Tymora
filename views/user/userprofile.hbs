@@ -154,6 +154,7 @@
         {{#if referralStats.recent.length}}
         <div style="margin-bottom:14px;">
           {{#each referralStats.recent}}
+          {{#if @first}}
           <div class="activity-item" style="margin-bottom:6px;">
             <div class="act-dot" style="background:{{#ifEquals this.rewardStatus 'Released'}}var(--gold){{else}}#555{{/ifEquals}};"></div>
             <div>
@@ -161,6 +162,7 @@
               <div class="act-time">{{this.rewardStatus}} · ₹{{this.referrerRewardAmount}}</div>
             </div>
           </div>
+          {{/if}}
           {{/each}}
         </div>
         {{/if}}
@@ -199,7 +201,7 @@
       Cancel
     </button>
 
-    <form action="/user/logout" method="GET">
+    <form action="/user/logout" method="POST">
   <button type="submit" class="modal-btn-red">
     Logout
   </button>

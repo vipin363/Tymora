@@ -412,12 +412,9 @@
       .then(data => {
         if (data.success) {
           const row = document.getElementById(`cat-row-${id}`);
-          const badge = row.querySelector('.badge');
           const label = row.querySelector('.toggle-label');
           const isVisible = checkbox.checked;
-          badge.textContent = isVisible ? 'VISIBLE' : 'HIDDEN';
-          badge.className = isVisible ? 'badge badge-visible' : 'badge badge-hidden';
-          label.textContent = isVisible ? 'Visible' : 'Hidden';
+          if (label) label.textContent = isVisible ? 'Visible' : 'Hidden';
           showToast(isVisible ? 'Category is now visible' : 'Category is now hidden', 'green');
           refreshStats();
         } else {

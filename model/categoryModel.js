@@ -5,7 +5,8 @@ const categorySchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    unique: true
   },
 
   short_description: {
@@ -41,6 +42,8 @@ const categorySchema = new mongoose.Schema({
     updatedAt: "updated_at"
   }
 });
+
+categorySchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 const Category = mongoose.model("Category", categorySchema);
 

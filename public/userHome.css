@@ -76,6 +76,7 @@
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh; /* Better mobile handling */
   min-height: 600px;
   overflow: hidden;
   background: var(--lux-black);
@@ -158,7 +159,7 @@
 
 .lux-hero__intro {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 4;
@@ -1505,9 +1506,31 @@
     margin-top: -5px;
   }
 
+  .lux-hero__content-side {
+    left: 20px;
+    right: 20px;
+    bottom: 110px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .lux-hero__side-title {
+    text-align: center;
+  }
+
+  .lux-hero__side-desc {
+    text-align: center;
+  }
+
   .lux-hero__actions {
     flex-direction: column;
     align-items: center;
+    width: 100%;
+  }
+
+  .lux-btn {
+    width: 100%;
+    margin-bottom: 10px;
   }
 
   .lux-masterpieces__grid {
@@ -1545,7 +1568,11 @@
   }
 
   .lux-story__image-side {
-    height: 300px;
+    display: none;
+  }
+  
+  .lux-story__img {
+    object-position: center 25%;
   }
 
   .lux-newsletter__card {

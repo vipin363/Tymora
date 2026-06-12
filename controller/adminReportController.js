@@ -46,6 +46,10 @@ const buildMatchConditions = (query) => {
         match.paymentMethod = query.paymentMethod;
     }
 
+    // Exclude Failed and Payment Pending orders from all reports and metrics
+    match.paymentStatus = { $ne: 'Failed' };
+    match.orderStatus = { $ne: 'Payment Pending' };
+
     return match;
 };
 
@@ -88,7 +92,12 @@ const getReportData = async (query, isExport = false) => {
                 grossSales: {
                     $sum: {
                         $cond: [
-                            { $eq: ["$products.orderStatus", "Delivered"] },
+                            {
+                                $or: [
+                                    { $in: ["$paymentStatus", ["Paid", "Refunded"]] },
+                                    { $and: [{ $eq: ["$paymentMethod", "COD"] }, { $eq: ["$products.orderStatus", "Delivered"] }] }
+                                ]
+                            },
                             "$products.productFinalPaidPrice",
                             0
                         ]
@@ -134,7 +143,7 @@ const getReportData = async (query, isExport = false) => {
     const startOfToday = moment().startOf('day').toDate();
     const endOfToday = moment().endOf('day').toDate();
     const ordersTodayResult = await Order.aggregate([
-        { $match: { orderDate: { $gte: startOfToday, $lte: endOfToday } } },
+        { $match: { orderDate: { $gte: startOfToday, $lte: endOfToday }, paymentStatus: { $ne: 'Failed' }, orderStatus: { $ne: 'Payment Pending' } } },
         { $unwind: "$products" },
         { $match: { "products.orderStatus": { $nin: ["Cancelled", "Returned", "Refund Processed"] } } },
         { $group: { _id: "$_id" } },
@@ -461,7 +470,7 @@ export const exportPdfReport = async (req, res) => {
     try {
         const data = await getReportData(req.query, true);
 
-        const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' });
+        const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape', bufferPages: true });
         res.setHeader('Content-disposition', 'attachment; filename=sales_report.pdf');
         res.setHeader('Content-type', 'application/pdf');
         doc.pipe(res);

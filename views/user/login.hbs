@@ -450,8 +450,14 @@ loginForm.addEventListener("submit", function(e){
 
 	 msg.innerText = ""
 	 
-	if(email === "" || password === ""){
-		msg.innerText = "Please fill all fields"
+	if(email === ""){
+		msg.innerText = "Email is required"
+		msg.style.color = "red"
+		e.preventDefault()
+		return
+	}
+	if(password === ""){
+		msg.innerText = "Password is required"
 		msg.style.color = "red"
 		e.preventDefault()
 		return

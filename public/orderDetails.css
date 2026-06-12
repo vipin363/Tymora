@@ -1,0 +1,244 @@
+/* ============================================================
+   TYMORA — orderDetails.css
+   Specific styles for the Order Details page.
+   Shares global UI components (buttons, badges, modals) with myOrders.css.
+   ============================================================ */
+
+.od-wrapper {
+  max-width: 1450px;
+  margin: 0 auto;
+  padding: 0 48px 80px;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--white);
+  text-align: left;
+}
+
+
+
+/* ── HEADER ── */
+.od-header {
+  margin-bottom: 50px;
+}
+.od-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.od-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+.od-sub {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.od-heading-underline {
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+/* ── SUMMARY CARDS ── */
+.od-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 50px;
+}
+.od-card {
+  background: linear-gradient(145deg, rgba(18,18,18,0.95), rgba(10,10,10,0.95));
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 36px 40px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.od-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+.od-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.od-card-title svg {
+  width: 20px;
+  height: 20px;
+  color: var(--gold);
+}
+.od-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-family: "Poppins", sans-serif;
+}
+.od-info-row:last-child {
+  margin-bottom: 0;
+}
+.od-info-label {
+  color: var(--muted);
+}
+.od-info-val {
+  color: var(--white);
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
+}
+.od-info-val.gold {
+  color: var(--gold);
+  font-weight: 600;
+}
+.od-info-val.red {
+  color: #ef4444;
+  font-weight: 500;
+}
+.od-info-val.green {
+  color: #10b981;
+}
+
+/* Dividers in Summary Cards */
+.od-divider {
+  border-top: 1px dashed rgba(255,255,255,0.1);
+  margin: 16px 0;
+}
+
+.od-total-row {
+  font-size: 16px;
+  font-weight: 700;
+}
+.od-total-row .od-info-val {
+  font-size: 18px;
+}
+
+/* ── ORDERED PRODUCTS SECTION ── */
+.od-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 24px;
+}
+.od-products-container {
+  background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(12,12,12,0.95));
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 30px 40px;
+  margin-bottom: 50px;
+}
+
+/* Overriding shared product row styles specifically for Order Details */
+.od-products-container .mo-prod-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  padding: 30px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.od-products-container .mo-prod-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.od-products-container .mo-prod-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+}
+.od-products-container .mo-prod-name {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.od-products-container .mo-prod-meta {
+  font-size: 14px;
+}
+
+/* Enhanced Pricing Display */
+.od-price-block {
+  text-align: right;
+  min-width: 120px;
+}
+.od-price-selling {
+  font-family: "Montserrat", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.od-price-mrp {
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  color: var(--muted);
+  text-decoration: line-through;
+  margin-bottom: 6px;
+}
+.od-price-discount {
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffb4b4;
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+/* Action Buttons Refinements */
+.od-products-container .mo-prod-actions {
+  margin-top: 16px;
+  gap: 12px;
+}
+
+/* ── INVOICE SECTION ── */
+.od-invoice-section {
+  text-align: center;
+  padding: 60px 0 20px;
+}
+.od-btn-invoice {
+  display: inline-block;
+  background: var(--gold);
+  color: #000;
+  padding: 16px 40px;
+  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.od-btn-invoice:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(212,175,55,0.3);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .od-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .od-wrapper { padding: 0 20px 80px; }
+  .od-header { margin-top: 0; }
+  .od-container { padding: 0 16px 80px; }
+  .od-title { font-size: 36px; }
+  .od-sub { font-size: 16px; }
+  .od-summary-grid { grid-template-columns: 1fr; }
+  .od-card { padding: 24px; }
+  .od-products-container { padding: 20px; }
+  .od-price-block { text-align: left; margin-top: 12px; }
+}

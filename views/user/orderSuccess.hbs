@@ -289,6 +289,7 @@
 
       const btn = document.getElementById('confirmCancelBtn');
       btn.disabled = true; btn.innerText = 'Cancelling...';
+      showGlobalLoader();
       try {
         const res = await fetch('/user/orders/cancel', {
           method: 'POST',
@@ -301,11 +302,13 @@
         } else {
           showToast(data.message || 'Failed to cancel order.', 'error');
           btn.disabled = false; btn.innerText = 'Confirm Cancel';
+          hideGlobalLoader();
         }
       } catch (err) {
         console.error(err);
         showToast('An error occurred. Please try again.', 'error');
         btn.disabled = false; btn.innerText = 'Confirm Cancel';
+        hideGlobalLoader();
       }
     });
   }
@@ -362,6 +365,7 @@
         formData.append('evidenceImages', files[i]);
       }
 
+      showGlobalLoader();
       try {
         const res = await fetch('/user/orders/return', { method: 'POST', body: formData });
         const data = await res.json();
@@ -370,11 +374,13 @@
         } else {
           showToast(data.message || 'Failed to submit return request.', 'error');
           btn.disabled = false; btn.innerText = 'Submit Request';
+          hideGlobalLoader();
         }
       } catch (err) {
         console.error(err);
         showToast('An error occurred. Please try again.', 'error');
         btn.disabled = false; btn.innerText = 'Submit Request';
+        hideGlobalLoader();
       }
     });
   }
@@ -414,6 +420,7 @@
       submitReviewBtn.disabled = true;
       submitReviewBtn.innerText = 'Submitting...';
 
+      showGlobalLoader();
       try {
         const res = await fetch('/user/reviews/add', {
           method: 'POST',
@@ -429,12 +436,14 @@
           showToast(data.message || 'Failed to submit review.', 'error');
           submitReviewBtn.disabled = false;
           submitReviewBtn.innerText = 'Submit Review';
+          hideGlobalLoader();
         }
       } catch (err) {
         console.error(err);
         showToast('An error occurred. Please try again.', 'error');
         submitReviewBtn.disabled = false;
         submitReviewBtn.innerText = 'Submit Review';
+        hideGlobalLoader();
       }
     });
   }
