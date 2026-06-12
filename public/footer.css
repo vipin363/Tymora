@@ -1,0 +1,146 @@
+/* ============================================================
+   TYMORA — footer.css
+   Global Footer Styles
+   ============================================================ */
+
+.tymora-footer {
+  background: #000;
+  border-top: 1px solid rgba(201, 168, 76, 0.15);
+  padding: 80px 48px 40px;
+  color: var(--muted);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.footer-brand h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.footer-brand p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 280px;
+}
+
+.footer-col h4 {
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.footer-col a {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: 0.3s;
+}
+
+.footer-col a:hover {
+  color: var(--gold);
+  transform: translateX(4px);
+}
+
+.footer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.secure-btn {
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  color: var(--gold);
+  padding: 12px 24px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  transition: 0.3s;
+}
+.secure-btn:hover {
+  background: rgba(201, 168, 76, 0.05);
+  border-color: var(--gold);
+}
+
+.footer-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
+  margin-bottom: 30px;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.footer-cities {
+  display: flex;
+  gap: 30px;
+}
+
+.footer-cities span {
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.footer-cities span:hover {
+  color: var(--gold);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .footer-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+    margin-bottom: 20px;
+  }
+  .footer-right {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .tymora-footer {
+    padding: 60px 24px 30px;
+  }
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .footer-bottom {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  .footer-cities {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+}

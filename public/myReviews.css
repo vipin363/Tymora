@@ -1,0 +1,254 @@
+/* ============================================================
+   TYMORA — myReviews.css
+   Premium Luxury Review Management Page
+   ============================================================ */
+
+.mr-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px 80px;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--white);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.mr-header {
+  text-align: left;
+  margin-bottom: 48px;
+}
+.mr-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.mr-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+.mr-subtitle {
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+.mr-heading-underline {
+  width: 90px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+/* ── CONTAINER ── */
+.mr-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── REVIEW CARD ── */
+.mr-card {
+  background: linear-gradient(145deg, rgba(18,18,18,0.95), rgba(10,10,10,0.95));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 28px 32px;
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.mr-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.mr-prod-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: contain;
+  border: 1px solid rgba(212,175,55,0.15);
+  background: rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+.mr-info { flex: 1; min-width: 0; }
+
+.mr-prod-name {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.mr-date {
+  font-family: "Poppins", sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.mr-rating {
+  color: var(--gold);
+  font-size: 14px;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
+
+.mr-text {
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  font-style: italic;
+  padding-left: 12px;
+  border-left: 2px solid rgba(212,175,55,0.3);
+}
+
+/* ── ACTION BUTTONS ── */
+.mr-actions { display: flex; gap: 10px; }
+
+.mr-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-family: "Poppins", sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: var(--white);
+}
+.mr-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.mr-btn-danger {
+  border-color: rgba(239,68,68,0.5);
+  color: #ef4444;
+}
+.mr-btn-danger:hover {
+  background: rgba(239,68,68,0.1);
+  border-color: #ef4444;
+}
+
+/* ── EMPTY STATE ── */
+.mr-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: linear-gradient(145deg, rgba(18,18,18,0.95), rgba(10,10,10,0.95));
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 14px;
+}
+.mr-empty h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.mr-empty p {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+/* ── EDIT MODAL ── */
+.mr-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.mr-modal {
+  background: linear-gradient(145deg, #141414, #0a0a0a);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 16px;
+  width: 460px;
+  max-width: 90vw;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.mr-modal h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--gold);
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+.mr-modal select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.5);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.mr-modal select:focus { border-color: var(--gold); }
+
+.mr-modal textarea {
+  width: 100%;
+  height: 120px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--white);
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  resize: vertical;
+  margin-bottom: 24px;
+  outline: none;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+.mr-modal textarea:focus { border-color: var(--gold); }
+
+.mr-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.mr-modal-actions .mr-btn {
+  padding: 12px 24px;
+}
+
+.mr-modal-btn-save {
+  background: var(--gold) !important;
+  color: #000 !important;
+  border-color: var(--gold) !important;
+  font-weight: 700;
+}
+.mr-modal-btn-save:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .mr-wrapper { padding: 0 20px 80px; }
+  .mr-title { font-size: 36px; }
+  .mr-card { flex-direction: column; gap: 16px; padding: 20px; }
+}

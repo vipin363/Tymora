@@ -1,0 +1,417 @@
+/* ============================================================
+   TYMORA — productCard.css
+   Unified Product Card Design System
+   Standardized sizing, spacing, and luxury aesthetics.
+   ============================================================ */
+
+:root {
+  --card-bg: var(--dark-3);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --card-radius: 12px;
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ── BASE CARD ── */
+.prod-card, .featured-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure uniform height in grid */
+}
+
+.prod-card:hover, .featured-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(201, 168, 76, 0.3);
+  box-shadow: var(--card-shadow);
+}
+
+/* ── BADGE ── */
+.prod-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.badge-new { background: var(--gold); color: #000; }
+.badge-sale, .prod-badge:not(.badge-new) { background: #e05252; color: #fff; }
+
+/* ── STOCK BADGE ── */
+.stock-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+.badge-instock { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
+.badge-outofstock { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3); }
+
+/* Adjust if both badges exist */
+.prod-badge + .stock-badge {
+  top: 42px;
+}
+
+/* ── WISHLIST HEART ── */
+.card-wish {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 25; /* Ensure it stays above everything including overlays */
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.card-wish svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--white);
+  fill: none;
+  transition: 0.3s;
+}
+.card-wish:hover { 
+  background: var(--gold); 
+  border-color: var(--gold);
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(201, 168, 76, 0.4);
+}
+.card-wish:hover svg { stroke: #000; }
+.card-wish.wished { background: #e05252; border-color: #e05252; box-shadow: 0 4px 15px rgba(224, 82, 82, 0.4); }
+.card-wish.wished svg { stroke: #fff; fill: #fff; }
+
+/* ── IMAGE WRAP ── */
+.prod-img-wrap {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #111;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.prod-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.prod-card:hover .prod-img-wrap img, 
+.featured-card:hover .prod-img-wrap img {
+  transform: scale(1.1);
+}
+
+.prod-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  opacity: 0;
+  transition: 0.4s;
+}
+.prod-card:hover .prod-img-overlay,
+.featured-card:hover .prod-img-overlay {
+  opacity: 1;
+}
+
+/* ── QUICK ADD ── */
+.quick-add {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 20px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.3s;
+  white-space: nowrap;
+}
+.prod-card:hover .quick-add,
+.featured-card:hover .quick-add {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.quick-add.disabled {
+  background: #333;
+  color: #777;
+  cursor: not-allowed;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.quick-add.disabled:hover {
+  background: #333;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── CONTENT ── */
+.prod-info {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.prod-atelier {
+  font-size: 8px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.prod-rating {
+  font-size: 0.7rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.rating-count {
+  color: var(--muted);
+  font-size: 0.65rem;
+  margin-left: 6px;
+}
+.prod-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--white);
+  margin-bottom: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.prod-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  margin-top: auto; /* Push price to bottom */
+}
+.prod-price-old {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: line-through;
+  margin-left: 8px;
+}
+
+.prod-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 16px;
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  transition: 0.3s;
+  letter-spacing: 2px;
+}
+.prod-btn:hover {
+  background: var(--gold);
+  color: #000;
+  border-color: var(--gold);
+}
+
+/* ── GRID SIZING ── */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+/* Featured Carousel Card Sizing */
+.featured-card {
+  flex: 0 0 240px; /* Uniform width for carousel cards */
+  max-width: 240px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .prod-info { padding: 16px; }
+  .prod-name { font-size: 1rem; }
+  .featured-card { flex: 0 0 200px; max-width: 200px; }
+}
+
+@media (max-width: 480px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .prod-info { padding: 12px; }
+  .prod-name { font-size: 0.85rem; margin-bottom: 6px; }
+  .prod-atelier { font-size: 7px; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .prod-price { font-size: 13px; }
+  .prod-btn { padding: 10px; font-size: 8px; margin-top: 10px; }
+  .card-wish { width: 30px; height: 30px; top: 10px; right: 10px; }
+  .card-wish svg { width: 14px; height: 14px; }
+  .prod-badge { top: 10px; left: 10px; padding: 3px 8px; font-size: 8px; }
+  .stock-badge { top: 10px; left: 10px; font-size: 7px; padding: 3px 6px; }
+  .prod-badge + .stock-badge { top: 32px; }
+}
+
+/* ── CARD REMOVAL ANIMATION ── */
+.removing-card {
+  animation: cardFadeOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes cardFadeOut {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0; filter: blur(10px); }
+}
+/* ══ SMART BADGE SYSTEM ══ */
+
+.prod-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-family: 'Montserrat', sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Deal of the Day — highest priority, premium gradient */
+.prod-badge.badge-deal {
+  background: linear-gradient(135deg, #b8860b, #d4af37, #b8860b);
+  color: #000;
+  box-shadow: 0 2px 12px rgba(212,175,55,0.5);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+/* Featured */
+.prod-badge.badge-featured {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #d4af37;
+  border: 1px solid rgba(212,175,55,0.4);
+}
+
+/* Offer / Discount */
+.prod-badge.badge-offer {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(231,76,60,0.4);
+}
+
+/* New Arrival */
+.prod-badge.badge-new {
+  background: linear-gradient(135deg, #0a3d62, #1e90ff);
+  color: #fff;
+}
+
+/* Limited Stock */
+.prod-badge.badge-limited {
+  background: linear-gradient(135deg, #6c3483, #9b59b6);
+  color: #fff;
+}
+
+/* Sale (legacy fallback) */
+.prod-badge.badge-sale {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  color: #fff;
+}
+
+/* Hot (legacy fallback) */
+.prod-badge.badge-hot {
+  background: linear-gradient(135deg, #e67e22, #f39c12);
+  color: #fff;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 2px 12px rgba(212,175,55,0.5); }
+  50%       { box-shadow: 0 4px 20px rgba(212,175,55,0.9); }
+}
+
+/* ══ PRICE DISPLAY ══ */
+
+.prod-price-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.prod-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white, #fff);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.prod-price-old {
+  font-size: 12px;
+  color: var(--muted, #888);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.prod-discount-pill {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* ══ WISHED HEART ══ */
+
+.card-wish.wished svg path {
+  fill: #e05252;
+  stroke: #e05252;
+}
+.card-wish.wished {
+  background: rgba(224, 82, 82, 0.15);
+  border-color: rgba(224, 82, 82, 0.4);
+}
+
+/* ══ DISABLED QUICK-ADD ══ */
+.quick-add.disabled {
+  background: rgba(255,255,255,0.05);
+  color: var(--muted, #888);
+  cursor: not-allowed;
+  opacity: 0.6;
+}

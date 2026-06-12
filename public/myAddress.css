@@ -1,0 +1,255 @@
+/* ============================================================
+   TYMORA — myAddress.css
+   Specific styles for the My Address page.
+   Standardized to work with main.hbs and shared theme.
+   ============================================================ */
+
+
+/* ── PAGE HEADER ── */
+.page-header {
+  padding: 0 48px 30px;
+}
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  color: var(--white);
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+.page-sub {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── ADDRESS GRID ── */
+.address-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 0 48px 80px;
+}
+
+/* ── CARD ── */
+.address-card {
+  background: var(--dark-2);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.address-card:hover {
+  border-color: rgba(201,168,76,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.address-card.active {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.03);
+}
+
+.address-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.address-title {
+  font-weight: 700;
+  color: var(--white);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.default-badge {
+  font-size: 9px;
+  padding: 3px 8px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.address-body {
+  flex: 1;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.address-body p:first-child {
+  color: var(--white);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.address-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 16px;
+}
+.address-actions a {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.address-actions a:hover {
+  color: var(--gold);
+}
+.address-actions .danger:hover {
+  color: #e05252;
+}
+.address-actions .default-btn {
+  color: var(--gold);
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── ADD NEW CARD ── */
+.address-card.add-new {
+  border: 1px dashed rgba(255,255,255,0.2);
+  background: transparent;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  cursor: pointer;
+}
+.address-card.add-new:hover {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.02);
+}
+.add-box { text-align: center; color: var(--muted); }
+.add-box .plus { font-size: 40px; display: block; margin-bottom: 8px; font-weight: 300; }
+.add-box p { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── MODALS ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+  background: var(--dark-2);
+  padding: 40px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-box h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modal-box input, .modal-box select {
+  width: 100%;
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  color: var(--white);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.3s;
+}
+.modal-box input:focus { border-color: var(--gold); background: rgba(201,168,76,0.02); }
+
+.default-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 24px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.default-row input { width: 16px; height: 16px; margin-bottom: 0; cursor: pointer; }
+
+.modal-btn-red {
+  width: 100%;
+  padding: 14px;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.modal-btn-red:hover {
+  background: var(--gold-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(201, 168, 76, 0.2);
+}
+
+.modal-btn-cancel {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  border-radius: 8px;
+  margin-top: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.modal-btn-cancel:hover {
+  border-color: var(--white);
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Delete Modal Specifics */
+#delete-address-modal .modal-box { max-width: 380px; text-align: center; }
+.modal-icon-wrap { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 20px; }
+.red-bg { background: rgba(224, 82, 82, 0.1); border: 1px solid rgba(224, 82, 82, 0.3); color: #e05252; }
+.modal-title-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--white); margin-bottom: 12px; }
+.modal-desc-text { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+#deleteAddressForm .modal-btn-red { background: #e05252; color: #fff; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .page-header, .address-wrap { padding-left: 20px; padding-right: 20px; }
+  .address-wrap { grid-template-columns: 1fr; padding-top: 0; }
+  .page-title { font-size: 28px; }
+}

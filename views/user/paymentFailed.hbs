@@ -1,0 +1,183 @@
+<link href="/orderSuccess.css" rel="stylesheet">
+
+<style>
+/* Overrides for Failure State */
+.pf-hero-override .os-title { color: #ef4444; }
+.pf-hero-override .os-icon { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+.pf-hero-override .os-subtitle { color: #a1a1aa; }
+.pf-step-failed .os-step-dot { background: rgba(239,68,68,0.1); border: 2px solid #ef4444; color: #ef4444; }
+.pf-step-failed.active .os-step-dot { background: #ef4444; color: #000; }
+.btn-pf-primary { background: #ef4444; color: #fff; padding: 14px 28px; border-radius: 6px; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; transition: all 0.3s; }
+.btn-pf-primary:hover { background: #dc2626; box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
+.os-steps::after { width: 100% !important; }
+</style>
+
+<div class="os-wrapper">
+  <div class="os-container">
+
+    <!-- 1. HERO (Failed State) -->
+    <div class="os-hero pf-hero-override">
+      <div class="os-icon">
+        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+      <h1 class="os-title">Payment Failed</h1>
+      <p class="os-subtitle">
+        {{#if reason}}
+          {{#if (eq reason "cancelled")}}
+            You closed the payment window before completion.
+          {{else if (eq reason "declined")}}
+            Your payment was declined by the bank.
+          {{else if (eq reason "verification_failed")}}
+            Payment verification failed due to invalid signature.
+          {{else if (eq reason "network_error")}}
+            A network error occurred during payment verification.
+          {{else}}
+            {{reason}}
+          {{/if}}
+        {{else}}
+          Your payment could not be processed at this time.
+        {{/if}}
+      </p>
+      <div class="os-savings" style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">
+        Your cart and pending order remain safe. No amount was charged.
+      </div>
+    </div>
+
+    <!-- 2. INFO BAR -->
+    <div class="os-info-bar">
+      <div class="os-info-card">
+        <div class="os-info-label">Order Reference</div>
+        <div class="os-info-val">#{{order.orderId}}</div>
+      </div>
+      <div class="os-info-card">
+        <div class="os-info-label">Date</div>
+        <div class="os-info-val">{{order.orderDateFormatted}}</div>
+      </div>
+      <div class="os-info-card">
+        <div class="os-info-label">Status</div>
+        <div class="os-info-val" style="color: #ef4444;">Payment Pending</div>
+      </div>
+      <div class="os-info-card">
+        <div class="os-info-label">Payment</div>
+        <div class="os-info-val">{{order.paymentMethod}}</div>
+      </div>
+    </div>
+
+    <!-- 3. TRACKING PROGRESS (Failure Context) -->
+    <div class="os-progress-box">
+      <h3 class="os-progress-title">Order Status</h3>
+      <div class="os-steps">
+        <div class="os-step active">
+          <div class="os-step-dot">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="os-step-label">Order Created</div>
+        </div>
+        <div class="os-step pf-step-failed active">
+          <div class="os-step-dot">
+             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </div>
+          <div class="os-step-label" style="color: #ef4444;">Payment Failed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. DETAILS GRID -->
+    <div class="os-details-grid">
+
+      <!-- Left: Products -->
+      <div class="os-shipment">
+        <h3 class="os-shipment-title">Pending Items</h3>
+        {{#each order.products}}
+        <div class="os-prod-card">
+          {{#if this.productImage}}
+          <div class="os-prod-img" style="opacity: 0.7;">
+            <img src="{{this.productImage}}" alt="{{this.productName}}">
+          </div>
+          {{/if}}
+          <div class="os-prod-info">
+            <div class="os-prod-name">{{this.productName}}</div>
+            <div class="os-prod-specs">{{this.variantSpecs}} · Qty: {{this.quantity}}</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+            <div class="os-prod-price">₹{{formatCurrency this.itemTotal}}</div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <!-- Right: Financials + Address -->
+      <div class="os-financial">
+        <div class="os-fin-title">Financial Summary</div>
+
+        <div class="os-fin-row">
+          <span>Selling Price</span>
+          <span>₹{{formatCurrency order.subtotalSalePrice}}</span>
+        </div>
+        {{#if order.couponDiscount}}
+        <div class="os-fin-row" style="color: var(--gold);">
+          <span>Coupon ({{order.couponCode}})</span>
+          <span>- ₹{{formatCurrency order.couponDiscount}}</span>
+        </div>
+        {{/if}}
+        <div class="os-fin-row">
+          <span>Delivery</span>
+          <span>{{#if (eq order.deliveryCharge 0)}}Free{{else}}₹{{formatCurrency order.deliveryCharge}}{{/if}}</span>
+        </div>
+        <div class="os-fin-row">
+          <span>CGST (9%)</span>
+          <span>₹{{formatCurrency order.cgst}}</span>
+        </div>
+        <div class="os-fin-row">
+          <span>SGST (9%)</span>
+          <span>₹{{formatCurrency order.sgst}}</span>
+        </div>
+
+        <div class="os-fin-total" style="border-top-color: rgba(239,68,68,0.2);">
+          <span>Unpaid Balance</span>
+          <span style="color: #ef4444;">₹{{formatCurrency order.totalAmount}}</span>
+        </div>
+
+        <div class="os-address">
+          <div class="os-add-title">Intended Delivery To</div>
+          <div class="os-add-text">
+            <strong>{{order.shippingAddress.fullName}}</strong><br>
+            {{order.shippingAddress.addressLine}}<br>
+            {{order.shippingAddress.city}}, {{order.shippingAddress.state}} {{order.shippingAddress.pincode}}<br>
+            +91 {{order.shippingAddress.phone}}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 5. ACTIONS -->
+    <div class="os-actions">
+      <button class="btn-pf-primary" onclick="window.location.href='/user/checkout'">Return to Checkout & Retry</button>
+      <button class="btn-os-secondary" onclick="window.location.href='/user/orders'">My Orders</button>
+      <button class="btn-os-secondary" onclick="window.location.href='/user/shop'">Continue Shopping</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
+      Need help? <a href="mailto:support@tymora.com" style="color: var(--gold); text-decoration: none;">Contact Support</a> <br><br>
+      Note: If money was deducted from your account, it will automatically be refunded within 5-7 business days.
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+  gsap.from('.os-hero', { y: -30, opacity: 0, duration: 1, ease: 'power3.out' });
+  gsap.from('.os-info-card', { y: 20, opacity: 0, duration: 0.8, stagger: 0.1, delay: 0.3 });
+  gsap.from('.os-progress-box', { y: 20, opacity: 0, duration: 0.8, delay: 0.5 });
+  gsap.from('.os-shipment, .os-financial', { y: 30, opacity: 0, duration: 0.8, stagger: 0.2, delay: 0.7 });
+</script>

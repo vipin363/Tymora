@@ -1,0 +1,659 @@
+  /* Base reset, :root vars, html/body — provided by theme.css */
+
+  .page {
+    display: flex;
+    width: 100%; height: 100vh;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    width: 55%;
+    background: radial-gradient(ellipse at 40% 40%, #1a1608 0%, #0a0800 60%, #050400 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-right: 1px solid rgba(201,168,76,0.12);
+    cursor: default;
+  }
+
+  .left-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201,168,76,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .brand-top {
+    position: absolute; top: 32px; left: 40px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; letter-spacing: 8px;
+    color: var(--gold); font-weight: 300;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .tagline {
+    position: absolute; bottom: 32px;
+    font-size: 9px; letter-spacing: 4px;
+    color: var(--text-muted); text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  /* ── WATCH SCENE ── */
+  .watch-scene {
+    position: relative;
+    perspective: 900px;
+    /* Let child handle pointer events */
+    pointer-events: none;
+  }
+  .watch-wrap {
+    pointer-events: all;
+    cursor: pointer;
+    position: relative;
+    display: block;
+    transition: opacity 0.45s cubic-bezier(.23,1,.32,1);
+  }
+
+  /* Full-coverage transparent hit area sitting on top of the SVG.
+     This guarantees every pixel of the watch circle is clickable. */
+  .watch-hit-area {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    cursor: pointer;
+    /* Circular mask matching the watch bezel */
+    border-radius: 50%;
+    background: transparent;
+    pointer-events: all;
+  }
+
+  /* All SVG children must NOT intercept clicks — they bubble to .watch-wrap */
+  .watch-svg {
+    display: block;
+    pointer-events: none; /* SVG itself doesn't eat clicks */
+  }
+
+  /* Every element inside the SVG: no pointer events */
+  .watch-svg * {
+    pointer-events: none;
+  }
+
+  .watch-wrap:hover .watch-svg {
+    filter: drop-shadow(0 0 30px rgba(201,168,76,0.25));
+  }
+
+  .watch-inner {
+    position: relative;
+    transition: transform 0.8s cubic-bezier(.68,-0.55,.27,1.55);
+    transform-style: preserve-3d;
+  }
+
+  .click-hint {
+    position: absolute;
+    bottom: -36px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    animation: pulse-hint 2.5s ease-in-out infinite;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  @keyframes pulse-hint {
+    0%,100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+
+  /* ── BRANDS OVERLAY ── */
+  .brands-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.5s 0.2s;
+  }
+
+  .brands-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; letter-spacing: 6px;
+    color: var(--text-muted); margin-bottom: 28px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .brands-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    pointer-events: none;
+  }
+
+  .brand-card {
+    width: 110px; height: 80px;
+    border: 1px solid rgba(201,168,76,0.2);
+    background: rgba(201,168,76,0.04);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s, transform 0.3s, box-shadow 0.3s, opacity 0.4s;
+    position: relative;
+    overflow: hidden;
+    pointer-events: all;
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .brand-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .brand-card:hover {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(201,168,76,0.15);
+  }
+
+  .brand-card:hover::before { opacity: 1; }
+
+  .brand-card.active-brand {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.12);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+
+  .brand-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--gold); letter-spacing: 2px;
+    text-align: center; line-height: 1.3;
+  }
+
+  .brand-founded {
+    font-size: 8px; letter-spacing: 1.5px;
+    color: var(--text-muted); margin-top: 4px;
+  }
+
+  /* ── DETAIL VIEW ── */
+  .detail-panel {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #0f0c04 0%, #080600 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 50px 40px;
+    opacity: 0; pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity 0.55s cubic-bezier(.23,1,.32,1),
+                transform 0.55s cubic-bezier(.23,1,.32,1);
+    overflow-y: auto;
+    cursor: default;
+  }
+
+  .detail-panel.active {
+    opacity: 1; pointer-events: all;
+    transform: translateX(0);
+  }
+
+  .detail-content {
+    display: flex; flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    position: relative;
+    z-index: 2;
+  }
+
+  .detail-brand-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 300; letter-spacing: 6px;
+    color: var(--gold); margin-bottom: 4px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .detail-tagline {
+    font-size: 9px; letter-spacing: 5px;
+    color: var(--text-muted); margin-bottom: 28px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .detail-divider {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin-bottom: 24px;
+  }
+
+  .detail-founded-badge {
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 5px 16px; font-size: 9px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 22px;
+  }
+
+  .detail-description {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; line-height: 1.9; font-style: italic;
+    color: rgba(232,216,160,0.8); text-align: center;
+    max-width: 380px; margin-bottom: 28px;
+  }
+
+  .detail-facts {
+    display: flex; gap: 24px;
+  }
+
+  .detail-fact {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px;
+  }
+
+  .fact-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; color: var(--gold); font-weight: 300;
+  }
+
+  .fact-label {
+    font-size: 8px; letter-spacing: 2px;
+    color: var(--text-muted); text-transform: uppercase;
+  }
+
+  .detail-bg-hint {
+    position: absolute;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px; letter-spacing: 3px;
+    color: rgba(201,168,76,0.2);
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: pulse-hint 3s ease-in-out infinite;
+  }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    width: 45%;
+    background: #0a0800;
+    display: flex;
+    align-items: center; justify-content: center;
+    position: relative;
+    z-index: 10;
+  }
+
+  .form-card {
+    width: 340px;
+  }
+
+  .form-brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; letter-spacing: 10px; font-weight: 300;
+    color: var(--gold); margin-bottom: 6px;
+  }
+
+  .form-brand-underline {
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-dark));
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .form-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; font-style: italic;
+    color: var(--text); margin-bottom: 6px;
+  }
+
+  .form-subtitle {
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-muted); margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+
+  .field-group { margin-bottom: 20px; }
+
+  .field-label {
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--text-muted); text-transform: uppercase;
+    display: block; margin-bottom: 8px;
+  }
+
+  .field-wrap {
+    position: relative;
+    border-bottom: 1px solid rgba(201,168,76,0.25);
+    transition: border-color 0.3s;
+  }
+
+  .field-wrap:focus-within {
+    border-color: var(--gold);
+  }
+
+  .field-icon {
+    position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold-dark); font-size: 13px; opacity: 0.6;
+  }
+
+  .field-wrap input {
+    width: 100%; padding: 10px 10px 10px 26px;
+    background: transparent; border: none; outline: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 300; color: var(--text);
+    letter-spacing: 1px;
+  }
+
+  .field-wrap input::placeholder { color: rgba(201,168,76,0.25); }
+
+  .forgot-link {
+    display: block; text-align: right;
+    margin-top: 6px; font-size: 9px; letter-spacing: 2px;
+    color: var(--text-muted); text-decoration: none;
+    text-transform: uppercase; transition: color 0.2s;
+  }
+  .forgot-link:hover { color: var(--gold); }
+
+  .btn-enter {
+    width: 100%; padding: 14px;
+    background: transparent;
+    border: 1px solid var(--gold-dark);
+    color: var(--gold); font-family: 'Montserrat', sans-serif;
+    font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
+    cursor: pointer; margin-top: 28px;
+    transition: all 0.35s;
+    position: relative; overflow: hidden;
+  }
+
+  .btn-enter::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.08), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+
+  .btn-enter:hover {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.15), inset 0 0 20px rgba(201,168,76,0.05);
+  }
+
+  .btn-enter:hover::before { transform: translateX(100%); }
+
+  .register-line {
+    text-align: center; margin-top: 24px;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--text-muted); text-transform: uppercase;
+  }
+  .register-line a { color: var(--gold); text-decoration: none; }
+  .register-line a:hover { text-decoration: underline; }
+
+  /* ── STATE CLASSES ── */
+  .state-brands .watch-wrap {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .state-brands .click-hint {
+    opacity: 0 !important;
+    animation: none;
+  }
+  .state-brands .brands-overlay {
+    opacity: 1;
+    pointer-events: none;
+  }
+  .state-brands .brand-card {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .state-brands .brand-card:nth-child(1) { transition-delay: 0.05s; }
+  .state-brands .brand-card:nth-child(2) { transition-delay: 0.1s; }
+  .state-brands .brand-card:nth-child(3) { transition-delay: 0.15s; }
+  .state-brands .brand-card:nth-child(4) { transition-delay: 0.2s; }
+  .state-brands .brand-card:nth-child(5) { transition-delay: 0.25s; }
+  .state-brands .brand-card:nth-child(6) { transition-delay: 0.3s; }
+
+  .state-detail .watch-wrap {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .state-detail .click-hint {
+    opacity: 0 !important;
+    animation: none;
+  }
+  .state-detail .brands-overlay {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @keyframes twist-out {
+    0%   { transform: rotateY(0deg) scale(1); }
+    40%  { transform: rotateY(90deg) scale(0.8); }
+    100% { transform: rotateY(0deg) scale(1); }
+  }
+
+  .twist-anim .watch-inner {
+    animation: twist-out 0.75s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+  }
+
+  .hand-hour, .hand-minute, .hand-second {
+    transform-origin: 150px 150px;
+  }
+  .or-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+.or-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.15), transparent);
+}
+.or-text {
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: rgba(201,168,76,0.3);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-google {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  border: 1px solid rgba(201,168,76,0.18);
+  color: rgba(201,168,76,0.7);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.35s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 2px;
+}
+.btn-google::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.05), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
+}
+.btn-google:hover {
+  border-color: rgba(201,168,76,0.45);
+  color: var(--gold);
+  box-shadow: 0 0 16px rgba(201,168,76,0.1), inset 0 0 14px rgba(201,168,76,0.03);
+}
+.btn-google:hover::before { transform: translateX(100%); }
+.btn-google:active { transform: scale(0.99); }
+
+.g-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: opacity 0.3s;
+}
+.btn-google:hover .g-icon { opacity: 1; }
+/* ── RESPONSIVE ── */
+
+/* Tablet & below (≤900px) */
+@media (max-width: 900px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .page {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Watch panel — full width, comes FIRST */
+  .left-panel {
+    width: 100%;
+    min-height: 420px;
+    border-right: none;
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+  }
+
+  .brand-top {
+    left: 20px;
+    top: 20px;
+  }
+
+  .tagline {
+    bottom: 16px;
+  }
+
+  /* Form panel — full width, comes SECOND */
+  .right-panel {
+    width: 100%;
+    padding: 40px 20px 60px;
+    justify-content: center;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* Detail panel inside left panel */
+  .detail-panel {
+    padding: 40px 24px;
+  }
+
+  .detail-brand-name {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .detail-description {
+    font-size: 14px;
+  }
+
+  /* Brand grid: 2 columns on tablet */
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brand-card {
+    width: 130px;
+    height: 80px;
+  }
+}
+
+/* Phone (≤480px) */
+@media (max-width: 480px) {
+  .left-panel {
+    min-height: 360px;
+  }
+
+  /* Watch SVG slightly smaller on small phones */
+  .watch-wrap svg {
+    width: 240px;
+    height: 240px;
+  }
+
+  .watch-hit-area {
+    width: 240px;
+    height: 240px;
+  }
+
+  /* Hand transform-origin stays at 150/150 regardless of SVG display size */
+
+  .right-panel {
+    padding: 32px 16px 48px;
+  }
+
+  .form-brand {
+    font-size: 22px;
+    letter-spacing: 7px;
+  }
+
+  .form-title {
+    font-size: 22px;
+  }
+
+  /* Brand grid: 2 columns still, tighter cards */
+  .brand-card {
+    width: 100%;
+    height: 72px;
+  }
+
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .detail-facts {
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+/* ── SPACING GAP between watch panel and form panel (mobile/tablet only) ── */
+
+@media (max-width: 900px) {
+  .left-panel {
+    padding-bottom: 32px;
+  }
+
+  .right-panel {
+    padding-top: 48px;
+    padding-bottom: 72px;
+  }
+
+  /* Extra visual separator line with a fade effect */
+  .left-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.25), transparent);
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-panel {
+    padding-bottom: 24px;
+    min-height: 400px;   /* a touch taller so the watch breathes */
+  }
+
+  .right-panel {
+    padding-top: 40px;
+    padding-bottom: 56px;
+  }
+}

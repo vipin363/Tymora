@@ -1,0 +1,146 @@
+
+  <link rel="stylesheet" href="/adminLogin.css">
+
+
+<div class="page">
+
+  <!-- LEFT -->
+  <section class="left">
+    <div class="left-grid"></div>
+
+    <div class="left-content">
+
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L3 7v6c0 5.25 3.75 10.15 9 11.25C17.25 23.15 21 18.25 21 13V7L12 2z"/>
+          </svg>
+        </div>
+        <span class="logo-name">Tymora Admin</span>
+      </div>
+
+      <p class="tagline">
+        The enterprise-grade console designed for surgical precision and seamless management.
+      </p>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h3>Advanced Security</h3>
+            <p>Military-grade encryption with multi-factor authentication.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h3>Real-time Control</h3>
+            <p>Instant synchronization across your store infrastructure.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- RIGHT -->
+  <section class="right">
+
+    <div class="login-card">
+
+      <h1 class="card-title">Admin Login</h1>
+      <p class="card-sub">Sign in to manage your store</p>
+
+      {{!-- ERROR MESSAGE --}}
+        <p id="loginMessage" style="color:red; margin-bottom:15px;">{{error}}</p>
+     
+
+      <form id="loginForm" action="/admin/login" method="POST">
+
+        <!-- EMAIL -->
+        <div class="field">
+          <label>Email</label>
+          <div class="input-wrap">
+            <input 
+            id="email"
+              type="email" 
+              name="email" 
+              placeholder="name@gmail.com"
+              value="{{email}}">
+          </div>
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="field">
+          <label>Password</label>
+          <div class="input-wrap pwd-wrap">
+            <input 
+              type="password" 
+              name="password" 
+              id="password"
+              placeholder="••••••••">
+          </div>
+        </div>
+
+       
+        <div class="form-footer">
+          <a href="/admin/forgotPassword" class="forgot">Forgot password?</a>
+        </div>
+
+        <!-- SUBMIT -->
+        <button type="submit" class="btn-login">
+          Login to Admin →
+        </button>
+
+      </form>
+    </div>
+
+  </section>
+
+</div>
+
+
+<script>
+const loginForm = document.getElementById("loginForm");
+
+loginForm.addEventListener("submit", function(e){
+
+	const email = document.getElementById("email").value.trim();
+	const password = document.getElementById("password").value.trim();
+	const msg = document.getElementById("loginMessage");
+
+	msg.innerText = "";
+
+	if(email === "" || password === ""){
+		msg.innerText = "Please fill all fields";
+		msg.style.color = "red";
+		e.preventDefault();
+		return;
+	}
+
+	const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+
+	if(!email.match(emailPattern)){
+		msg.innerText = "Enter valid email";
+		msg.style.color = "red";
+		e.preventDefault();
+		return;
+	}
+});
+
+
+</script>
+

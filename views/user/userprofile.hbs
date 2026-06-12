@@ -1,0 +1,421 @@
+<link rel="stylesheet" href="/userProfile.css">
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp; <span>My Account</span>
+</div>
+
+<div class="account-wrap">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+
+    <div class="profile-card">
+     <img class="profile-avatar"
+      src="{{#if user.avatar}}{{user.avatar}}?v={{user._id}}{{else}}/image/useravathar.png{{/if}}"
+      alt="Profile">
+
+      <div class="profile-name">{{user.name}}</div>
+
+      <a class="btn-edit-profile" href="/user/editProfile">
+        Edit Profile
+      </a>
+    </div>
+
+    <div class="info-card">
+
+      <div class="info-item">
+        <div class="info-label">Email Address</div>
+        <div class="info-value">{{user.email}}</div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-label">Phone Number</div>
+        <div class="info-value">
+          {{#if user.phone}}
+            {{user.phone}}
+          {{else}}
+            Not Added
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-label">Date of Birth</div>
+        <div class="info-value">
+          {{#if user.dob}}
+            {{user.dob}}
+          {{else}}
+            Not Added
+          {{/if}}
+        </div>
+      </div>
+
+    </div>
+
+    <button class="btn-logout" onclick="showModal('logout-modal')" >
+      Logout Account
+    </button>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- QUICK LINKS -->
+    <div class="quick-links">
+
+      <a class="quick-card" href="/user/orders">
+        <span class="quick-icon">🛒</span>
+        <span class="quick-label">My Orders</span>
+      </a>
+
+      <a class="quick-card" href="/user/address">
+        <span class="quick-icon">📍</span>
+        <span class="quick-label">My Addresses</span>
+      </a>
+
+      <a class="quick-card" href="/user/wishlist">
+        <span class="quick-icon">♡</span>
+        <span class="quick-label">My Wishlist</span>
+      </a>
+
+      <a class="quick-card" href="/user/wallet">
+        <span class="quick-icon">💳</span>
+        <span class="quick-label">My Wallet</span>
+      </a>
+
+      <a class="quick-card" href="/user/my-reviews">
+        <span class="quick-icon">🖼</span>
+        <span class="quick-label">My Reviews</span>
+      </a>
+
+      <a class="quick-card" href="/user/coupons">
+        <span class="quick-icon">🏷</span>
+        <span class="quick-label">My Coupons</span>
+      </a>
+
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-row">
+
+      <!-- SETTINGS -->
+      <div class="panel">
+
+        <div class="panel-title">Account Settings</div>
+
+        {{#unless isGoogleUser}}
+        <div class="setting-row">
+          <a class="setting-link" onclick="showModal('change-password-modal')">
+            {{#if hasPassword}}
+            Change Password <span>›</span>
+            {{else}}
+            Create Password <span>›</span>
+            {{/if}}
+          </a>
+        </div>
+
+        <div class="setting-row">
+          <a class="setting-link" onclick="showModal('change-email-modal')">
+            Update Email Address <span>›</span>
+          </a>
+        </div>
+        {{/unless}}
+
+       <div class="toggle-wrap">
+      <span id="themeLabel">Light Mode</span>
+     <div class="toggle" id="theme-toggle"></div>
+     </div>
+
+        <button class="btn-delete-acct"
+          onclick="showModal('delete-modal')">
+          <span>🗑</span> Delete Account
+        </button>
+
+      </div>
+
+      <!-- REFERRAL PROGRAMME SNIPPET -->
+      <div class="panel">
+        <div class="panel-title">Referral Programme</div>
+
+        <div style="margin-bottom: 12px;">
+          <div class="info-label" style="font-size:0.75rem; margin-bottom:6px;">Your Referral Code</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-family:monospace; font-size:1rem; font-weight:700; color:var(--gold); letter-spacing:2px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); padding:6px 12px; border-radius:6px;">{{user.referralCode}}</span>
+            <button onclick="copyReferralCode()" style="background:transparent; border:1px solid rgba(201,168,76,0.3); color:var(--gold); padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.75rem;" id="copyCodeBtn">Copy</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <div class="info-label" style="font-size:0.75rem; margin-bottom:6px;">Total Referral Earnings</div>
+          <div style="font-size:1.4rem; font-weight:700; color:var(--gold);">₹{{referralStats.totalEarned}}</div>
+          <div style="font-size:0.75rem; color:#888; margin-top:2px;">{{referralStats.total}} referral(s) · {{referralStats.released}} reward(s) released</div>
+        </div>
+
+        {{#if referralStats.recent.length}}
+        <div style="margin-bottom:14px;">
+          {{#each referralStats.recent}}
+          {{#if @first}}
+          <div class="activity-item" style="margin-bottom:6px;">
+            <div class="act-dot" style="background:{{#ifEquals this.rewardStatus 'Released'}}var(--gold){{else}}#555{{/ifEquals}};"></div>
+            <div>
+              <div class="act-text">{{this.referredUser.name}}</div>
+              <div class="act-time">{{this.rewardStatus}} · ₹{{this.referrerRewardAmount}}</div>
+            </div>
+          </div>
+          {{/if}}
+          {{/each}}
+        </div>
+        {{/if}}
+
+        <a href="/user/referrals" style="display:block; text-align:center; padding:8px; border:1px solid rgba(201,168,76,0.25); border-radius:6px; color:var(--gold); font-size:0.8rem; text-decoration:none; transition: background 0.2s;" onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background='transparent'">View All Referrals →</a>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- LOGOUT MODAL -->
+<div class="modal-overlay"
+     id="logout-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('logout-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-icon-wrap gold-bg">→</div>
+
+    <div class="modal-title-text">
+      Logout from TYMORA?
+    </div>
+
+    <p class="modal-desc-text">
+      Are you sure you want to logout?
+    </p>
+
+    <button class="modal-btn-cancel"
+      style="margin-bottom:10px"
+      onclick="hideModal('logout-modal')">
+      Cancel
+    </button>
+
+    <form action="/user/logout" method="POST">
+  <button type="submit" class="modal-btn-red">
+    Logout
+  </button>
+</form>
+
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay"
+     id="delete-modal"
+     style="display:none">
+
+  <div class="modal-box">
+
+    <div class="modal-icon-wrap red-bg">🗑</div>
+
+    <div class="modal-title-text">
+      Delete Account?
+    </div>
+
+    <p class="modal-desc-text">
+      This action cannot be undone.
+    </p>
+
+   
+
+   <form action="/user/deleteAccount" method="POST" onsubmit="console.log('FORM SUBMITTED')">
+
+   <input 
+    class="modal-confirm-input"
+    type="text"
+    id="del-input"
+    name="confirmText"  
+    placeholder="DELETE">
+
+      <button class="modal-btn-red"
+        id="del-btn"
+        type="submit"
+        disabled>
+        Delete Account
+      </button>
+    </form>
+    <button class="modal-btn-cancel"
+  onclick="hideModal('delete-modal')">
+  Cancel
+</button>
+
+  </div>
+
+</div>
+
+<!-- CHANGE EMAIL MODAL -->
+<div class="modal-overlay"
+     id="change-email-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('change-email-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-title-text">
+      Change Email
+    </div>
+    <p>{{user.email}}</p>
+
+    <p class="modal-desc-text">
+      Enter your new email address
+    </p>
+
+    <!-- ERROR MESSAGE -->
+    <div id="email-error" class="error-msg"></div>
+
+    <form id="changeEmailForm">
+
+      <input class="modal-confirm-input"
+        type="email"
+        id="email"
+        name="email"
+        placeholder="example@email.com">
+
+      <button type="submit" class="modal-btn-red">
+        Verify with Code
+      </button>
+
+    </form>
+
+    <button class="modal-btn-cancel"
+      onclick="hideModal('change-email-modal')">
+      Cancel
+    </button>
+
+  </div>
+</div>
+<!-- OTP MODAL -->
+<div class="modal-overlay"
+     id="otp-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('otp-modal')">
+
+
+  <div class="modal-box">
+
+    <div class="modal-title-text">
+      Verify OTP
+    </div>
+    <div id="otp-success" class="success-msg"></div>
+
+    <p class="modal-desc-text">
+      Enter the 6-digit code sent to your email
+    </p>
+
+    <!-- ERROR MESSAGE -->
+    <div id="otp-error" class="error-msg"></div>
+
+    <form id="otpForm">
+
+      <input class="modal-confirm-input"
+        type="text"
+        id="otp"
+        maxlength="6"
+        placeholder="Enter OTP">
+
+        <p id="otp-timer" style="margin-top:10px;color:#aaa;font-size:13px;"></p>
+
+      <button type="submit" class="modal-btn-red">
+        Verify OTP
+      </button>
+
+    </form>
+
+    <!-- RESEND -->
+    <button class="modal-btn-cancel" id="resendOtpBtn">
+      Resend OTP
+    </button>
+    
+
+    <button class="modal-btn-cancel"
+      onclick="hideModal('otp-modal')">
+      Cancel
+    </button>
+
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay"
+     id="change-password-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('change-password-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-title-text">
+      {{#if hasPassword}}
+      Change Password
+      {{else}}
+      Create Password
+      {{/if}}
+    </div>
+
+    <p class="modal-desc-text">
+      {{#if hasPassword}}
+      Enter your current and new password
+      {{else}}
+      Enter your password
+      {{/if}}
+    </p>
+
+    <!-- ERROR MESSAGE -->
+    <div id="password-error" class="error-msg"></div>
+
+    <!-- SUCCESS MESSAGE -->
+    <div id="password-success" class="success-msg"></div>
+
+    <form id="changePasswordForm">
+
+      <!-- CURRENT PASSWORD -->
+     <div class="password-wrap">
+      {{#if hasPassword}}
+    <input type="password" id="currentPassword" placeholder="Current Password">
+  {{/if}}
+  </div>
+
+<div class="password-wrap">
+  <input type="password" id="newPassword" placeholder="New Password">
+  </div>
+
+<div class="password-wrap">
+  <input type="password" id="confirmPassword" placeholder="Confirm Password">
+</div>
+
+      <button type="submit" class="modal-btn-red">
+        Update Password
+      </button>
+
+    </form>
+
+    </button>
+
+  </div>
+</div>
+
+<script src="/js/profile.js"></script>
+<script>
+function copyReferralCode() {
+  const code = '{{user.referralCode}}';
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyCodeBtn');
+    btn.textContent = 'Copied!';
+    btn.style.color = '#4ade80';
+    btn.style.borderColor = '#4ade80';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  });
+}
+</script>
+

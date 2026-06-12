@@ -1,0 +1,83 @@
+@import url('/userProfile.css');
+
+.panel-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;
+}
+.filter-wrap {
+  display: flex; gap: 12px;
+}
+.coupon-search, .coupon-filter {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;
+  padding: 10px 14px; border-radius: 6px; font-family: inherit; font-size: 0.85rem; outline: none;
+}
+.coupon-search:focus, .coupon-filter:focus { border-color: var(--gold); }
+.coupon-search { width: 220px; }
+.coupon-filter { cursor: pointer; }
+.coupon-filter option { background: #111; }
+
+.coupons-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
+}
+
+.coupon-card {
+  background: #111; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.coupon-card:hover { border-color: rgba(212,175,55,0.3); transform: translateY(-3px); }
+
+.c-badge {
+  position: absolute; top: 15px; right: 15px; font-size: 0.7rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px;
+}
+.c-badge-green { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+.c-badge-gold { background: rgba(212,175,55,0.15); color: var(--gold); border: 1px solid rgba(212,175,55,0.3); }
+.c-badge-red { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+.c-badge-gray { background: rgba(255,255,255,0.1); color: #aaa; border: 1px solid rgba(255,255,255,0.2); }
+
+.c-top {
+  padding: 25px 20px 15px; border-bottom: 1px dashed rgba(255,255,255,0.1);
+  position: relative;
+}
+.c-top::before, .c-top::after {
+  content: ''; position: absolute; bottom: -8px; width: 16px; height: 16px;
+  background: var(--bg); border-radius: 50%; border: 1px solid rgba(255,255,255,0.08);
+}
+.c-top::before { left: -9px; border-right-color: transparent; border-top-color: transparent; transform: rotate(-45deg); }
+.c-top::after { right: -9px; border-left-color: transparent; border-bottom-color: transparent; transform: rotate(-45deg); }
+
+.c-value { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+.c-code { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: #fff; letter-spacing: 2px; }
+
+.c-body { padding: 15px 20px; flex-grow: 1; }
+.c-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: #fff; }
+.c-desc { font-size: 0.8rem; color: #aaa; line-height: 1.5; margin-bottom: 15px; }
+.c-terms { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: #777; }
+
+.c-actions { padding: 15px 20px 20px; }
+.btn-copy {
+  width: 100%; background: var(--gold); color: #000; border: none; padding: 12px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;
+  border-radius: 6px; cursor: pointer; transition: background 0.3s;
+}
+.btn-copy:hover { background: #b8962e; }
+
+.btn-disabled {
+  width: 100%; background: rgba(255,255,255,0.05); color: #777; border: 1px solid rgba(255,255,255,0.1);
+  padding: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;
+  border-radius: 6px; cursor: not-allowed;
+}
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px;
+}
+.empty-icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
+.empty-state h3 { font-family: var(--font-serif); font-size: 1.4rem; color: #fff; margin-bottom: 10px; }
+.empty-state p { color: #888; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+  .panel-header { flex-direction: column; align-items: flex-start; }
+  .filter-wrap { width: 100%; flex-direction: column; }
+  .coupon-search, .coupon-filter { width: 100%; }
+}

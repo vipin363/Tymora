@@ -1,0 +1,130 @@
+<link rel="stylesheet" href="/myCoupons.css">
+
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a> &nbsp;›&nbsp;
+  <span>My Coupons</span>
+</div>
+
+<div class="account-wrap" style="display: block;">
+
+  <!-- MAIN CONTENT (Coupons) -->
+  <div class="right-col" style="width: 100%; max-width: 1200px; margin: 0 auto;">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">My Coupons</div>
+        
+        <div class="filter-wrap">
+          <input type="text" class="coupon-search" id="couponSearch" placeholder="Search code or title..." onkeyup="filterCoupons()">
+          <select class="coupon-filter" id="couponFilter" onchange="filterCoupons()">
+            <option value="All">All Statuses</option>
+            <option value="Available">Available</option>
+            <option value="Used">Used</option>
+            <option value="Expired">Expired</option>
+          </select>
+        </div>
+      </div>
+
+      {{#if hasCoupons}}
+      <div class="coupons-grid" id="couponsGrid">
+        {{#each coupons}}
+        <div class="coupon-card {{toLowerCase this.statusBadge}}" data-status="{{this.statusText}}" data-search="{{toLowerCase this.code}} {{toLowerCase this.title}}">
+          
+          <!-- Badge -->
+          <div class="c-badge c-badge-{{toLowerCase this.statusBadge}}">{{this.statusText}}</div>
+          
+          <div class="c-top">
+            <div class="c-value">
+              {{#ifEquals this.discountType 'percentage'}}
+                {{this.discountValue}}% OFF
+              {{else}}
+                ₹{{formatCurrency this.discountValue}} OFF
+              {{/ifEquals}}
+            </div>
+            <div class="c-code">{{this.code}}</div>
+          </div>
+          
+          <div class="c-body">
+            <div class="c-title">{{this.title}}</div>
+            <div class="c-desc">{{this.description}}</div>
+            <div class="c-terms">
+              <span>Min. Order: ₹{{formatCurrency this.minPurchase}}</span>
+              {{#if this.maxDiscountLimit}}
+              <span>Max Discount: ₹{{formatCurrency this.maxDiscountLimit}}</span>
+              {{/if}}
+              <span>Expires: {{this.endDateFormatted}}</span>
+            </div>
+          </div>
+          
+          <div class="c-actions">
+            {{#if this.canCopy}}
+            <button class="btn-copy" onclick="copyCouponCode('{{this.code}}')">Copy Code</button>
+            {{else}}
+            <button class="btn-disabled" disabled>{{this.statusText}}</button>
+            {{/if}}
+          </div>
+          
+        </div>
+        {{/each}}
+      </div>
+      
+      <!-- Empty Search Result State -->
+      <div id="no-search-results" style="display:none;" class="empty-state">
+        <div class="empty-icon">🏷</div>
+        <h3>No Coupons Found</h3>
+        <p>Try adjusting your search or filters.</p>
+      </div>
+      
+      {{else}}
+      <div class="empty-state">
+        <div class="empty-icon">🏷</div>
+        <h3>No Coupons Available</h3>
+        <p>Check back later for exclusive deals and offers.</p>
+      </div>
+      {{/if}}
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast for Copy -->
+<div class="toast" id="copyToast">Coupon copied to clipboard!</div>
+
+<script>
+function copyCouponCode(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  });
+}
+
+function filterCoupons() {
+  const query = document.getElementById('couponSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('couponFilter').value;
+  const cards = document.querySelectorAll('.coupon-card');
+  let visibleCount = 0;
+  
+  cards.forEach(card => {
+    const status = card.getAttribute('data-status');
+    const searchStr = card.getAttribute('data-search');
+    
+    const matchesSearch = searchStr.includes(query);
+    const matchesStatus = statusFilter === 'All' || status === statusFilter;
+    
+    if (matchesSearch && matchesStatus) {
+      card.style.display = 'flex';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  
+  const noRes = document.getElementById('no-search-results');
+  if(noRes) {
+    if (visibleCount === 0) noRes.style.display = 'flex';
+    else noRes.style.display = 'none';
+  }
+}
+</script>

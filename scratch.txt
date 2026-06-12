@@ -1,0 +1,165 @@
+export const loadLogin = async (req, res) => {
+  let message = null;
+  let success = false;
+
+  if (req.query.message) {
+    message = req.query.message;
+  }
+
+  if (req.query.success) {
+    success = true;
+  }
+  if (req.query.msg === "blocked") {
+    message = "Your account has been blocked by admin";
+  }
+
+  res.render("user/login", { layout: "auth", message, success });
+};
+
+
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await userSchema.findOne({ email });
+    if (!user) {
+      return res.render("user/login", {
+        layout: "auth",
+        message: "User not exists",
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.render("user/login", {
+        layout: "auth",
+        message: "Your account is blocked by the Admin",
+      });
+    }
+
+    if (!user.password) {
+      return res.render("user/login", {
+        layout: "auth",
+        message:
+          "You registered using Google. Please login with Google and set your password in profile or please continue with forgot password.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.render("user/login", {
+        layout: "auth",
+        message: "Incorrect password",
+      });
+    }
+
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+    };
+
+    res.redirect("/user/");
+  } catch (err) {
+    res.render("user/login", {
+      layout: "auth",
+      message: "Something went wrong",
+    });
+  }
+};
+
+export const homePage = async (req, res) => {
+  try {
+    let message = req.query.message || null;
+    // Find category IDs that have at least one active product with active variants
+    const activeCategoryIds = await Product.distinct("category", { status: "active", deleted_at: null });
+    // only categories whose products have at least one active variant
+    const productsWithActiveVariants = await Variant.distinct("product", { status: "active", deleted_at: null });
+    const productIdsWithVariants = await Product.distinct("_id", { _id: { $in: productsWithActiveVariants }, status: "active", deleted_at: null });
+    const validCategoryIds = await Product.distinct("category", { _id: { $in: productIdsWithVariants }, status: "active", deleted_at: null });
+    const rawCategories = await Category.find({ _id: { $in: validCategoryIds }, is_visible: true, deleted_at: null }).sort({ createdAt: -1 }).lean();
+    const navCategories = rawCategories.map(c => ({ _id: c._id.toString(), name: c.name, image: c.image_url || "" }));
+    if (req.session.user) {
+      const user = await userSchema.findById(req.session.user.id);
+      if (!user) {
+        req.session.user = null;
+        return res.render("user/home", { layout: "main", user: null, message: "Your account has been deleted by admin", navCategories, categories: navCategories });
+      }
+      if (user.isBlocked) {
+        req.session.user = null;
+        return res.render("user/home", { layout: "main", user: null, message: "Your account has been blocked by admin", navCategories, categories: navCategories });
+      }
+    }
+    res.render("user/home", { layout: "main", user: req.session.user || null, message, navCategories, categories: navCategories });
+  } catch (err) {
+    console.log(err);
+    res.render("user/home", { layout: "main", user: null, message: "Something went wrong", navCategories: [], categories: [] });
+  }
+};
+
+    const activeCategoryIds = await Product.distinct("category", {
+      status: "active",
+      deleted_at: null,
+    });
+
+    // only categories whose products have at least one active variant
+    const productsWithActiveVariants = await Variant.distinct("product", {
+      status: "active",
+      deleted_at: null,
+    });
+
+    const productIdsWithVariants = await Product.distinct("_id", {
+      _id: { $in: productsWithActiveVariants },
+      status: "active",
+      deleted_at: null,
+    });
+
+    const validCategoryIds = await Product.distinct("category", {
+      _id: { $in: productIdsWithVariants },
+      status: "active",
+      deleted_at: null,
+    });
+
+    const rawCategories = await Category.find({
+      _id: { $in: validCategoryIds },
+      is_visible: true,
+      deleted_at: null,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const navCategories = rawCategories.map((c) => ({
+      _id: c._id.toString(),
+      name: c.name,
+      image: c.image_url || "",
+    }));
+
+    if (req.session.user) {
+      const user = await userSchema.findById(req.session.user.id);
+
+      if (!user) {
+        req.session.user = null;
+        return res.render("user/home", {
+          layout: "main",
+          user: null,
+          message: "Your account has been deleted by admin",
+          navCategories,
+          categories: navCategories,
+        });
+      }
+
+      if (user.isBlocked) {
+        req.session.user = null;
+        return res.render("user/home", {
+          layout: "main",
+          user: null,
+          message: "Your account has been blocked by admin",
+          navCategories,
+          categories: navCategories,
+        });
+
+
+export const logout = (req, res) => {
+  req.session.user = null;
+  res.redirect("/user/?message=Logged out successfully");
+};
+

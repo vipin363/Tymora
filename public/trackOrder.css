@@ -1,0 +1,204 @@
+/* ============================================================
+   TYMORA — trackOrder.css
+   Luxury Order Tracking Page
+   ============================================================ */
+
+.trk-wrapper {
+  padding: calc(var(--nav-height) - 35px) 40px 80px;
+  background: radial-gradient(circle at 50% 0%, rgba(20, 18, 12, 0.6) 0%, #050505 50%, #000000 100%);
+  min-height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trk-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.trk-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.trk-subtitle {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.trk-container {
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 40px;
+}
+
+@media (max-width: 800px) {
+  .trk-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* LEFT: TIMELINE */
+.trk-main {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 40px;
+  backdrop-filter: blur(10px);
+}
+
+.trk-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--white);
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 15px;
+}
+
+.trk-timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.trk-timeline::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 6px;
+  bottom: 10px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.trk-event {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.trk-event:last-child {
+  margin-bottom: 0;
+}
+
+.trk-dot {
+  position: absolute;
+  left: -32px;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #111;
+  border: 2px solid var(--muted);
+  z-index: 2;
+  transition: 0.3s;
+}
+
+.trk-event.active .trk-dot {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.5);
+}
+
+.trk-event-content {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.trk-event.active .trk-event-content {
+  border-color: rgba(201, 168, 76, 0.2);
+}
+
+.trk-status {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+
+.trk-event.active .trk-status {
+  color: var(--gold);
+}
+
+.trk-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.trk-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+/* RIGHT: INFO BAR */
+.trk-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.trk-info-card {
+  background: rgba(15, 14, 12, 0.8);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.trk-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.trk-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.trk-val.small {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  color: var(--white);
+}
+
+.trk-btn-back {
+  padding: 14px 24px;
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+  text-decoration: none;
+  display: block;
+}
+
+.trk-btn-back:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.05);
+}

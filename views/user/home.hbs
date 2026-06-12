@@ -1,0 +1,736 @@
+<!-- userHome.css contains all the ultra-premium V2 styling -->
+<link rel="stylesheet" href="/userHome.css">
+<link
+  href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap"
+  rel="stylesheet">
+
+<!-- ══════════════════════════════════════════════════════════
+     1. CINEMATIC HERO EXPERIENCE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-hero" id="luxHero">
+  <video id="heroVideo" class="lux-hero__video" autoplay loop muted playsinline>
+    <source src="/video/5892f09ea8fb4067b2b8830382a66dc7.mp4" type="video/mp4">
+  </video>
+  <div class="lux-hero__overlay"></div>
+  <div class="lux-hero__particles" id="luxParticles"></div>
+  <div class="lux-hero__light-sweep"></div>
+
+  <!-- INTRO TEXT (Fades out) -->
+  <div class="lux-hero__intro">
+    <div class="lux-hero__word lux-hero__word--time" id="introWord1">TYM</div>
+    <div class="lux-hero__word lux-hero__word--redefined" id="introWord2">OF REFINED AESTHETICS</div>
+  </div>
+
+  <!-- BOTTOM-LEFT TEXT (Fades in) -->
+  <div class="lux-hero__content-side">
+    <div class="lux-hero__side-title" id="sideTitle">TIME REDEFINED</div>
+    <p class="lux-hero__side-desc" id="sideDesc">Crafted for those who value elegance.</p>
+    <div class="lux-hero__actions" id="heroActions">
+      <a href="/user/shop" class="lux-btn lux-btn--primary magnetic-btn">
+        <span class="lux-btn__text">Explore Collection</span>
+        <span class="lux-btn__glow"></span>
+      </a>
+      <a href="#luxStory" class="lux-btn lux-btn--ghost magnetic-btn">
+        <span class="lux-btn__text">Watch Story</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="lux-hero__scroll-indicator">
+    <span>Discover</span>
+    <div class="lux-hero__scroll-line"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     2. BRAND MARQUEE
+     ══════════════════════════════════════════════════════════ -->
+<div class="lux-marquee">
+  <div class="lux-marquee__track">
+    <span>ROLEX</span><span class="lux-marquee__dot">✦</span>
+    <span>PATEK PHILIPPE</span><span class="lux-marquee__dot">✦</span>
+    <span>AUDEMARS PIGUET</span><span class="lux-marquee__dot">✦</span>
+    <span>RICHARD MILLE</span><span class="lux-marquee__dot">✦</span>
+    <span>OMEGA</span><span class="lux-marquee__dot">✦</span>
+    <span>CARTIER</span><span class="lux-marquee__dot">✦</span>
+    <span>TAG HEUER</span><span class="lux-marquee__dot">✦</span>
+    <span>ROLEX</span><span class="lux-marquee__dot">✦</span>
+    <span>PATEK PHILIPPE</span><span class="lux-marquee__dot">✦</span>
+    <span>AUDEMARS PIGUET</span><span class="lux-marquee__dot">✦</span>
+    <span>RICHARD MILLE</span><span class="lux-marquee__dot">✦</span>
+    <span>OMEGA</span><span class="lux-marquee__dot">✦</span>
+    <span>CARTIER</span><span class="lux-marquee__dot">✦</span>
+    <span>TAG HEUER</span><span class="lux-marquee__dot">✦</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     3. FEATURED COLLECTIONS — HORIZONTAL SCROLL
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-collections" id="luxCollections">
+  <div class="lux-collections__header lux-reveal">
+    <div class="lux-eyebrow">CURATED EXCELLENCE</div>
+    <h2 class="lux-heading">Featured <span class="lux-gold">Collections</span></h2>
+  </div>
+
+  <div class="lux-collections__viewport" id="collectionsViewport">
+    <div class="lux-collections__track" id="collectionsTrack">
+      {{#each categories}}
+      <div class="lux-collection-card glass-card lux-reveal"
+        onclick="window.location.href='/user/collection/{{this._id}}'">
+        <div class="lux-collection-card__img-wrap">
+          {{#if this.image}}
+          <img src="{{this.image}}" alt="{{this.name}}" loading="lazy">
+          {{else}}
+          <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&q=80" alt="{{this.name}}"
+            loading="lazy">
+          {{/if}}
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>{{this.name}}</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      {{/each}}
+      {{#unless categories.length}}
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&q=80" alt="Luxury Collection"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Luxury Collection</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1611095973763-414019e72400?w=600&q=80" alt="Classic Collection"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Classic Collection</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1596901844697-7104b2075a22?w=600&q=80" alt="Modern Collection"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Modern Collection</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      <div class="lux-collection-card glass-card lux-reveal" onclick="window.location.href='/user/shop'">
+        <div class="lux-collection-card__img-wrap">
+          <img src="https://images.unsplash.com/photo-1622434641406-a158123450f9?w=600&q=80" alt="Limited Edition"
+            loading="lazy">
+          <div class="lux-collection-card__light"></div>
+        </div>
+        <div class="lux-collection-card__info">
+          <h3>Limited Edition</h3>
+          <span class="lux-collection-card__explore">Explore <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+      {{/unless}}
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     4. MASTERPIECES OF TIME — PRODUCT SHOWCASE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-masterpieces">
+  <div class="lux-masterpieces__bg-glow"></div>
+  <div class="lux-container">
+    <div class="lux-masterpieces__header lux-reveal">
+      <div class="lux-eyebrow">THE MASTERPIECES</div>
+      <h2 class="lux-heading">Masterpieces of <span class="lux-gold">Time</span></h2>
+    </div>
+
+    <div class="lux-masterpieces__grid">
+      {{#each trendingProducts}}
+      <div class="lux-product-card tilt-card lux-reveal">
+        <a href="/user/product/{{this._id}}?variant={{this.variantId}}" class="lux-product-card__link">
+          <div class="lux-product-card__img-wrap">
+            {{#if this.hasBadge}}
+            <div class="lux-product-card__badge">{{this.badge}}</div>
+            {{/if}}
+            <img src="{{this.image}}" alt="{{this.name}}" loading="lazy">
+            <div class="lux-product-card__shadow"></div>
+            <div class="lux-product-card__quick-view">
+              <span>Quick View</span>
+            </div>
+          </div>
+          <div class="lux-product-card__info">
+            <div class="lux-product-card__brand">{{this.brand}}</div>
+            <h3 class="lux-product-card__name">{{this.name}}</h3>
+            <div class="lux-product-card__price-row">
+              <span class="lux-product-card__price">₹{{formatCurrency this.salePrice}}</span>
+              {{#if this.hasDiscount}}
+              <span class="lux-product-card__original">₹{{formatCurrency this.originalPrice}}</span>
+              {{/if}}
+            </div>
+            {{#if this.rating}}
+            <div class="lux-product-card__rating">
+              <i class="fas fa-star"></i> {{this.rating}}
+              {{#if this.reviewCount}}<span>({{this.reviewCount}})</span>{{/if}}
+            </div>
+            {{/if}}
+          </div>
+        </a>
+      </div>
+      {{/each}}
+
+      {{#unless hasProducts}}
+      <div class="lux-masterpieces__empty lux-reveal">
+        <p>Our artisans are curating new masterpieces. <a href="/user/shop">Explore the full collection →</a></p>
+      </div>
+      {{/unless}}
+    </div>
+
+    {{#if hasProducts}}
+    <div class="lux-masterpieces__cta lux-reveal">
+      <a href="/user/shop" class="lux-btn lux-btn--outline magnetic-btn">
+        <span class="lux-btn__text">View All Timepieces</span>
+      </a>
+    </div>
+    {{/if}}
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     5. LUXURY NUMBERS SECTION
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-numbers">
+  <div class="lux-numbers__bg"></div>
+  <div class="lux-container">
+    <div class="lux-numbers__grid">
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.happyCustomers}}">0</span>+</div>
+        <div class="lux-number-card__label">Happy Customers</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.watchesSold}}">0</span>+</div>
+        <div class="lux-number-card__label">Luxury Watches Sold</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.premiumCollections}}">0</span>+</div>
+        <div class="lux-number-card__label">Premium Collections</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+      <div class="lux-number-card lux-reveal">
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.customerSatisfaction}}">0</span>%</div>
+        <div class="lux-number-card__label">Customer Satisfaction</div>
+        <div class="lux-number-card__glow"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     6. PREMIUM BRAND STORY — SPLIT SCREEN PARALLAX
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-story" id="luxStory">
+  <div class="lux-story__layout">
+    <div class="lux-story__image-side lux-reveal">
+      <div class="lux-story__image-wrapper">
+        <img src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=1600&q=80" alt="Craftsmanship"
+          class="lux-story__img parallax-img" loading="lazy">
+        <div class="lux-story__image-overlay"></div>
+      </div>
+    </div>
+    <div class="lux-story__text-side">
+      <div class="lux-story__content lux-reveal">
+        <div class="lux-eyebrow">OUR HERITAGE</div>
+        <h2 class="lux-heading lux-story__title">A Legacy of <br><span class="lux-gold">Excellence</span></h2>
+        <p class="lux-story__paragraph word-reveal">Since inception, we have curated only the finest masterworks of
+          horology and lifestyle. Every piece embodies hundreds of hours of uncompromising craftsmanship, born from a
+          passion for timeless elegance.</p>
+        <p class="lux-story__paragraph word-reveal">Our commitment to authenticity and precision has made us the trusted
+          destination for discerning collectors worldwide.</p>
+        <div class="lux-story__signature">
+          <div class="lux-story__sig-name">Tymora</div>
+          <div class="lux-story__sig-title">HOUSE OF LUXURY</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     7. TRUST & EXPERIENCE SECTION
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-trust">
+  <div class="lux-container">
+    <div class="lux-trust__header lux-reveal">
+      <div class="lux-eyebrow">WHY TYMORA</div>
+      <h2 class="lux-heading">The Tymora <span class="lux-gold">Experience</span></h2>
+    </div>
+    <div class="lux-trust__grid">
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-lock"></i></div>
+        <h4>Secure Payments</h4>
+        <p>End-to-end encrypted transactions with Razorpay.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-certificate"></i></div>
+        <h4>Authentic Products</h4>
+        <p>Every timepiece is verified and certified genuine.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-gift"></i></div>
+        <h4>Premium Packaging</h4>
+        <p>Luxury presentation worthy of the craft within.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-shipping-fast"></i></div>
+        <h4>Fast Delivery</h4>
+        <p>Insured express shipping across India.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-undo-alt"></i></div>
+        <h4>Easy Returns</h4>
+        <p>Hassle-free 30-day return and exchange policy.</p>
+      </div>
+      <div class="lux-trust-card glass-card lux-reveal">
+        <div class="lux-trust-card__icon"><i class="fas fa-headset"></i></div>
+        <h4>Dedicated Support</h4>
+        <p>Personalized assistance from our concierge team.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     8. TESTIMONIALS — REAL DB REVIEWS
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-testimonials">
+  <div class="lux-container">
+    <div class="lux-testimonials__header lux-reveal">
+      <div class="lux-eyebrow">CLIENT REVIEWS</div>
+      <h2 class="lux-heading">Words from the <span class="lux-gold">Elite</span></h2>
+    </div>
+
+    <div class="lux-testimonials__carousel" id="testimonialCarousel">
+      <div class="lux-testimonials__track" id="testimonialTrack">
+        {{#each testimonials}}
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">{{this.stars}}</div>
+          <p class="lux-testimonial-card__text">"{{this.text}}"</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              {{#if this.avatar}}
+              <img src="{{this.avatar}}" alt="{{this.userName}}" class="lux-testimonial-card__avatar-img">
+              {{else}}
+              <div class="lux-testimonial-card__avatar">{{this.initials}}</div>
+              {{/if}}
+              <div>
+                <div class="lux-testimonial-card__name">{{this.userName}}</div>
+                <div class="lux-testimonial-card__product">on {{this.productName}}</div>
+              </div>
+            </div>
+            <div class="lux-testimonial-card__date">{{this.date}}</div>
+          </div>
+        </div>
+        {{/each}}
+
+        {{#unless hasTestimonials}}
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">★★★★★</div>
+          <p class="lux-testimonial-card__text">"An absolute masterpiece. The buying experience was as flawless as the
+            timepiece itself."</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              <div class="lux-testimonial-card__avatar">AR</div>
+              <div>
+                <div class="lux-testimonial-card__name">Alexander R.</div>
+                <div class="lux-testimonial-card__product">Verified Buyer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">★★★★★</div>
+          <p class="lux-testimonial-card__text">"The curation of brands here is unmatched. My watch arrived in pristine
+            condition."</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              <div class="lux-testimonial-card__avatar">SW</div>
+              <div>
+                <div class="lux-testimonial-card__name">Sophia W.</div>
+                <div class="lux-testimonial-card__product">Verified Buyer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lux-testimonial-card glass-card">
+          <div class="lux-testimonial-card__stars">★★★★★</div>
+          <p class="lux-testimonial-card__text">"Exquisite craftsmanship and unparalleled customer service. Highly
+            recommended."</p>
+          <div class="lux-testimonial-card__footer">
+            <div class="lux-testimonial-card__author">
+              <div class="lux-testimonial-card__avatar">JP</div>
+              <div>
+                <div class="lux-testimonial-card__name">James P.</div>
+                <div class="lux-testimonial-card__product">Verified Buyer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{/unless}}
+      </div>
+      <div class="lux-testimonials__controls">
+        <button class="lux-testimonials__arrow lux-testimonials__arrow--prev" id="testPrev"><i
+            class="fas fa-chevron-left"></i></button>
+        <button class="lux-testimonials__arrow lux-testimonials__arrow--next" id="testNext"><i
+            class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     9. PREMIUM VIDEO SECTION — EVERY SECOND MATTERS
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-video-section">
+  <video class="lux-video-section__bg" autoplay loop muted playsinline>
+    <source src="https://videos.pexels.com/video-files/3205915/3205915-uhd_2560_1440_25fps.mp4" type="video/mp4">
+  </video>
+  <div class="lux-video-section__overlay"></div>
+  <div class="lux-video-section__content lux-reveal">
+    <h2 class="lux-video-section__title">Every Second <span class="lux-gold">Matters</span></h2>
+    <p class="lux-video-section__desc">Embrace the art of fine living with collections curated for those who command the
+      room.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     11. INTERACTIVE TIMELINE
+     ══════════════════════════════════════════════════════════ -->
+<section class="lux-timeline">
+  <div class="lux-container">
+    <div class="lux-timeline__header lux-reveal">
+      <div class="lux-eyebrow">OUR PROCESS</div>
+      <h2 class="lux-heading">From Vision to <span class="lux-gold">Wrist</span></h2>
+    </div>
+    <div class="lux-timeline__track">
+      <div class="lux-timeline__line" id="timelineLine"></div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">01</div>
+          <h4>Design</h4>
+          <p>Every masterpiece begins with a vision sketched by world-renowned artisans.</p>
+        </div>
+      </div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">02</div>
+          <h4>Craftsmanship</h4>
+          <p>Hundreds of hours of meticulous hand-assembly by master watchmakers.</p>
+        </div>
+      </div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">03</div>
+          <h4>Precision</h4>
+          <p>Each movement tested to Swiss chronometer standards for flawless accuracy.</p>
+        </div>
+      </div>
+      <div class="lux-timeline__item lux-reveal">
+        <div class="lux-timeline__dot"></div>
+        <div class="lux-timeline__card glass-card">
+          <div class="lux-timeline__step">04</div>
+          <h4>Delivery</h4>
+          <p>Insured, premium packaging delivered to your doorstep with white-glove care.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     13. TRUST STRIP
+     ══════════════════════════════════════════════════════════ -->
+<div class="lux-trust-strip">
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-shield-alt"></i><span>Authenticity Guaranteed</span>
+  </div>
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-shipping-fast"></i><span>Complimentary Shipping</span>
+  </div>
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-undo"></i><span>30-Day Returns</span></div>
+  <div class="lux-trust-strip__item lux-reveal"><i class="fas fa-lock"></i><span>Secure Payment</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPTS — GSAP + ScrollTrigger + Custom Animations
+     ══════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+
+    // ── GSAP SETUP ──
+    if (typeof gsap === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ── 1. HERO CINEMATIC ENTRANCE ──
+    const heroTl = gsap.timeline({ delay: 0.2 });
+    heroTl
+      // 1. Intro text blur in
+      .fromTo('#introWord1',
+        { opacity: 0, scale: 0.95, filter: 'blur(15px)', letterSpacing: '0.4em' },
+        { opacity: 1, scale: 1, filter: 'blur(0px)', letterSpacing: '0.3em', duration: 2, ease: 'power3.out' }
+      )
+      .fromTo('#introWord2',
+        { opacity: 0, y: 30, filter: 'blur(10px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.5, ease: 'power3.out' },
+        '-=1.2'
+      )
+      // 2. Intro text fades out after 2 seconds
+      .to(['#introWord1', '#introWord2'], {
+        opacity: 0,
+        filter: 'blur(10px)',
+        scale: 1.05,
+        duration: 1.5,
+        ease: 'power2.inOut',
+        stagger: 0.2
+      }, '+=2')
+      // 3. Bottom left side content animates in
+      .fromTo('.lux-hero__content-side',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.1 },
+        '-=0.5' // Ensure container is visible before children animate
+      )
+      .fromTo('#sideTitle',
+        { opacity: 0, x: -30, filter: 'blur(5px)' },
+        { opacity: 1, x: 0, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out' },
+        '-=0.5'
+      )
+      .fromTo('#sideDesc',
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 1, ease: 'power2.out' },
+        '-=0.8'
+      )
+      .fromTo('#heroActions',
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' },
+        '-=0.6'
+      )
+      .fromTo('.lux-hero__scroll-indicator',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.8 },
+        '-=0.2'
+      );
+
+    // ── 2. SCROLL REVEAL UTILITY ──
+    document.querySelectorAll('.lux-reveal').forEach((el, i) => {
+      gsap.fromTo(el, { opacity: 0, y: 50 }, {
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none none' },
+        opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: i % 4 * 0.1
+      });
+    });
+
+    // ── 3. PARALLAX EFFECTS ──
+    document.querySelectorAll('.parallax-img').forEach(img => {
+      gsap.to(img, {
+        scrollTrigger: { trigger: img.closest('section') || img, start: 'top bottom', end: 'bottom top', scrub: 1 },
+        yPercent: 20, ease: 'none'
+      });
+    });
+
+    gsap.to('.lux-video-section__bg', {
+      scrollTrigger: { trigger: '.lux-video-section', start: 'top bottom', end: 'bottom top', scrub: 1 },
+      yPercent: 20, ease: 'none'
+    });
+
+    // ── 4. COUNTER ANIMATION ──
+    document.querySelectorAll('.lux-counter').forEach(counter => {
+      ScrollTrigger.create({
+        trigger: counter,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => {
+          const target = +counter.getAttribute('data-target');
+          gsap.to(counter, { innerHTML: target, duration: 2.5, snap: { innerHTML: 1 }, ease: 'power2.out' });
+        }
+      });
+    });
+
+    // ── 5. PARTICLES ──
+    const particlesContainer = document.getElementById('luxParticles');
+    if (particlesContainer) {
+      for (let i = 0; i < 40; i++) {
+        const p = document.createElement('div');
+        p.classList.add('lux-particle');
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.top = Math.random() * 100 + 'vh';
+        p.style.animationDuration = (Math.random() * 6 + 4) + 's';
+        p.style.animationDelay = (Math.random() * 6) + 's';
+        p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+        particlesContainer.appendChild(p);
+      }
+    }
+
+
+    // ── 7. TESTIMONIAL CAROUSEL ──
+    const track = document.getElementById('testimonialTrack');
+    const prevBtn = document.getElementById('testPrev');
+    const nextBtn = document.getElementById('testNext');
+    if (track && prevBtn && nextBtn) {
+      let pos = 0;
+      const cards = track.querySelectorAll('.lux-testimonial-card');
+      const cardWidth = () => {
+        const card = cards[0];
+        if (!card) return 400;
+        return card.offsetWidth + parseInt(getComputedStyle(card).marginRight || 0) + 24;
+      };
+      const maxPos = () => Math.max(0, track.scrollWidth - track.parentElement.offsetWidth);
+
+      nextBtn.addEventListener('click', () => {
+        pos = Math.min(pos + cardWidth(), maxPos());
+        track.style.transform = `translateX(-${pos}px)`;
+      });
+      prevBtn.addEventListener('click', () => {
+        pos = Math.max(pos - cardWidth(), 0);
+        track.style.transform = `translateX(-${pos}px)`;
+      });
+
+      // Auto-slide
+      let autoSlide = setInterval(() => {
+        if (pos >= maxPos()) pos = 0;
+        else pos += cardWidth();
+        track.style.transform = `translateX(-${pos}px)`;
+      }, 5000);
+
+      track.parentElement.addEventListener('mouseenter', () => clearInterval(autoSlide));
+      track.parentElement.addEventListener('mouseleave', () => {
+        autoSlide = setInterval(() => {
+          if (pos >= maxPos()) pos = 0;
+          else pos += cardWidth();
+          track.style.transform = `translateX(-${pos}px)`;
+        }, 5000);
+      });
+    }
+
+    // ── 8. 3D TILT EFFECT ──
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / centerY * -8;
+        const rotateY = (x - centerX) / centerX * 8;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+      });
+    });
+
+    // ── 9. MAGNETIC BUTTONS ──
+    document.querySelectorAll('.magnetic-btn').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'translate(0, 0)';
+      });
+    });
+
+    // ── 10. TIMELINE SCROLL PROGRESS ──
+    const timelineLine = document.getElementById('timelineLine');
+    if (timelineLine) {
+      gsap.fromTo(timelineLine, { scaleY: 0 }, {
+        scaleY: 1,
+        scrollTrigger: {
+          trigger: '.lux-timeline__track',
+          start: 'top 80%',
+          end: 'bottom 50%',
+          scrub: 1
+        },
+        ease: 'none'
+      });
+    }
+
+    // ── 11. NAVBAR SCROLL EFFECT ──
+    window.addEventListener('scroll', () => {
+      const nav = document.querySelector('.navbar');
+      if (nav) {
+        if (window.scrollY > 50) {
+          nav.style.background = 'rgba(10, 10, 10, 0.85)';
+          nav.style.backdropFilter = 'blur(20px)';
+          nav.style.borderBottom = '1px solid rgba(201,168,76,0.1)';
+        } else {
+          nav.style.background = 'var(--nav-bg)';
+          nav.style.backdropFilter = 'none';
+          nav.style.borderBottom = '1px solid var(--border-color)';
+        }
+      }
+    });
+
+    // ── 12. WORD-BY-WORD REVEAL ──
+    document.querySelectorAll('.word-reveal').forEach(el => {
+      const words = el.textContent.trim().split(/\s+/);
+      el.innerHTML = words.map(w => `<span class="wr-word">${w}</span>`).join(' ');
+      gsap.fromTo(el.querySelectorAll('.wr-word'),
+        { opacity: 0.15 },
+        {
+          opacity: 1,
+          stagger: 0.04,
+          scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 40%', scrub: 1 },
+          ease: 'none'
+        }
+      );
+    });
+
+    // ── 13. HERO VIDEO AUDIO CONTROL ──
+    const heroVideo = document.getElementById('heroVideo');
+    if (heroVideo) {
+      let hasInteracted = false;
+
+      // Unmute on first scroll or interaction
+      const enableAudio = () => {
+        if (!hasInteracted) {
+          heroVideo.muted = false;
+          hasInteracted = true;
+        }
+      };
+
+      window.addEventListener('scroll', enableAudio, { once: true });
+      window.addEventListener('click', enableAudio, { once: true });
+
+      // Mute audio when hero section is out of view
+      ScrollTrigger.create({
+        trigger: '#luxHero',
+        start: 'top top',
+        end: 'bottom top',
+        onLeave: () => {
+          heroVideo.muted = true;
+        },
+        onEnterBack: () => {
+          if (hasInteracted) heroVideo.muted = false;
+        }
+      });
+    }
+  });
+</script>

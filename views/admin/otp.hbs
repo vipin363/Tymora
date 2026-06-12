@@ -1,0 +1,235 @@
+{{!-- otp page --}}
+
+<link href="/adminOtp.css" rel="stylesheet">
+<div class="page">
+
+  <!-- ══ LEFT ══ -->
+  <section class="left" aria-label="Product branding">
+    <div class="left-grid"></div>
+    <div class="left-content">
+
+      <div class="logo-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 7v6c0 5.25 3.75 10.15 9 11.25C17.25 23.15 21 18.25 21 13V7L12 2z"/>
+        </svg>
+      </div>
+
+      <h1 class="left-title">Tymora Admin</h1>
+      <p class="left-sub">Secure Access &amp; Resilience</p>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h3>Secure Recovery</h3>
+            <p>Multi-layered protocols ensuring your operational data remains protected at all times.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+              <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h3>24/7 Support</h3>
+            <p>Dedicated concierge support for enterprise administrators and system integrators.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ RIGHT ══ -->
+  <section class="right" aria-label="OTP verification">
+    <div class="otp-card">
+
+      <!-- Default: verify form -->
+      <form action="/admin/otp" method="POST">
+      <div id="formState">
+        <div class="card-icon-wrap" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+
+        <h1 class="card-title">Verify Your Identity</h1>
+        <p class="card-sub">
+          We've sent a 6-digit code to your registered email<br>
+          <span class="email-highlight">{{email}}</span>
+        </p>
+        {{#if error}}
+  <p class="error-msg show">{{error}}</p>
+{{/if}}
+<input type="hidden" name="otp" id="finalOtp">
+        <!-- OTP inputs -->
+        <div class="otp-group" id="otpGroup" role="group" aria-label="Enter 6-digit OTP">
+          <input class="otp-input" type="number" inputmode="numeric" maxlength="1" min="0" max="9" placeholder="0" aria-label="Digit 1" />
+          <input class="otp-input" type="number" inputmode="numeric" maxlength="1" min="0" max="9" placeholder="0" aria-label="Digit 2" />
+          <input class="otp-input" type="number" inputmode="numeric" maxlength="1" min="0" max="9" placeholder="0" aria-label="Digit 3" />
+          <input class="otp-input" type="number" inputmode="numeric" maxlength="1" min="0" max="9" placeholder="0" aria-label="Digit 4" />
+          <input class="otp-input" type="number" inputmode="numeric" maxlength="1" min="0" max="9" placeholder="0" aria-label="Digit 5" />
+          <input class="otp-input" type="number" inputmode="numeric" maxlength="1" min="0" max="9" placeholder="0" aria-label="Digit 6" />
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-wrap" id="timerWrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Code expires in <span id="timerText">01:00</span></span>
+        </div>
+
+        <!-- Verify button -->
+        <button class="btn-verify" id="verifyBtn" type="submit" disabled>
+          <span id="btnText">Verify Code</span>
+          <span class="spinner" id="btnSpinner" aria-hidden="true"></span>
+        </button>
+
+        <!-- Resend -->
+        <p class="resend-row">
+          Didn't receive the code?&nbsp;
+          <button class="resend-btn" id="resendBtn" disabled>Resend Code</button>
+        </p>
+
+        <div class="divider"></div>
+
+        <a href="/admin/login" class="back-link">
+          <span class="back-arrow" aria-hidden="true">←</span>
+          Back to Login
+        </a>
+      </div>
+    </form>
+     
+    </div>
+  </section>
+
+</div>
+{{#if otpSent}}
+<script>
+  localStorage.setItem("otp_expiry", Date.now() + 60000);
+</script>
+{{/if}}
+
+<script>
+(function () {
+  /* ── OTP inputs ── */
+  const inputs    = Array.from(document.querySelectorAll('.otp-input'));
+  const verifyBtn = document.getElementById('verifyBtn');
+  const btnText   = document.getElementById('btnText');
+  const btnSpinner= document.getElementById('btnSpinner');
+  const resendBtn = document.getElementById('resendBtn');
+  const timerWrap = document.getElementById('timerWrap');
+  const timerText = document.getElementById('timerText');
+  const formState = document.getElementById('formState');
+  const successState = document.getElementById('successState');
+
+  /* Focus first input on load */
+  inputs[0].focus();
+
+  /* Auto-advance / backspace */
+  inputs.forEach(function (inp, i) {
+    inp.addEventListener('input', function () {
+      /* Keep only last typed digit */
+      const val = inp.value.replace(/[^0-9]/g, '').slice(-1);
+      inp.value = val;
+      inp.classList.toggle('filled', val !== '');
+      checkAllFilled();
+      if (val && i < inputs.length - 1) inputs[i + 1].focus();
+    });
+
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !inp.value && i > 0) {
+        inputs[i - 1].value = '';
+        inputs[i - 1].classList.remove('filled');
+        inputs[i - 1].focus();
+        checkAllFilled();
+      }
+      /* Left / Right arrow nav */
+      if (e.key === 'ArrowLeft'  && i > 0)              { e.preventDefault(); inputs[i-1].focus(); }
+      if (e.key === 'ArrowRight' && i < inputs.length-1){ e.preventDefault(); inputs[i+1].focus(); }
+    });
+
+    /* Handle paste */
+    inp.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+      pasted.split('').forEach(function (ch, j) {
+        if (inputs[i + j]) {
+          inputs[i + j].value = ch;
+          inputs[i + j].classList.add('filled');
+        }
+      });
+      const next = Math.min(i + pasted.length, inputs.length - 1);
+      inputs[next].focus();
+      checkAllFilled();
+    });
+  });
+
+  function checkAllFilled () {
+    const allFilled = inputs.every(function (inp) { return inp.value !== ''; });
+    verifyBtn.disabled = !allFilled;
+  }
+
+  /* ── Countdown timer (60s) ── */
+let seconds = {{remaining}};
+
+ function startTimer() {
+  const interval = setInterval(() => {
+
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    timerText.textContent = `${m}:${s}`;
+
+    if (seconds <= 0) {
+      clearInterval(interval);
+      timerText.textContent = "Expired";
+      resendBtn.disabled = false;
+      verifyBtn.disabled = true;
+      return;
+    }
+
+    seconds--;
+  }, 1000);
+}
+
+startTimer();
+
+
+resendBtn.addEventListener("click", () => {
+  const newExpiry = Date.now() + 60000;
+  location.reload(); // simplest way
+});
+  /* ── Resend ── */
+  resendBtn.addEventListener("click", async () => {
+  resendBtn.disabled = true;
+
+  await fetch("/admin/resend-otp", {
+    method: "POST"
+  });
+
+  const newExpiry = Date.now() + 60000;
+
+  location.reload();
+});
+})();
+
+document.querySelector("form").addEventListener("submit", function(e){
+  const inputs = document.querySelectorAll(".otp-input");
+  let otp = "";
+
+  inputs.forEach(inp => otp += inp.value);
+
+  document.getElementById("finalOtp").value = otp;
+});
+</script>

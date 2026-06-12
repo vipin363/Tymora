@@ -1,0 +1,177 @@
+<link rel="stylesheet" href="/myCoupons.css">
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a> &nbsp;›&nbsp;
+  <span class="current">My Referrals</span>
+</div>
+
+<div class="account-wrap" style="display:block;">
+  <div class="right-col" style="width:100%; max-width:1100px; margin:0 auto;">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <h1 class="page-title">My Referrals</h1>
+      <p class="page-sub">Invite friends to TYMORA and earn wallet credits when they place their first order.</p>
+    </div>
+
+    <!-- STATS STRIP -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px;">
+      <div style="background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.15); border-radius:12px; padding:18px; text-align:center;">
+        <div style="font-size:1.8rem; font-weight:700; color:var(--gold);">{{stats.total}}</div>
+        <div style="font-size:0.78rem; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px;">Total Referrals</div>
+      </div>
+      <div style="background:rgba(74,222,128,0.06); border:1px solid rgba(74,222,128,0.15); border-radius:12px; padding:18px; text-align:center;">
+        <div style="font-size:1.8rem; font-weight:700; color:#4ade80;">{{stats.released}}</div>
+        <div style="font-size:0.78rem; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px;">Rewards Released</div>
+      </div>
+      <div style="background:rgba(250,204,21,0.06); border:1px solid rgba(250,204,21,0.15); border-radius:12px; padding:18px; text-align:center;">
+        <div style="font-size:1.8rem; font-weight:700; color:#facc15;">{{stats.pending}}</div>
+        <div style="font-size:0.78rem; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px;">Pending Rewards</div>
+      </div>
+      <div style="background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.15); border-radius:12px; padding:18px; text-align:center;">
+        <div style="font-size:1.8rem; font-weight:700; color:var(--gold);">₹{{stats.totalEarned}}</div>
+        <div style="font-size:0.78rem; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px;">Total Earned</div>
+      </div>
+    </div>
+
+    <!-- SHARE SECTION -->
+    <div class="panel" style="margin-bottom:24px;">
+      <div class="panel-title">Share & Earn</div>
+      <p style="color:#9ca3af; font-size:0.875rem; margin-bottom:20px;">
+        When a friend signs up using your code and completes their first order, you both earn wallet credits automatically.
+      </p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+        <!-- Referral Code -->
+        <div>
+          <div style="font-size:0.75rem; color:#9ca3af; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Your Referral Code</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="refCode" style="font-family:monospace; font-size:1.3rem; font-weight:800; color:var(--gold); letter-spacing:4px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); padding:10px 16px; border-radius:8px; flex:1; text-align:center;">{{user.referralCode}}</span>
+            <button id="copyCodeBtn" onclick="copyCode()" style="background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.3); color:var(--gold); padding:10px 16px; border-radius:8px; cursor:pointer; font-size:0.85rem; white-space:nowrap; transition:all 0.2s;">📋 Copy Code</button>
+          </div>
+        </div>
+
+        <!-- Referral Link -->
+        <div>
+          <div style="font-size:0.75rem; color:#9ca3af; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Your Referral Link</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="refLink" style="font-size:0.78rem; color:#ccc; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); padding:10px 12px; border-radius:8px; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">{{referralUrl}}</span>
+            <button id="copyLinkBtn" onclick="copyLink()" style="background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.3); color:var(--gold); padding:10px 16px; border-radius:8px; cursor:pointer; font-size:0.85rem; white-space:nowrap; transition:all 0.2s;">🔗 Copy Link</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:rgba(201,168,76,0.05); border:1px solid rgba(201,168,76,0.1); border-radius:10px; padding:16px; font-size:0.82rem; color:#9ca3af; line-height:1.6;">
+        🎁 <strong style="color:var(--gold);">You earn ₹{{rewardAmounts.referrer}}</strong> · 
+        Your friend gets <strong style="color:#4ade80;">₹{{rewardAmounts.referred}}</strong> — 
+        Rewards are credited after their first order is delivered.
+      </div>
+    </div>
+
+    <!-- REFERRAL HISTORY TABLE -->
+    <div class="panel">
+      <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="panel-title" style="margin:0;">Referral History</div>
+        <span style="font-size:0.8rem; color:#888;">{{stats.total}} total</span>
+      </div>
+
+      {{#if referrals.length}}
+      <div style="overflow-x:auto; margin-top:16px;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <th style="text-align:left; padding:10px 12px; color:#9ca3af; font-weight:500;">Friend</th>
+              <th style="text-align:left; padding:10px 12px; color:#9ca3af; font-weight:500;">Signed Up</th>
+              <th style="text-align:center; padding:10px 12px; color:#9ca3af; font-weight:500;">First Order</th>
+              <th style="text-align:center; padding:10px 12px; color:#9ca3af; font-weight:500;">Reward Status</th>
+              <th style="text-align:right; padding:10px 12px; color:#9ca3af; font-weight:500;">You Earned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each referrals}}
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s;" onmouseover="this.style.background='rgba(201,168,76,0.03)'" onmouseout="this.style.background='transparent'">
+              <td style="padding:12px;">
+                <div style="font-weight:600; color:#fff;">{{this.referredUser.name}}</div>
+                <div style="font-size:0.75rem; color:#888;">{{this.referredUser.email}}</div>
+              </td>
+              <td style="padding:12px; color:#ccc;">{{this.signupDate}}</td>
+              <td style="padding:12px; text-align:center;">
+                <span style="font-size:0.78rem; padding:3px 10px; border-radius:20px; 
+                  {{#ifEquals this.firstOrderStatus 'Delivered'}}background:rgba(74,222,128,0.12); color:#4ade80;
+                  {{else}}{{#ifEquals this.firstOrderStatus 'Pending'}}background:rgba(250,204,21,0.12); color:#facc15;
+                  {{else}}background:rgba(156,163,175,0.12); color:#9ca3af;{{/ifEquals}}{{/ifEquals}}">
+                  {{this.firstOrderStatus}}
+                </span>
+              </td>
+              <td style="padding:12px; text-align:center;">
+                <span style="font-size:0.78rem; padding:3px 10px; border-radius:20px;
+                  {{#ifEquals this.rewardStatus 'COMPLETED'}}background:rgba(74,222,128,0.12); color:#4ade80;
+                  {{else}}{{#ifEquals this.rewardStatus 'PENDING'}}background:rgba(250,204,21,0.12); color:#facc15;
+                  {{else}}background:rgba(239,68,68,0.12); color:#f87171;{{/ifEquals}}{{/ifEquals}}">
+                  {{this.rewardStatus}}
+                </span>
+              </td>
+              <td style="padding:12px; text-align:right;">
+                {{#ifEquals this.rewardStatus 'COMPLETED'}}
+                <span style="color:var(--gold); font-weight:700;">₹{{this.referrerRewardAmount}}</span>
+                {{else}}
+                <span style="color:#555;">—</span>
+                {{/ifEquals}}
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+
+      {{else}}
+      <div class="empty-state">
+        <div class="empty-icon">🎁</div>
+        <h3>No Referrals Yet</h3>
+        <p>Share your referral code with friends and start earning wallet credits!</p>
+      </div>
+      {{/if}}
+    </div>
+
+  </div>
+</div>
+
+<!-- Copy Toast -->
+<div class="toast" id="copyToast"></div>
+
+<script>
+// Read directly from DOM so browser has already decoded any HTML entities
+const REFERRAL_CODE = document.getElementById('refCode').textContent.trim();
+const REFERRAL_URL  = document.getElementById('refLink').textContent.trim();
+
+function showToast(msg) {
+  const t = document.getElementById('copyToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(REFERRAL_CODE).then(() => {
+    const btn = document.getElementById('copyCodeBtn');
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#4ade80';
+    btn.style.borderColor = '#4ade80';
+    showToast('Referral code copied!');
+    setTimeout(() => { btn.textContent = '📋 Copy Code'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  });
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(REFERRAL_URL).then(() => {
+    const btn = document.getElementById('copyLinkBtn');
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#4ade80';
+    btn.style.borderColor = '#4ade80';
+    showToast('Referral link copied!');
+    setTimeout(() => { btn.textContent = '🔗 Copy Link'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  });
+}
+</script>

@@ -1,0 +1,366 @@
+<link href="/userProductDetail.css" rel="stylesheet">
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  <a href="/user/shop">Shop</a> &nbsp;›&nbsp;
+  <span class="current">{{product.name}}</span>
+</div>
+
+<div class="pd-container">
+
+  <!-- HERO -->
+  <section class="pd-hero">
+
+    <!-- Gallery -->
+    <div class="pd-gallery">
+      <div class="pd-main-img-wrap">
+        {{#if product.discountPct}}
+          <div class="pd-discount-badge" id="pdDiscountBadge">-{{product.discountPct}}% OFF</div>
+        {{/if}}
+        <img id="pdMainImg" src="{{product.images.[0]}}" alt="{{product.name}}">
+      </div>
+      <div class="pd-thumbs" id="pdThumbs">
+        {{#each product.images}}
+          <div class="pd-thumb {{#ifEquals @index 0}}active{{/ifEquals}}" data-src="{{this}}">
+            <img src="{{this}}" alt="View {{@index}}">
+          </div>
+        {{/each}}
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="pd-info">
+      <div class="pd-brand pd-fade">{{product.brand}}</div>
+      <h1 class="pd-name pd-fade">{{product.name}}</h1>
+
+      <div class="pd-rating-row pd-fade">
+        {{#if product.reviewCount}}
+          <div class="pd-stars" style="color:var(--gold);">{{#times product.ratingRounded}}★{{/times}}{{#times (subtract 5 product.ratingRounded)}}☆{{/times}}</div>
+          <span class="pd-rating-val">{{product.rating}}</span>
+          <div class="pd-rating-sep"></div>
+          <span class="pd-review-count">{{product.reviewCount}} Reviews</span>
+        {{else}}
+          <span class="pd-review-count" style="color:var(--muted);">No reviews yet</span>
+        {{/if}}
+      </div>
+
+      <!-- Price (updated live by JS) -->
+      <div class="pd-price-row pd-fade" id="pdPriceRow">
+        <span class="pd-price" id="pdPrice">₹{{formatCurrency product.price}}</span>
+        {{#if product.oldPrice}}
+          <span class="pd-old-price" id="pdOldPrice">₹{{formatCurrency product.oldPrice}}</span>
+          <span class="pd-discount-pill" id="pdDiscountPill">{{product.discountPct}}% OFF</span>
+        {{else}}
+          <span class="pd-old-price" id="pdOldPrice" style="display:none"></span>
+          <span class="pd-discount-pill" id="pdDiscountPill" style="display:none"></span>
+        {{/if}}
+      </div>
+
+      <!-- Coupon -->
+      <div class="pd-coupon pd-fade">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2">
+          <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/>
+          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+        </svg>
+        {{#if coupon}}
+          <span class="coupon-text">Use code</span>
+          <span class="coupon-code">{{coupon.code}}</span>
+          <span class="coupon-text">{{coupon.label}}</span>
+        {{else}}
+          <span class="coupon-text" style="color:var(--muted);">No coupon available yet</span>
+        {{/if}}
+      </div>
+
+      <!-- Description -->
+      <p class="pd-description pd-fade">{{product.description}}</p>
+
+      <!-- Meta (SKU / stock updated live) -->
+      <div class="pd-meta pd-fade">
+        <div class="pd-meta-row">
+          <span class="pd-meta-label">Status</span>
+          <span class="pd-meta-val" id="pdAvailText"
+            class="{{#ifEquals product.avail 'instock'}}instock{{else}}outofstock{{/ifEquals}}">
+            {{#ifEquals product.avail 'instock'}}● In Stock{{else}}● Out of Stock{{/ifEquals}}
+          </span>
+        </div>
+        <div class="pd-meta-row">
+          <span class="pd-meta-label">SKU</span>
+          <span class="pd-meta-val" id="pdSku">{{product.sku}}</span>
+        </div>
+        <div class="pd-meta-row">
+          <span class="pd-meta-label">Category</span>
+          <span class="pd-meta-val">{{product.category}}</span>
+        </div>
+        {{#if product.gender}}
+        <div class="pd-meta-row">
+          <span class="pd-meta-label">Gender</span>
+          <span class="pd-meta-val" style="text-transform:capitalize">{{product.gender}}</span>
+        </div>
+        {{/if}}
+      </div>
+
+      <!-- ── DYNAMIC VARIANT PICKER ── -->
+      <div class="pd-variants pd-fade" id="pdVariantPicker">
+        <!-- Rendered by JS from variantData -->
+      </div>
+
+      <!-- Actions -->
+      <div class="pd-actions pd-fade">
+        <div class="pd-actions-row">
+          <button class="pd-btn-cart" id="pdAddToCart">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" style="vertical-align:middle;margin-right:8px">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            <span id="pdCartBtnLabel">{{#if product.inCart}}View in Cart{{else}}Add to Cart{{/if}}</span>
+          </button>
+          <button class="pd-btn-buy" id="pdBuyNow">Buy Now</button>
+        </div>
+        <div class="pd-actions-row">
+          <button class="pd-btn-icon" id="pdWishBtn" data-id="{{product.id}}"
+            title="{{#if product.wished}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}"
+            {{#if product.wished}}style="background:#e05252;border-color:#e05252"{{/if}}>
+            <svg viewBox="0 0 24 24">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                {{#if product.wished}}fill="#fff"{{/if}}/>
+            </svg>
+          </button>
+          <button class="pd-btn-icon" id="pdShareBtn" title="Share">
+            <svg viewBox="0 0 24 24">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+          <span id="pdStockNote" style="font-size:12px;color:var(--muted);align-self:center;margin-left:4px;">
+            {{#if product.stock}}Only {{product.stock}} left in stock{{/if}}
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="pd-divider"></div>
+
+  <!-- ACCORDION -->
+  <section class="pd-accordion pd-fade">
+    <h2 class="pd-section-title" style="margin-bottom:24px">Product <em>Details</em></h2>
+
+    <div class="pd-accordion-item">
+      <div class="pd-accordion-header">
+        <span class="pd-accordion-title">Description</span>
+        <span class="pd-accordion-icon">+</span>
+      </div>
+      <div class="pd-accordion-body">
+        <p>{{product.description}}</p>
+      </div>
+    </div>
+
+    <div class="pd-accordion-item">
+      <div class="pd-accordion-header">
+        <span class="pd-accordion-title">Specifications</span>
+        <span class="pd-accordion-icon">+</span>
+      </div>
+      <div class="pd-accordion-body">
+        <!-- Populated by JS from selected variant -->
+        <table class="pd-spec-table" id="pdSpecTable"></table>
+      </div>
+    </div>
+
+    <div class="pd-accordion-item">
+      <div class="pd-accordion-header">
+        <span class="pd-accordion-title">Shipping Information</span>
+        <span class="pd-accordion-icon">+</span>
+      </div>
+      <div class="pd-accordion-body">
+        <ul>
+          <li>Free insured express shipping on all orders above ₹50,000</li>
+          <li>Standard delivery: 3–5 business days (Pan India)</li>
+          <li>Express delivery: 1–2 business days (Metro cities)</li>
+          <li>All shipments are fully insured and tracked in real time</li>
+          <li>Signature required on delivery for all luxury timepieces</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pd-accordion-item">
+      <div class="pd-accordion-header">
+        <span class="pd-accordion-title">Warranty</span>
+        <span class="pd-accordion-icon">+</span>
+      </div>
+      <div class="pd-accordion-body">
+        <p>Every TYMORA timepiece carries a <strong style="color:var(--gold)">2-Year International Warranty</strong> against manufacturing defects.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="pd-divider"></div>
+
+  <!-- REVIEWS -->
+  <section class="pd-reviews pd-fade">
+    <h2 class="pd-section-title">Customer <em>Reviews</em></h2>
+    
+    {{#if product.reviewCount}}
+    <div class="pd-reviews-header">
+      <div class="pd-avg-rating">
+        <div class="pd-avg-num">{{product.rating}}</div>
+        <div class="pd-avg-stars" style="color:var(--gold);">
+          {{#times product.ratingRounded}}★{{/times}}{{#times (subtract 5 product.ratingRounded)}}☆{{/times}}
+        </div>
+        <div class="pd-avg-count">Based on {{product.reviewCount}} reviews</div>
+      </div>
+      <div class="pd-rating-bars">
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">5 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[5]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[5]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">4 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[4]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[4]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">3 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[3]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[3]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">2 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[2]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[2]}}</span></div>
+        <div class="pd-rating-bar-row"><span class="pd-bar-label">1 ★</span><div class="pd-bar-track"><div class="pd-bar-fill" style="width:calc({{product.ratingBreakdown.[1]}} / {{product.reviewCount}} * 100%)"></div></div><span class="pd-bar-count">{{product.ratingBreakdown.[1]}}</span></div>
+      </div>
+    </div>
+    <div class="pd-review-list" style="margin-top: 40px; display: flex; flex-direction: column; gap: 24px;">
+      {{#each product.reviews}}
+      <div class="pd-review-card" style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+          <strong style="color: var(--white); font-size: 14px;">{{this.userName}}</strong>
+          <span style="color: var(--muted); font-size: 11px;">{{this.dateFormatted}}</span>
+        </div>
+        <div style="color: var(--gold); margin-bottom: 12px; font-size: 12px;">
+          {{#times this.rating}}★{{/times}}{{#times (subtract 5 this.rating)}}☆{{/times}}
+        </div>
+        <p style="color: #ddd; font-size: 13px; line-height: 1.6;">{{this.reviewText}}</p>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div style="text-align:center; padding: 40px 0; color: var(--muted);">
+      <p>No reviews yet. Be the first to review this masterpiece.</p>
+    </div>
+    {{/if}}
+  </section>
+
+  <div class="pd-divider"></div>
+
+  <!-- RELATED PRODUCTS -->
+ <!-- RELATED PRODUCTS -->
+<section class="pd-related pd-fade">
+  <div class="pd-related-header">
+    <h2 class="pd-section-title" style="margin-bottom:0">You May Also <em>Like</em></h2>
+    <a href="/user/shop" class="pd-related-link">View All →</a>
+  </div>
+  <div class="products-grid" id="pdRelatedGrid" data-server-count="{{relatedProducts.length}}">
+    {{#each relatedProducts}}
+      <div class="prod-card" data-id="{{this.id}}">
+        <div class="prod-img-wrap">
+
+          {{#if this.badgeLabel}}
+            <span class="prod-badge badge-{{this.badge}}">{{this.badgeLabel}}</span>
+          {{/if}}
+
+          <div class="card-wish {{#if this.wished}}wished{{/if}}"
+               data-id="{{this.id}}"
+               title="{{#if this.wished}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}">
+            <svg viewBox="0 0 24 24"
+                 fill="{{#if this.wished}}currentColor{{else}}none{{/if}}"
+                 stroke="currentColor" stroke-width="1.8">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+                       a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+                       1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
+
+          <img src="{{this.img}}" alt="{{this.name}}" loading="lazy"
+               style="cursor:pointer"
+               onerror="this.src='/images/placeholder.jpg'"
+               onclick="window.location.href='/user/product/{{this.id}}'">
+          <div class="prod-img-overlay"></div>
+
+          {{#ifEquals this.avail 'outofstock'}}
+            <button class="quick-add disabled" disabled>Out of Stock</button>
+          {{else}}
+            {{#if this.inCart}}
+              <button class="quick-add"
+                      style="background:transparent;color:var(--gold);border:1px solid var(--gold);"
+                      data-id="{{this.id}}"
+                      data-variant-id="{{this.variantId}}"
+                      data-in-cart="true">View in Cart</button>
+            {{else}}
+              <button class="quick-add"
+                      data-id="{{this.id}}"
+                      data-variant-id="{{this.variantId}}"
+                      data-in-cart="">+ Add to Bag</button>
+            {{/if}}
+          {{/ifEquals}}
+
+        </div>
+        <div class="prod-info">
+          <div class="prod-atelier">{{this.brand}}</div>
+          <div class="prod-rating">★ {{this.rating}}
+            {{#if this.reviews}}<span class="rating-count">({{this.reviews}})</span>{{/if}}
+          </div>
+          <div class="prod-name">{{this.name}}</div>
+          <div class="prod-price-wrap">
+            <span class="prod-price">₹{{formatCurrency this.price}}</span>
+            {{#if this.oldPrice}}
+              <span class="prod-price-old">₹{{formatCurrency this.oldPrice}}</span>
+            {{/if}}
+            {{#if this.discountPct}}
+              <span class="prod-discount-pill">{{this.discountPct}}% OFF</span>
+            {{/if}}
+          </div>
+          <button class="prod-btn"
+                  onclick="window.location.href='/user/product/{{this.id}}'">
+            View Details
+          </button>
+        </div>
+      </div>
+    {{/each}}
+
+    {{#unless relatedProducts.length}}
+      <div class="pd-related-loading" id="pdRelatedLoading"
+        style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);font-size:13px;letter-spacing:2px;">
+        <div style="width:32px;height:32px;border:2px solid var(--gold);border-top-color:transparent;
+          border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+        LOADING RECOMMENDATIONS
+      </div>
+    {{/unless}}
+  </div>
+  <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</section>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="pd-lightbox" id="pdLightbox" role="dialog" aria-modal="true">
+  <button class="pd-lightbox-close" id="pdLbClose" aria-label="Close">✕</button>
+  <div class="pd-lightbox-inner">
+    <div class="pd-lightbox-img-wrap" id="pdLbImgWrap">
+      <img class="pd-lightbox-img" id="pdLbImg" src="" alt="Product zoom view">
+    </div>
+  </div>
+  <div class="pd-lightbox-hint">Click to zoom · ESC to close</div>
+</div>
+
+<!-- STICKY CTA -->
+<div class="pd-sticky-cta" id="pdStickyCta">
+  <div>
+    <span class="pd-sticky-price" id="pdStickyPrice">₹{{formatCurrency product.price}}</span>
+    {{#if product.oldPrice}}<span class="pd-sticky-old">₹{{formatCurrency product.oldPrice}}</span>{{/if}}
+  </div>
+  <button class="pd-sticky-btn" id="pdStickyBtn" onclick="document.getElementById('pdAddToCart').click()">
+    {{#if product.inCart}}View in Cart{{else}}Add to Cart{{/if}}
+  </button>
+</div>
+
+<script>
+  window.PD_DATA = {
+    productId:  "{{product.id}}",
+    variantId:  "{{product.variantId}}",
+    wished:     {{#if product.wished}}true{{else}}false{{/if}},
+    inCart:     {{#if product.inCart}}true{{else}}false{{/if}},
+    variants:   {{{json variantData}}}
+  };
+</script>
+<script src="/js/productDetail.js"></script>

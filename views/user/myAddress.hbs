@@ -1,0 +1,147 @@
+<link rel="stylesheet" href="/myAddress.css">
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  {{#if fromCheckout}}
+  <a href="/user/checkout">Checkout</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Addresses</span>
+  {{else}}
+  <a href="/user/home">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Addresses</span>
+  {{/if}}
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1 class="page-title">My Addresses</h1>
+  <p class="page-sub">
+    Manage your delivery locations for secure shipping and seamless checkout.
+  </p>
+</div>
+
+<!-- ADDRESS GRID -->
+<div class="address-wrap">
+
+  {{#each addresses}}
+  <div class="address-card {{#if this.isDefault}}active{{/if}}">
+
+    <div class="address-top">
+      <div class="address-title">{{this.type}}</div>
+
+      {{#if this.isDefault}}
+      <span class="default-badge">DEFAULT</span>
+      {{/if}}
+    </div>
+
+    <div class="address-body">
+      <p>{{this.fullName}}</p>
+      <p>{{this.street}}</p>
+      <p>{{this.city}}, {{this.state}}</p>
+      <p>{{this.pincode}}</p>
+      <p>+91 {{this.phone}}</p>
+    </div>
+
+    <div class="address-actions">
+      <a  onclick="openEditModal('{{this._id}}')">EDIT</a>
+      {{#if this.isDefault}}
+  <span class="default-btn">DEFAULT</span>
+{{else}}
+  <a href="/user/setDefault/{{this._id}}">SET DEFAULT</a>
+{{/if}}
+     <a href="#" onclick="openDeleteAddressModal('{{this._id}}')" class="danger">
+  DELETE
+</a>
+    </div>
+
+  </div>
+  {{/each}}
+
+  <!-- ADD NEW CARD -->
+<div class="address-card add-new" onclick="showModal('add-address-modal')">    
+    <div class="add-box">
+      <span class="plus">+</span>
+      <p>Add New Address</p>
+    </div>
+  </div>
+
+</div>
+
+{{!-- add address model --}}
+<div class="modal-overlay" id="add-address-modal" style="display:none"
+onclick="if(event.target===this)hideModal('add-address-modal')">
+
+  <div class="modal-box">
+
+    <h2 style="margin-bottom:15px;">Add New Address</h2>
+
+    <div id="address-error" style="color:red;font-size:13px;margin-bottom:10px;"></div>
+
+    <form id="addressForm">
+
+      <input type="text" id="fullName" placeholder="Full Name">
+      <input type="text" id="phone" placeholder="Phone Number">
+      <input type="text" id="street" placeholder="Street Address">
+      
+      <div class="field-row">
+        <input type="text" id="city" placeholder="City">
+        <input type="text" id="state" placeholder="State">
+      </div>
+      
+      <div class="field-row">
+        <input type="text" id="pincode" placeholder="Pincode">
+        <select id="type">
+          <option value="Home">Home</option>
+          <option value="Work">Work</option>
+        </select>
+      </div>
+
+      <div class="default-row">
+  <input type="checkbox" id="isDefault">
+  <label for="isDefault">Set as Default</label>
+</div>
+
+      <button type="submit" class="modal-btn-red">Save Address</button>
+
+    </form>
+
+    <button class="modal-btn-cancel" onclick="hideModal('add-address-modal')">
+      Cancel
+    </button>
+
+  </div>
+</div>
+<div class="modal-overlay"
+     id="delete-address-modal"
+     style="display:none"
+     onclick="if(event.target===this)hideModal('delete-address-modal')">
+
+  <div class="modal-box">
+
+    <div class="modal-icon-wrap red-bg">🗑</div>
+
+    <div class="modal-title-text">
+      Delete Address?
+    </div>
+
+    <p class="modal-desc-text">
+      Are you sure you want to delete this address?
+    </p>
+
+    <button class="modal-btn-cancel"
+      onclick="hideModal('delete-address-modal')">
+      Cancel
+    </button>
+
+    <form id="deleteAddressForm" method="POST">
+      <button type="submit" class="modal-btn-red">
+        Delete
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<script src="/js/address.js"></script>

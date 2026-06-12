@@ -1,0 +1,286 @@
+
+<link href="/otp.css" rel="stylesheet">
+
+<div class="page">
+
+  <!-- LEFT PANEL (identical watch) -->
+  <div class="left-panel">
+    <div class="brand-top">TYMORA</div>
+
+    <div class="watch-scene">
+      <div class="watch-inner">
+        <div class="watch-wrap">
+          <svg class="watch-svg" viewBox="0 0 300 300" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f0d060"/>
+                <stop offset="25%" stop-color="#c9a84c"/>
+                <stop offset="50%" stop-color="#f5e070"/>
+                <stop offset="75%" stop-color="#9a7428"/>
+                <stop offset="100%" stop-color="#e8c050"/>
+              </linearGradient>
+              <linearGradient id="goldRingInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#d4b050"/>
+                <stop offset="50%" stop-color="#8a6520"/>
+                <stop offset="100%" stop-color="#c9a030"/>
+              </linearGradient>
+              <radialGradient id="dialGrad" cx="40%" cy="35%" r="70%">
+                <stop offset="0%" stop-color="#1a1608"/>
+                <stop offset="60%" stop-color="#0d0b04"/>
+                <stop offset="100%" stop-color="#050400"/>
+              </radialGradient>
+              <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#8a6520"/>
+                <stop offset="50%" stop-color="#e8c050"/>
+                <stop offset="100%" stop-color="#8a6520"/>
+              </linearGradient>
+              <pattern id="dialPattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+                <circle cx="4" cy="4" r="0.5" fill="#c9a84c" opacity="0.3"/>
+              </pattern>
+              <linearGradient id="hourHandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#c9a030"/>
+                <stop offset="50%" stop-color="#f0d060"/>
+                <stop offset="100%" stop-color="#c9a030"/>
+              </linearGradient>
+              <linearGradient id="minHandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#a07820"/>
+                <stop offset="50%" stop-color="#e0c050"/>
+                <stop offset="100%" stop-color="#a07820"/>
+              </linearGradient>
+              <filter id="handGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="watchGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur"/>
+                <feColorMatrix type="matrix" values="1 0.8 0 0 0  0.8 0.6 0 0 0  0 0 0 0 0  0 0 0 0.5 0" in="blur" result="colored"/>
+                <feMerge><feMergeNode in="colored"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect x="255" y="138" width="18" height="24" rx="4" fill="url(#crownGrad)"/>
+            <circle cx="150" cy="150" r="138" fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="20"/>
+            <circle cx="150" cy="150" r="130" fill="url(#goldRing)" filter="url(#watchGlow)"/>
+            <circle cx="150" cy="150" r="120" fill="#0d0b04" stroke="url(#goldRingInner)" stroke-width="2"/>
+            <circle cx="150" cy="150" r="116" fill="url(#dialGrad)"/>
+            <circle cx="150" cy="150" r="116" fill="url(#dialPattern)" opacity="0.3"/>
+            <circle cx="150" cy="205" r="18" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+            <circle cx="150" cy="205" r="14" fill="rgba(201,168,76,0.04)" stroke="rgba(201,168,76,0.08)" stroke-width="0.5"/>
+            <g id="subdialTicks"></g>
+            <g id="hourMarkers"></g>
+            <text x="150" y="120" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="11" font-weight="400" fill="#c9a84c" letter-spacing="5" opacity="0.85">TYMORA</text>
+            <text x="150" y="135" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="5" font-weight="300" fill="rgba(201,168,76,0.45)" letter-spacing="3">SWISS MADE</text>
+            <rect x="196" y="144" width="20" height="13" rx="1" fill="#0a0800" stroke="rgba(201,168,76,0.3)" stroke-width="0.5"/>
+            <text x="206" y="154.5" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="7" fill="#c9a84c" font-weight="400" id="svg-date">01</text>
+            <g class="hand-hour" id="hand-hour" filter="url(#handGlow)">
+              <polygon points="150,68 154,145 150,155 146,145" fill="url(#hourHandGrad)"/>
+              <polygon points="150,155 152,165 150,168 148,165" fill="#9a7428"/>
+            </g>
+            <g class="hand-minute" id="hand-minute" filter="url(#handGlow)">
+              <polygon points="150,42 152.5,143 150,154 147.5,143" fill="url(#minHandGrad)"/>
+              <polygon points="150,154 152,170 150,174 148,170" fill="#7a5818"/>
+            </g>
+            <g class="hand-second" id="hand-second">
+              <line x1="150" y1="50" x2="150" y2="180" stroke="#e53935" stroke-width="1.2"/>
+              <line x1="150" y1="180" x2="150" y2="200" stroke="#e53935" stroke-width="1.2" opacity="0.5"/>
+              <circle cx="150" cy="180" r="2" fill="#e53935"/>
+            </g>
+            <circle cx="150" cy="150" r="5" fill="url(#goldRing)" stroke="#0d0b04" stroke-width="1"/>
+            <circle cx="150" cy="150" r="2.5" fill="#f0d060"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="tagline">TYM Of Refined Aesthetics</div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <form action={{formAction}} method="post" class="form-card">
+      <div class="form-brand">TYMORA</div>
+      <div class="form-brand-underline"></div>
+      <h1 class="form-title">Verify identity.</h1>
+      <p class="form-subtitle">Code sent to</p>
+      <p class="email-display" id="email-display">{{email}}</p>
+
+      <label class="otp-label" for="otp-1">Enter verification code</label>
+      <div class="otp-row" id="otp-row">
+        <input class="otp-box" id="otp-1" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code"/>
+        <input class="otp-box" id="otp-2" type="text" inputmode="numeric" maxlength="1"/>
+        <input class="otp-box" id="otp-3" type="text" inputmode="numeric" maxlength="1"/>
+        <input class="otp-box" id="otp-4" type="text" inputmode="numeric" maxlength="1"/>
+        <input class="otp-box" id="otp-5" type="text" inputmode="numeric" maxlength="1"/>
+        <input class="otp-box" id="otp-6" type="text" inputmode="numeric" maxlength="1"/>
+      </div>
+      <input type="hidden" name="otp" id="final-otp">
+      <p style="color:red">{{message}}</p>
+      <p id="otp-error" style="color:red;"></p>
+
+      <div class="resend-row">
+    <span class="timer-text">
+      Resend in <span class="timer-count" id="timer-count">01:00</span>
+  </span>
+
+  <button type="button" class="resend-btn" id="resend-btn" disabled>Resend Code</button>
+      </div>
+
+      <button type="submit" class="btn-verify" id="verify-btn">Verify &nbsp;→</button>
+
+
+      <p class="change-email-line">Wrong address? <a href="{{changeEmailLink}}" id="change-email-link">Change email</a></p>
+  </form>
+  </div>
+
+
+<script>
+// ── Clock ──
+const hourHand = document.getElementById('hand-hour');
+const minHand  = document.getElementById('hand-minute');
+const secHand  = document.getElementById('hand-second');
+const svgDate  = document.getElementById('svg-date');
+
+function updateClock() {
+  const n = new Date();
+  const hh = n.getHours() % 12, mm = n.getMinutes(), ss = n.getSeconds(), ms = n.getMilliseconds();
+  const hDeg = (hh/12)*360 + (mm/60)*30 + (ss/3600)*6;
+  const mDeg = (mm/60)*360 + (ss/60)*6 + (ms/60000)*6;
+  const sDeg = (ss/60)*360 + (ms/1000)*6;
+  hourHand.style.transform = `rotate(${hDeg}deg)`;
+  minHand.style.transform  = `rotate(${mDeg}deg)`;
+  secHand.style.transform  = `rotate(${sDeg}deg)`;
+  hourHand.style.transformOrigin = '150px 150px';
+  minHand.style.transformOrigin  = '150px 150px';
+  secHand.style.transformOrigin  = '150px 150px';
+  svgDate.textContent = String(n.getDate()).padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 50);
+
+// ── Hour Markers ──
+const markersG = document.getElementById('hourMarkers');
+for (let i = 0; i < 60; i++) {
+  const angle = (i/60)*2*Math.PI - Math.PI/2;
+  const isHour = i % 5 === 0;
+  const outerR = 110, innerR = outerR - (isHour ? 12 : 5);
+  const x1 = 150 + outerR*Math.cos(angle), y1 = 150 + outerR*Math.sin(angle);
+  const x2 = 150 + innerR*Math.cos(angle), y2 = 150 + innerR*Math.sin(angle);
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+  line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+  line.setAttribute('stroke', isHour ? '#c9a84c' : '#6a5018');
+  line.setAttribute('stroke-width', isHour ? '2' : '0.8');
+  markersG.appendChild(line);
+}
+
+// Sub-dial ticks
+const subG = document.getElementById('subdialTicks');
+for (let i = 0; i < 12; i++) {
+  const ang = (i/12)*2*Math.PI - Math.PI/2;
+  const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1', 150 + 14*Math.cos(ang)); l.setAttribute('y1', 205 + 14*Math.sin(ang));
+  l.setAttribute('x2', 150 + 11*Math.cos(ang)); l.setAttribute('y2', 205 + 11*Math.sin(ang));
+  l.setAttribute('stroke','#c9a84c'); l.setAttribute('stroke-width','0.8'); l.setAttribute('opacity','0.5');
+  subG.appendChild(l);
+}
+
+// ── OTP Input Logic ──
+const boxes = Array.from(document.querySelectorAll('.otp-box'));
+const errorEl = document.getElementById('otp-error');
+
+boxes.forEach((box, idx) => {
+  box.addEventListener('input', (e) => {
+    const val = e.target.value.replace(/\D/g,'');
+    e.target.value = val.slice(-1);
+    box.classList.toggle('filled', val !== '');
+    errorEl.classList.remove('visible');
+    boxes.forEach(b => b.classList.remove('error'));
+    if (val && idx < boxes.length - 1) boxes[idx + 1].focus();
+  });
+
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !box.value && idx > 0) {
+      boxes[idx - 1].value = '';
+      boxes[idx - 1].classList.remove('filled');
+      boxes[idx - 1].focus();
+    }
+    if (e.key === 'ArrowLeft' && idx > 0) boxes[idx - 1].focus();
+    if (e.key === 'ArrowRight' && idx < boxes.length - 1) boxes[idx + 1].focus();
+  });
+
+  box.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'');
+    text.split('').slice(0,6).forEach((ch, i) => {
+      if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
+    });
+    const next = Math.min(text.length, 5);
+    boxes[next].focus();
+  });
+});
+
+// ── Countdown Timer ──
+let timeLeft = {{remaining}};
+const timerEl = document.getElementById('timer-count');
+const resendBtn = document.getElementById('resend-btn');
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+}
+
+function enableResend(){
+  resendBtn.disabled = false;
+  resendBtn.classList.add('active');
+  timerEl.textContent = '00:00';
+}
+
+function startTimer(){
+
+  timerEl.textContent = formatTime(timeLeft);
+
+  if(timeLeft <= 0){
+    enableResend();
+    return;
+  }
+
+  resendBtn.disabled = true;
+  resendBtn.classList.remove('active');
+
+  const timerInterval = setInterval(()=>{
+
+    timeLeft--;
+    timerEl.textContent = formatTime(timeLeft);
+
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      enableResend();
+    }
+
+  },1000);
+}
+
+startTimer();
+
+resendBtn.addEventListener('click', ()=>{
+
+  if(resendBtn.disabled) return;
+
+  window.location.href = "/user/resendOtp";
+
+});
+
+// ── Verify Button ──
+document.getElementById('verify-btn').addEventListener('click', function(e){
+  const code = boxes.map(b => b.value).join('');
+  if(code.length < 6){
+    e.preventDefault();
+    errorEl.textContent = "Please enter 6 digit OTP";
+    return;
+  }
+  document.getElementById("final-otp").value = code;
+});
+
+// Focus first box on load
+boxes[0].focus();
+</script>
+

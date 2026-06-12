@@ -1,0 +1,208 @@
+<link rel="stylesheet" href="/myWallet.css">
+
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a> &nbsp;›&nbsp;
+  <span>My Wallet</span>
+</div>
+
+<div class="account-wrap" style="display: block;">
+
+  <!-- MAIN CONTENT (Wallet) -->
+  <div class="right-col" style="width: 100%; max-width: 1200px; margin: 0 auto;">
+    <div class="panel wallet-overview">
+      <div class="wallet-balance-box">
+        <div class="wb-label">Available Balance</div>
+        <div class="wb-amount">₹{{formatCurrency walletBalance}}</div>
+        <div class="wb-status"><span class="dot"></span> Active & Ready</div>
+      </div>
+
+      <div class="wallet-topup-box">
+        <div class="wt-title">Add Funds to Wallet</div>
+        <div class="wt-desc">Instantly top up your TYMORA wallet using secure payment methods for seamless checkout.</div>
+        
+        <div class="preset-amounts">
+          <button class="preset-btn" onclick="setTopup(500)">₹500</button>
+          <button class="preset-btn" onclick="setTopup(1000)">₹1,000</button>
+          <button class="preset-btn" onclick="setTopup(2000)">₹2,000</button>
+          <button class="preset-btn" onclick="setTopup(5000)">₹5,000</button>
+        </div>
+        
+        <div class="custom-topup-wrap">
+          <span class="rupee-sym">₹</span>
+          <input type="number" id="topupAmount" class="topup-input" placeholder="Enter custom amount (Min. ₹100)" min="100">
+          <button class="btn-topup" onclick="initiateTopup()">Top Up Wallet</button>
+        </div>
+        <div id="topupMsg" class="topup-msg" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Transaction History</div>
+        <div class="filter-wrap">
+          <select class="wallet-filter" id="txnFilter" onchange="filterTxns()">
+            <option value="All">All Transactions</option>
+            <option value="Credit">Credits Only</option>
+            <option value="Debit">Debits Only</option>
+          </select>
+        </div>
+      </div>
+
+      {{#if hasTransactions}}
+      <div class="transactions-list" id="txnsList">
+        {{#each transactions}}
+        <div class="txn-card" data-type="{{#if this.isCredit}}Credit{{else}}Debit{{/if}}">
+          
+          <div class="txn-icon {{#if this.isCredit}}icon-green{{else}}icon-red{{/if}}">
+            {{#if this.isCredit}}↓{{else}}↑{{/if}}
+          </div>
+          
+          <div class="txn-details">
+            <div class="txn-title">{{this.type}}</div>
+            <div class="txn-meta">
+              {{this.date}} &nbsp;•&nbsp; ID: {{this.id}}
+              {{#if this.orderId}} &nbsp;•&nbsp; Ref: {{this.orderId}}{{/if}}
+            </div>
+          </div>
+          
+          <div class="txn-status">
+            <div class="txn-amount {{#if this.isCredit}}text-green{{else}}text-red{{/if}}">
+              {{#if this.isCredit}}+{{else}}-{{/if}}₹{{formatCurrency this.amount}}
+            </div>
+            <div class="txn-badge">{{this.status}}</div>
+          </div>
+          
+        </div>
+        {{/each}}
+      </div>
+      {{else}}
+      <div class="empty-state">
+        <div class="empty-icon">💳</div>
+        <h3>No Transactions Yet</h3>
+        <p>Your wallet history will appear here once you top up or make a purchase.</p>
+      </div>
+      {{/if}}
+
+    </div>
+  </div>
+
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+function setTopup(amount) {
+  document.getElementById('topupAmount').value = amount;
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+document.getElementById('topupAmount').addEventListener('input', function() {
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+});
+
+function showTopupMsg(msg, type) {
+  const el = document.getElementById('topupMsg');
+  el.textContent = msg;
+  el.className = 'topup-msg topup-msg--' + type;
+  el.style.display = 'block';
+  if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+async function initiateTopup() {
+  const amount = parseFloat(document.getElementById('topupAmount').value);
+  if (!amount || amount < 100) {
+    showTopupMsg('Please enter a minimum amount of ₹100', 'error');
+    return;
+  }
+  // Clear previous messages
+  document.getElementById('topupMsg').style.display = 'none';
+
+  try {
+    const btn = document.querySelector('.btn-topup');
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+
+    const res = await fetch('/user/wallet/topup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      showTopupMsg(data.message || 'Failed to initiate top-up.', 'error');
+      btn.textContent = 'Top Up Wallet';
+      btn.disabled = false;
+      return;
+    }
+
+    const options = {
+      key: data.key,
+      amount: data.razorpayOrder.amount,
+      currency: 'INR',
+      name: 'TYMORA',
+      description: 'Wallet Top-Up',
+      order_id: data.razorpayOrder.id,
+      handler: async function(response) {
+        try {
+          const verifyRes = await fetch('/user/wallet/verify-topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: data.amount
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            showTopupMsg('✅ ' + verifyData.message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            showTopupMsg('❌ Payment verification failed. Please contact support.', 'error');
+          }
+        } catch(e) {
+          showTopupMsg('Something went wrong during verification.', 'error');
+        }
+      },
+      theme: { color: '#c9a84c' },
+      modal: {
+        ondismiss: function() {
+          btn.textContent = 'Top Up Wallet';
+          btn.disabled = false;
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', function() {
+      showTopupMsg('Payment failed. Please try again.', 'error');
+      btn.textContent = 'Top Up Wallet';
+      btn.disabled = false;
+    });
+    rzp.open();
+
+  } catch(err) {
+    console.error(err);
+    showTopupMsg('Something went wrong. Please try again.', 'error');
+    document.querySelector('.btn-topup').textContent = 'Top Up Wallet';
+    document.querySelector('.btn-topup').disabled = false;
+  }
+}
+
+function filterTxns() {
+  const filter = document.getElementById('txnFilter').value;
+  const cards = document.querySelectorAll('.txn-card');
+  cards.forEach(card => {
+    const type = card.getAttribute('data-type');
+    if (filter === 'All' || filter === type) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>

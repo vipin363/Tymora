@@ -1,0 +1,451 @@
+<link href="/myOrders.css" rel="stylesheet">
+<link href="/orderDetails.css" rel="stylesheet">
+
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <a href="/user/orders">My Orders</a>
+  &nbsp;›&nbsp;
+  <span class="current">Order Details</span>
+</div>
+
+<div class="od-wrapper">
+
+  <div class="od-header">
+    <h1 class="od-title">Order <em style="font-style: italic; color: var(--gold);">Details</em></h1>
+    <p class="od-sub">Order ID: <span style="color:var(--white);">#{{order.orderId}}</span> &nbsp;|&nbsp; Placed on {{order.orderDateFormatted}}</p>
+    <div class="od-heading-underline"></div>
+  </div>
+
+  <div class="od-summary-grid">
+    <!-- Shipping Address -->
+    <div class="od-card">
+      <h3 class="od-card-title">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        Shipping Address
+      </h3>
+      <div class="od-info-row" style="flex-direction:column; gap:4px; text-align:left;">
+        <span class="od-info-val" style="text-align:left; max-width:100%;">{{order.shippingAddress.fullName}}</span>
+        <span class="od-info-label" style="text-align:left;">{{order.shippingAddress.addressLine}}</span>
+        <span class="od-info-label" style="text-align:left;">{{order.shippingAddress.city}}, {{order.shippingAddress.state}} - {{order.shippingAddress.pincode}}</span>
+        <span class="od-info-label" style="text-align:left; margin-top:8px;">Phone: <span class="od-info-val">{{order.shippingAddress.phone}}</span></span>
+      </div>
+    </div>
+    
+    <!-- Payment & Delivery -->
+    <div class="od-card">
+      <h3 class="od-card-title">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+        Payment & Delivery
+      </h3>
+      <div class="od-info-row">
+        <span class="od-info-label">Payment Method:</span>
+        <span class="od-info-val">{{order.paymentMethod}}</span>
+      </div>
+      <div class="od-info-row">
+        <span class="od-info-label">Payment Status:</span>
+        {{#if order.isPaymentFailed}}
+          <span class="od-info-val red">Failed</span>
+        {{else}}
+          <span class="od-info-val gold">{{order.paymentStatus}}</span>
+        {{/if}}
+      </div>
+      <div class="od-info-row">
+        <span class="od-info-label">Shipping Method:</span>
+        <span class="od-info-val">{{order.deliveryType}} Delivery</span>
+      </div>
+      <div class="od-info-row">
+        <span class="od-info-label">Est. Delivery:</span>
+        <span class="od-info-val">{{order.estimatedDeliveryFormatted}}</span>
+      </div>
+    </div>
+    
+    <!-- Order Summary -->
+    <div class="od-card">
+      <h3 class="od-card-title">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"></path></svg>
+        Order Summary
+      </h3>
+      <div class="od-info-row">
+        <span class="od-info-label">Selling Price:</span>
+        <span class="od-info-val">₹{{formatCurrency order.subtotalSalePrice}}</span>
+      </div>
+      
+      {{#if order.offerDiscount}}
+      <div class="od-info-row">
+        <span class="od-info-label">
+          Offer Applied{{#if order.offerName}} <span style="font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid rgba(168,85,247,0.3); border-radius:4px; padding:2px 6px; margin-left:4px;">{{order.offerName}}</span>{{/if}}:
+        </span>
+        <span class="od-info-val green">-₹{{formatCurrency order.offerDiscount}}</span>
+      </div>
+      {{/if}}
+      
+      {{#if order.couponDiscount}}
+      <div class="od-info-row">
+        <span class="od-info-label">
+          Coupon Applied{{#if order.couponCode}} <span style="font-size:10px; background:rgba(201,168,76,0.12); color:#c9a84c; border:1px solid rgba(201,168,76,0.3); border-radius:4px; padding:2px 6px; margin-left:4px;">{{order.couponCode}}</span>{{/if}}:
+        </span>
+        <span class="od-info-val green">-₹{{formatCurrency order.couponDiscount}}</span>
+      </div>
+      {{/if}}
+      
+      <div class="od-info-row">
+        <span class="od-info-label">Delivery Charge:</span>
+        <span class="od-info-val">₹{{formatCurrency order.deliveryCharge}}</span>
+      </div>
+      
+      {{#if order.codCharge}}
+      <div class="od-info-row">
+        <span class="od-info-label">COD Charge:</span>
+        <span class="od-info-val">₹{{formatCurrency order.codCharge}}</span>
+      </div>
+      {{/if}}
+      
+      <div class="od-info-row">
+        <span class="od-info-label">CGST (9%):</span>
+        <span class="od-info-val">₹{{formatCurrency order.cgst}}</span>
+      </div>
+      
+      <div class="od-info-row">
+        <span class="od-info-label">SGST (9%):</span>
+        <span class="od-info-val">₹{{formatCurrency order.sgst}}</span>
+      </div>
+      
+      <div class="od-divider"></div>
+      
+      <div class="od-info-row od-total-row">
+        <span class="od-info-label" style="color:var(--white);">Original Total:</span>
+        <span class="od-info-val gold">₹{{formatCurrency order.totalAmount}}</span>
+      </div>
+      
+      {{#if (gt order.totalCancelledRefunds 0)}}
+      <div class="od-info-row" style="margin-top:8px;">
+        <span class="od-info-label" style="color:var(--muted);">{{#if order.isCOD}}Cancelled Product:{{else}}Cancelled Product Refund:{{/if}}</span>
+        <span class="od-info-val red">-₹{{formatCurrency order.totalCancelledRefunds}}</span>
+      </div>
+      {{/if}}
+      
+      {{#if (gt order.totalReturnedRefunds 0)}}
+      <div class="od-info-row" style="margin-top:8px;">
+        <span class="od-info-label" style="color:var(--muted);">Returned Product Refund:</span>
+        <span class="od-info-val red">-₹{{formatCurrency order.totalReturnedRefunds}}</span>
+      </div>
+      {{/if}}
+      
+      {{#if (lt order.finalAmountPaid order.totalAmount)}}
+      <div class="od-divider"></div>
+      <div class="od-info-row od-total-row">
+        <span class="od-info-label" style="color:var(--white);">{{#if order.isCOD}}Amount To Pay:{{else}}Final Amount Paid:{{/if}}</span>
+        <span class="od-info-val gold" style="font-size:20px;">₹{{formatCurrency order.finalAmountPaid}}</span>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+
+
+  <!-- ORDERED PRODUCTS SECTION -->
+  <h2 class="od-section-title">Ordered Products</h2>
+  
+  <div class="od-products-container">
+    {{#each order.products}}
+    <div class="mo-prod-row">
+      
+      <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+        {{#if this.productImage}}
+        <img class="mo-prod-img" src="{{this.productImage}}" alt="{{this.productName}}">
+        {{/if}}
+        
+        <div class="mo-prod-info">
+          <div class="mo-prod-name">{{this.productName}}</div>
+          <div class="mo-prod-meta">
+            {{#if this.variantSpecs}}{{this.variantSpecs}} <span style="margin:0 6px;color:rgba(255,255,255,0.2);">·</span>{{/if}} Qty: {{this.quantity}}
+          </div>
+          <div class="mo-prod-meta" style="margin-top: 12px;">
+            {{#if ../order.isPaymentFailed}}
+              <span class="mo-status status-payment-failed">Payment Failed</span>
+            {{else}}
+              <span class="mo-status status-{{this.orderStatus}}">{{this.orderStatus}}</span>
+            {{/if}}
+          </div>
+        </div>
+        
+        <div class="od-price-block">
+          <div class="od-price-selling">₹{{formatCurrency this.salePrice}}</div>
+          {{#if this.mrp}}
+          {{#if (gt this.mrp this.salePrice)}}
+          <div class="od-price-mrp">₹{{formatCurrency this.mrp}}</div>
+          {{/if}}
+          {{/if}}
+          {{#if this.discountPercent}}
+          {{#if (gt this.discountPercent 0)}}
+          <div class="od-price-discount">-{{this.discountPercent}}%</div>
+          {{/if}}
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="mo-prod-actions">
+        {{#if this.canTrack}}
+        <a href="/user/track-order/{{../order.orderId}}/{{this._id}}" class="mo-btn mo-btn-outline-gold">Track Order</a>
+        {{/if}}
+        {{#if this.isReturned}}
+        <a href="/user/track-order/{{../order.orderId}}/{{this._id}}" class="mo-btn mo-btn-outline-gold">View Tracking</a>
+        {{/if}}
+        
+        {{#if this.canCancel}}
+        <button class="mo-btn mo-btn-outline-danger" onclick="openCancelModal('{{../order.orderId}}', '{{this._id}}')">Cancel Product</button>
+        {{/if}}
+        {{#if this.canReturn}}
+        <button class="mo-btn mo-btn-outline-white" onclick="openReturnModal('{{../order.orderId}}', '{{this._id}}')">Return Product</button>
+        {{/if}}
+        {{#if this.showReview}}
+        <button class="mo-btn mo-btn-outline-blue" onclick="openReviewModal('{{../order.orderId}}', '{{this.productId}}')">Add Review</button>
+        {{/if}}
+      </div>
+      
+    </div>
+    {{/each}}
+  </div>
+
+  {{#if order.canDownloadInvoice}}
+  <div class="od-invoice-section">
+    <a href="/user/orders/invoice/{{order.orderId}}" class="od-btn-invoice">Download Invoice</a>
+  </div>
+  {{/if}}
+  
+</div>
+
+<!-- Cancel Product Modal -->
+<div class="mo-modal-overlay" id="cancelModalOverlay">
+  <div class="mo-modal">
+    <h3>Cancel Product</h3>
+    <p>Are you sure you want to cancel this product? This action cannot be undone.</p>
+    <textarea id="cancelReasonInput" class="mo-modal-textarea" placeholder="Required: Please tell us why you are cancelling this product..."></textarea>
+    <p id="cancelReasonError" class="mo-modal-error"></p>
+    <div class="mo-modal-actions">
+      <button class="mo-btn mo-btn-outline-white" onclick="closeCancelModal()">Keep Product</button>
+      <button class="mo-btn mo-btn-solid-danger" id="confirmCancelBtn">Confirm Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Return Product Modal -->
+<div class="mo-modal-overlay" id="returnModalOverlay">
+  <div class="mo-modal">
+    <h3>Return Product</h3>
+    <p>Please provide a reason for returning this product.</p>
+    <textarea id="returnReasonInput" class="mo-modal-textarea" placeholder="Reason for return (e.g. Damaged item, Wrong size)..."></textarea>
+    <p id="returnReasonError" class="mo-modal-error"></p>
+    <div class="mo-modal-actions">
+      <button class="mo-btn mo-btn-outline-white" onclick="closeReturnModal()">Cancel</button>
+      <button class="mo-btn mo-btn-solid-gold" id="confirmReturnBtn">Submit Return Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review Product Modal -->
+<div class="mo-modal-overlay" id="reviewModalOverlay">
+  <div class="mo-modal">
+    <h3>Add Review</h3>
+    <p>Please rate and review this product.</p>
+    
+    <div class="mo-modal-select-wrap">
+      <label>Rating (1-5):</label>
+      <select id="reviewRatingInput" class="mo-modal-select">
+        <option value="5">5 ★★★★★</option>
+        <option value="4">4 ★★★★☆</option>
+        <option value="3">3 ★★★☆☆</option>
+        <option value="2">2 ★★☆☆☆</option>
+        <option value="1">1 ★☆☆☆☆</option>
+      </select>
+    </div>
+    
+    <textarea id="reviewTextInput" class="mo-modal-textarea" placeholder="Write your honest review (e.g. Good watch, Bad quality)..."></textarea>
+    <p id="reviewTextError" class="mo-modal-error"></p>
+    <div class="mo-modal-actions">
+      <button class="mo-btn mo-btn-outline-white" onclick="closeReviewModal()">Cancel</button>
+      <button class="mo-btn mo-btn-solid-blue" id="confirmReviewBtn">Submit Review</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Shared validation helpers ──────────────────────────────────
+  function showToast(msg, type) {
+    const wrap = document.createElement('div');
+    const bg = type === 'success' ? '#16a34a' : type === 'info' ? '#2563eb' : '#dc2626';
+    wrap.style.cssText = `position:fixed;top:20px;right:20px;z-index:99999;background:${bg};color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-width:320px;word-break:break-word;opacity:0;transition:opacity .25s;`;
+    wrap.textContent = msg;
+    document.body.appendChild(wrap);
+    requestAnimationFrame(() => { wrap.style.opacity = '1'; });
+    setTimeout(() => { wrap.style.opacity = '0'; setTimeout(() => wrap.remove(), 300); }, 3500);
+  }
+
+  function validateReason(value, fieldLabel) {
+    const v = (value || '').trim();
+    if (!v) return `Please enter a ${fieldLabel}.`;
+    if (v.length < 3) return `${fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)} must contain at least 3 characters.`;
+    if (!/[A-Za-z]/.test(v)) return `${fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)} cannot contain only numbers or special characters.`;
+    return null;
+  }
+
+  function showModalError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  // ── State ─────────────────────────────────────────────────────
+  let targetCancelOrderId = null;
+  let targetCancelItemId = null;
+  let targetReturnOrderId = null;
+  let targetReturnItemId = null;
+  let targetReviewOrderId = null;
+  let targetReviewProductId = null;
+
+  // ── Cancel Modal ──────────────────────────────────────────────
+  function openCancelModal(orderId, itemId) {
+    targetCancelOrderId = orderId;
+    targetCancelItemId = itemId;
+    document.getElementById('cancelReasonInput').value = '';
+    showModalError('cancelReasonError', null);
+    document.getElementById('cancelModalOverlay').classList.add('active');
+  }
+
+  function closeCancelModal() {
+    targetCancelOrderId = null;
+    targetCancelItemId = null;
+    document.getElementById('cancelModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmCancelBtn').addEventListener('click', async () => {
+    if (!targetCancelOrderId || !targetCancelItemId) return;
+    const reason = document.getElementById('cancelReasonInput').value;
+    const err = validateReason(reason, 'cancellation reason');
+    if (err) { showModalError('cancelReasonError', err); return; }
+    showModalError('cancelReasonError', null);
+
+    const btn = document.getElementById('confirmCancelBtn');
+    btn.disabled = true; btn.innerText = 'Cancelling...';
+    showGlobalLoader();
+    try {
+      const res = await fetch('/user/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetCancelOrderId, itemId: targetCancelItemId, reason: reason.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        showToast(data.message || 'Failed to cancel product.', 'error');
+        btn.disabled = false; btn.innerText = 'Confirm Cancel';
+        hideGlobalLoader();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('An error occurred. Please try again.', 'error');
+      btn.disabled = false; btn.innerText = 'Confirm Cancel';
+      hideGlobalLoader();
+    }
+  });
+
+  // ── Return Modal ──────────────────────────────────────────────
+  function openReturnModal(orderId, itemId) {
+    targetReturnOrderId = orderId;
+    targetReturnItemId = itemId;
+    document.getElementById('returnReasonInput').value = '';
+    showModalError('returnReasonError', null);
+    document.getElementById('returnModalOverlay').classList.add('active');
+  }
+
+  function closeReturnModal() {
+    targetReturnOrderId = null;
+    targetReturnItemId = null;
+    document.getElementById('returnModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+    if (!targetReturnOrderId || !targetReturnItemId) return;
+    const reason = document.getElementById('returnReasonInput').value;
+    const err = validateReason(reason, 'return reason');
+    if (err) { showModalError('returnReasonError', err); return; }
+    showModalError('returnReasonError', null);
+
+    const btn = document.getElementById('confirmReturnBtn');
+    btn.disabled = true; btn.innerText = 'Submitting...';
+    showGlobalLoader();
+    try {
+      const res = await fetch('/user/orders/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetReturnOrderId, itemId: targetReturnItemId, reason: reason.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        showToast(data.message || 'Failed to submit return request.', 'error');
+        btn.disabled = false; btn.innerText = 'Submit Return Request';
+        hideGlobalLoader();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('An error occurred. Please try again.', 'error');
+      btn.disabled = false; btn.innerText = 'Submit Return Request';
+      hideGlobalLoader();
+    }
+  });
+
+  // ── Review Modal ──────────────────────────────────────────────
+  function openReviewModal(orderId, productId) {
+    targetReviewOrderId = orderId;
+    targetReviewProductId = productId;
+    document.getElementById('reviewRatingInput').value = 5;
+    document.getElementById('reviewTextInput').value = '';
+    showModalError('reviewTextError', null);
+    document.getElementById('reviewModalOverlay').classList.add('active');
+  }
+
+  function closeReviewModal() {
+    targetReviewOrderId = null;
+    targetReviewProductId = null;
+    document.getElementById('reviewModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmReviewBtn').addEventListener('click', async () => {
+    if (!targetReviewOrderId || !targetReviewProductId) return;
+    const rating = document.getElementById('reviewRatingInput').value;
+    const reviewText = document.getElementById('reviewTextInput').value;
+    const err = validateReason(reviewText, 'review');
+    if (err) { showModalError('reviewTextError', err); return; }
+    showModalError('reviewTextError', null);
+
+    const btn = document.getElementById('confirmReviewBtn');
+    btn.disabled = true; btn.innerText = 'Submitting...';
+    showGlobalLoader();
+    try {
+      const res = await fetch('/user/reviews/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetReviewOrderId, productId: targetReviewProductId, rating, reviewText: reviewText.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Review submitted!', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast(data.message || 'Failed to submit review.', 'error');
+        btn.disabled = false; btn.innerText = 'Submit Review';
+        hideGlobalLoader();
+      }
+    } catch (err) {
+      showToast('Error submitting review.', 'error');
+      btn.disabled = false; btn.innerText = 'Submit Review';
+      hideGlobalLoader();
+    }
+  });
+</script>

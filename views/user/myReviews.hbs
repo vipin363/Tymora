@@ -1,0 +1,116 @@
+<link href="/myReviews.css" rel="stylesheet">
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Reviews</span>
+</div>
+
+<div class="mr-wrapper">
+
+  <div class="mr-header">
+    <h1 class="mr-title">My <em>Reviews</em></h1>
+    <p class="mr-subtitle">Your voice. Your experience. Your TYMORA story.</p>
+    <div class="mr-heading-underline"></div>
+  </div>
+
+  <div class="mr-container">
+    {{#if reviews.length}}
+      {{#each reviews}}
+      <div class="mr-card" id="review-card-{{this._id}}">
+        {{#if this.productImage}}
+        <img src="{{this.productImage}}" class="mr-prod-img" alt="Product">
+        {{/if}}
+        <div class="mr-info">
+          <div class="mr-prod-name">{{this.productName}}</div>
+          <div class="mr-date">Reviewed on {{this.dateFormatted}}</div>
+          <div class="mr-rating">
+            {{#times this.rating}}★{{/times}}
+            {{#times (subtract 5 this.rating)}}☆{{/times}}
+          </div>
+          <div class="mr-text" id="review-text-{{this._id}}">{{this.reviewText}}</div>
+          
+          <div class="mr-actions">
+            <button class="mr-btn" onclick="openEditModal('{{this._id}}', {{this.rating}}, '{{this.reviewText}}')">Edit</button>
+            <button class="mr-btn mr-btn-danger" onclick="deleteReview('{{this._id}}')">Delete</button>
+          </div>
+        </div>
+      </div>
+      {{/each}}
+    {{else}}
+      <div class="mr-empty">
+        <h2>No Reviews Yet</h2>
+        <p>Share your thoughts on the timepieces you've experienced.</p>
+      </div>
+    {{/if}}
+  </div>
+
+</div>
+
+<!-- Edit Review Modal -->
+<div class="mr-modal-overlay" id="editModalOverlay">
+  <div class="mr-modal">
+    <h3>Edit Review</h3>
+    <select id="editRating">
+      <option value="5">5 ★★★★★ — Excellent</option>
+      <option value="4">4 ★★★★☆ — Good</option>
+      <option value="3">3 ★★★☆☆ — Average</option>
+      <option value="2">2 ★★☆☆☆ — Poor</option>
+      <option value="1">1 ★☆☆☆☆ — Terrible</option>
+    </select>
+    <textarea id="editReviewText" placeholder="Share your honest thoughts about this timepiece..."></textarea>
+    <div class="mr-modal-actions">
+      <button class="mr-btn" onclick="closeEditModal()">Cancel</button>
+      <button class="mr-btn mr-modal-btn-save" id="saveEditBtn">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let targetEditId = null;
+
+  function openEditModal(id, rating, text) {
+    targetEditId = id;
+    document.getElementById('editRating').value = rating;
+    document.getElementById('editReviewText').value = text;
+    document.getElementById('editModalOverlay').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    targetEditId = null;
+    document.getElementById('editModalOverlay').style.display = 'none';
+  }
+
+  document.getElementById('saveEditBtn').addEventListener('click', async () => {
+    if(!targetEditId) return;
+    const rating = document.getElementById('editRating').value;
+    const reviewText = document.getElementById('editReviewText').value;
+
+    const res = await fetch(`/user/reviews/edit/${targetEditId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating, reviewText })
+    });
+    const data = await res.json();
+    if(data.success) {
+      window.location.reload();
+    } else {
+      alert(data.message || 'Failed to update review');
+    }
+  });
+
+  async function deleteReview(id) {
+    if(confirm('Are you sure you want to delete this review?')) {
+      const res = await fetch(`/user/reviews/delete/${id}`, { method: 'POST' });
+      const data = await res.json();
+      if(data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || 'Failed to delete review');
+      }
+    }
+  }
+</script>

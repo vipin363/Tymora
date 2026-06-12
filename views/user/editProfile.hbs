@@ -1,0 +1,128 @@
+<link href="/editProfile.css" rel="stylesheet">
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/user/home">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <span class="current">Edit Profile</span>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1 class="page-title">Edit Profile</h1>
+  <div class="title-rule"></div>
+</div>
+
+<!-- EDIT WRAP -->
+<div class="edit-wrap">
+
+  <!-- LEFT -->
+  <div class="left-panel">
+
+    <div class="avatar-card">
+      <!-- Clickable avatar — triggers hidden file input -->
+      <div class="avatar-wrap" onclick="document.getElementById('avatar-input').click()">
+       <img id="avatar-preview" class="profile-avatar"
+            src="{{#if user.avatar}}{{user.avatar}}{{else}}/image/useravathar.png{{/if}}"
+            alt="Profile">
+        <div class="avatar-overlay">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>Change</span>
+        </div>
+        <div class="avatar-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+      </div>
+      <button type="button" class="btn-remove-dp" onclick="confirmRemoveDp()">
+        Remove Photo
+        </button>
+             </div>
+
+    <div class="info-note">
+      <p>Your profile is your digital ledger within the Tymora ecosystem. Ensure your shipping details and contact information are current to prevent delays in atelier dispatches.</p>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: FORM -->
+  <div class="form-card">
+   <form id="edit-form" action="/user/updateProfile" method="POST" enctype="multipart/form-data"> 
+               <input type="file" id="avatar-input" name="profileImage" accept="image/*">   
+        <input type="hidden" name="removeAvatar" id="removeAvatar" value="false">
+
+        {{#if message}}
+        <div class="error-msg">{{message}}</div>
+        {{/if}}
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="full-name">Full Name</label>
+          <input type="text" id="full-name" name="name" value="{{user.name}}" placeholder="Your full name" />
+        </div>
+
+
+
+        <div class="field">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" value="{{user.phone}}" placeholder="0000000000" >
+        </div>
+
+        <div class="field">
+          <label for="dob">Date of Birth</label>
+          <input type="date" id="dob" name="dob" value="{{{user.dob}}}" >
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-save">Save Changes</button>
+        <button type="button" class="btn-cancel" onclick="history.back()">Cancel</button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"> Profile updated successfully</div>
+
+<!-- REMOVE DP MODAL -->
+<div class="modal-overlay" id="removeDpModal" style="display:none"
+     onclick="if(event.target===this) closeRemoveDpModal()">
+
+  <div class="modal-box">
+
+    <div class="modal-icon-wrap red-bg">🗑</div>
+
+    <div class="modal-title-text">
+      Remove Profile Photo?
+    </div>
+
+    <p class="modal-desc-text">
+      This action will remove your current profile picture.
+    </p>
+
+    <button class="modal-btn-red"
+      onclick="removeDpConfirmed()">
+      Remove Photo
+    </button>
+
+    <button class="modal-btn-cancel"
+      onclick="closeRemoveDpModal()">
+      Cancel
+    </button>
+
+  </div>
+
+</div>
+
+<script src="/js/editProfile.js"></script>
+

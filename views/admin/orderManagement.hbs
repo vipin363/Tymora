@@ -1,0 +1,284 @@
+<link href="/adminUserManagement.css" rel="stylesheet">
+
+<div class="shell">
+  {{> admin/sidebar}}
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <span class="topbar-title"></span>
+
+      <div class="admin-info">
+        <div class="admin-avatar">A</div>
+        <div class="admin-meta">
+          <div class="admin-name">Admin</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+  <div class="page active" id="page-list">
+
+    <div class="page-header">
+      <div>
+        <h2>Order Management</h2>
+        <p>Manage and track all customer orders.</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="slabel">Total Orders</div>
+        <div class="svalue">{{stats.totalOrders}}</div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Pending</div>
+        <div class="svalue" style="color:#f59e0b">{{stats.pendingCount}}</div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Delivered</div>
+        <div class="svalue" style="color:#22c55e">{{stats.deliveredCount}}</div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Cancelled</div>
+        <div class="svalue" style="color:#ef4444">{{stats.cancelledCount}}</div>
+      </div>
+    </div>
+
+    <form method="GET" action="/admin/orders" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); border:1px solid #f1f5f9; margin-bottom:24px;">
+      <input type="text" name="search" placeholder="Search orders..." value="{{search}}" style="flex:1; min-width:180px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; color:#334155;">
+
+      <select name="status" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+        <option value="all" {{#ifEquals status "all"}}selected{{/ifEquals}}>All Status</option>
+        <option value="Pending" {{#ifEquals status "Pending"}}selected{{/ifEquals}}>Pending</option>
+        <option value="Confirmed" {{#ifEquals status "Confirmed"}}selected{{/ifEquals}}>Confirmed</option>
+        <option value="Packed" {{#ifEquals status "Packed"}}selected{{/ifEquals}}>Packed</option>
+        <option value="Shipped" {{#ifEquals status "Shipped"}}selected{{/ifEquals}}>Shipped</option>
+        <option value="Delivered" {{#ifEquals status "Delivered"}}selected{{/ifEquals}}>Delivered</option>
+        <option value="Cancelled" {{#ifEquals status "Cancelled"}}selected{{/ifEquals}}>Cancelled</option>
+        <option value="Return Requested" {{#ifEquals status "Return Requested"}}selected{{/ifEquals}}>Return Requested</option>
+        <option value="Returned" {{#ifEquals status "Returned"}}selected{{/ifEquals}}>Returned</option>
+      </select>
+
+      <select name="sort" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#334155; background:#fff; outline:none;">
+        <option value="latest" {{#ifEquals sort "latest"}}selected{{/ifEquals}}>Latest</option>
+        <option value="oldest" {{#ifEquals sort "oldest"}}selected{{/ifEquals}}>Oldest</option>
+        <option value="amount_high" {{#ifEquals sort "amount_high"}}selected{{/ifEquals}}>Amount ↓</option>
+        <option value="amount_low" {{#ifEquals sort "amount_low"}}selected{{/ifEquals}}>Amount ↑</option>
+      </select>
+
+      <button type="submit" class="btn-search">Search</button>
+
+      {{#if search}}
+        <a href="/admin/orders" class="btn-clear">Clear</a>
+      {{/if}}
+    </form>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each orders}}
+          <tr id="order-row-{{this.orderId}}">
+            <td><span style="color:#c9a84c; font-weight:600">#{{this.orderId}}</span></td>
+            <td>
+              <div class="user-cell">
+                <div class="user-av"><img src="{{this.userImage}}" alt="user" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>
+                <div>
+                  <div class="uname">{{this.customerName}}</div>
+                  <div class="uemail">{{this.customerEmail}}</div>
+                </div>
+              </div>
+            </td>
+
+            <td style="font-weight:600">₹{{formatCurrency this.totalAmount}}</td>
+            <td>
+              {{#ifEquals this.paymentMethod "COD"}}
+                <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">COD</span>
+              {{else}}
+                <span class="badge" style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)">Online</span>
+              {{/ifEquals}}
+            </td>
+            <td>
+              {{#if this.hasMixedStatus}}
+                <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                  {{#each this.mixedStatuses}}
+                    {{#ifEquals this.status "Pending"}}
+                      <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3); font-size:0.7rem; padding:3px 8px;">Pending • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Confirmed"}}
+                      <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3); font-size:0.7rem; padding:3px 8px;">Confirmed • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Packed"}}
+                      <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3); font-size:0.7rem; padding:3px 8px;">Packed • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Shipped"}}
+                      <span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3); font-size:0.7rem; padding:3px 8px;">Shipped • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Out for Delivery"}}
+                      <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3); font-size:0.7rem; padding:3px 8px;">Out for Delivery • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Delivered"}}
+                      <span class="badge s-active" style="font-size:0.7rem; padding:3px 8px;">Delivered • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Cancelled"}}
+                      <span class="badge s-blocked" style="font-size:0.7rem; padding:3px 8px;">Cancelled • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Requested"}}
+                      <span class="badge" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3); font-size:0.7rem; padding:3px 8px;">Return Req. • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Approved"}}
+                      <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3); font-size:0.7rem; padding:3px 8px;">Ret. Apprvd • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Pickup Scheduled"}}
+                      <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3); font-size:0.7rem; padding:3px 8px;">Pickup Sched. • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Picked"}}
+                      <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3); font-size:0.7rem; padding:3px 8px;">Ret. Picked • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Return Rejected"}}
+                      <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3); font-size:0.7rem; padding:3px 8px;">Ret. Rejected • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Returned"}}
+                      <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3); font-size:0.7rem; padding:3px 8px;">Returned • {{this.count}}</span>
+                    {{/ifEquals}}
+                    {{#ifEquals this.status "Refund Processed"}}
+                      <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3); font-size:0.7rem; padding:3px 8px;">Refunded • {{this.count}}</span>
+                    {{/ifEquals}}
+                  {{/each}}
+                </div>
+              {{else}}
+                {{#ifEquals this.summaryStatus "Pending"}}
+                  <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">Pending</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Confirmed"}}
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Confirmed</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Packed"}}
+                  <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">Packed</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Shipped"}}
+                  <span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)">Shipped</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Out for Delivery"}}
+                  <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">Out for Delivery</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Delivered"}}
+                  <span class="badge s-active">Delivered</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Cancelled"}}
+                  <span class="badge s-blocked">Cancelled</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Requested"}}
+                  <span class="badge" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3)">Return Req.</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Approved"}}
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Ret. Apprvd</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Pickup Scheduled"}}
+                  <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">Pickup Sched.</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Picked"}}
+                  <span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">Ret. Picked</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Return Rejected"}}
+                  <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">Ret. Rejected</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Returned"}}
+                  <span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">Returned</span>
+                {{/ifEquals}}
+                {{#ifEquals this.summaryStatus "Refund Processed"}}
+                  <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">Refunded</span>
+                {{/ifEquals}}
+              {{/if}}
+            </td>
+            <td>{{this.orderDateFormatted}}</td>
+            <td>
+              <button class="act-btn" onclick="window.location.href='/admin/orders/{{this.orderId}}'">View Order</button>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        {{#if (gt currentPage 1)}}
+          <a href="/admin/orders?page={{subtract currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Prev</a>
+        {{/if}}
+        <span>Page {{currentPage}} of {{totalPages}}</span>
+        {{#if (lt currentPage totalPages)}}
+          <a href="/admin/orders?page={{add currentPage 1}}&search={{search}}&sort={{sort}}&status={{status}}">Next</a>
+        {{/if}}
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+{{!-- Logout Modal --}}
+
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+
+
+
+
+
+async function updateStatus(orderId, newStatus) {
+  try {
+    const res = await fetch(`/admin/orders/${orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newStatus })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message, 'green');
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      showToast(data.message || 'Failed to update status', 'red');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Network error', 'red');
+  }
+}
+
+// ── TOAST
+function showToast(msg, type='green') {
+  const icons = {
+    green:'<polyline points="20 6 9 17 4 12"/>',
+    red:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    blue:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+  };
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-icon ${type}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ── SIDEBAR
+
+
+</script>

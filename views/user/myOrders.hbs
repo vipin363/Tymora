@@ -1,0 +1,391 @@
+<link href="/myOrders.css" rel="stylesheet">
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/user/profile">My Account</a>
+  &nbsp;›&nbsp;
+  <span class="current">My Orders</span>
+</div>
+
+<div class="mo-wrapper">
+
+  <div class="mo-header">
+    <h1 class="mo-title">My <em>Orders</em></h1>
+    <p class="mo-sub">Your complete order history with TYMORA</p>
+    <div class="heading-underline"></div>
+  </div>
+
+  <div class="mo-search-bar">
+    <form action="/user/orders" method="GET" class="mo-search-form">
+      <div class="mo-search-input-wrap">
+        <svg class="mo-search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" name="search" class="mo-search-input" placeholder="Search by Order ID or Product Name" value="{{search}}">
+      </div>
+      <button type="submit" class="mo-btn-search">Search</button>
+      {{#if search}}
+      <a href="/user/orders" class="mo-btn-clear">Clear</a>
+      {{/if}}
+    </form>
+  </div>
+
+  {{#if orders.length}}
+  <div class="mo-list">
+
+    {{#each orders}}
+    <div class="mo-card">
+
+      <div class="mo-card-top">
+        <div class="mo-order-meta">
+          <div class="mo-order-id">#{{this.orderId}}</div>
+          <div class="mo-order-date">Placed on {{this.orderDateFormatted}}</div>
+        </div>
+        <div class="mo-status-wrap">
+          {{#if this.isPaymentFailed}}
+            <span class="mo-status status-payment-failed">Payment Failed</span>
+          {{else}}
+            <span class="mo-status status-{{this.orderStatus}}">{{this.orderStatus}}</span>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="mo-products">
+        {{#each this.products}}
+        <div class="mo-prod-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+          <div style="display: flex; gap: 15px; align-items: center;">
+            {{#if this.productImage}}
+            <img class="mo-prod-img" src="{{this.productImage}}" alt="{{this.productName}}">
+            {{/if}}
+            <div class="mo-prod-info" style="flex: 1;">
+              <div class="mo-prod-name">{{this.productName}}</div>
+              <div class="mo-prod-meta">{{this.variantSpecs}} · Qty: {{this.quantity}}</div>
+              <div class="mo-prod-meta" style="margin-top: 4px;">Status:
+                {{#if ../isPaymentFailed}}
+                  <strong class="text-payment-failed">Payment Failed</strong>
+                {{else}}
+                  <strong style="color:var(--gold);">{{this.orderStatus}}</strong>
+                {{/if}}
+              </div>
+
+            </div>
+            <div class="mo-prod-price-wrap">
+              <span class="mo-prod-price">₹{{formatCurrency this.salePrice}}</span>
+              {{#if this.mrp}}
+                <span class="mo-prod-price-old">₹{{formatCurrency this.mrp}}</span>
+              {{/if}}
+              {{#if this.discountPercent}}
+                <span class="mo-prod-discount-pill">{{this.discountPercent}}% OFF</span>
+              {{/if}}
+            </div>
+          </div>
+          <div class="mo-prod-actions">
+            {{#if this.canTrack}}
+            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn mo-btn-outline-gold">Track Order</a>
+            {{/if}}
+            {{#if this.isReturned}}
+            <a href="/user/track-order/{{../orderId}}/{{this._id}}" class="mo-btn mo-btn-outline-gold">View Tracking</a>
+            {{/if}}
+
+            {{#if this.canCancel}}
+            <button class="mo-btn mo-btn-outline-danger" onclick="openCancelModal('{{../orderId}}', '{{this._id}}')">Cancel Order</button>
+            {{/if}}
+            {{#if this.canReturn}}
+            <button class="mo-btn mo-btn-outline-white" onclick="openReturnModal('{{../orderId}}', '{{this._id}}')">Return Order</button>
+            {{/if}}
+            {{#if this.showReview}}
+            <button class="mo-btn mo-btn-outline-blue" onclick="openReviewModal('{{../orderId}}', '{{this.productId}}')">Add Review</button>
+            {{/if}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="mo-card-foot">
+        <div class="mo-foot-left">
+          <div class="mo-delivery-info">
+            <span class="mo-muted">Est. Delivery:</span> <strong class="mo-white">{{this.estimatedDeliveryFormatted}}</strong>
+            <span class="mo-divider">·</span>
+            <span class="mo-muted">{{this.deliveryType}} Delivery</span>
+            <span class="mo-divider">·</span>
+            <span class="mo-muted">{{this.paymentMethod}}</span>
+          </div>
+          <div class="mo-total">
+            {{#if (lt this.finalAmountPaid this.totalAmount)}}
+              <span class="mo-muted">Final Amount Paid:</span> <strong class="mo-gold">₹{{formatCurrency this.finalAmountPaid}}</strong>
+            {{else}}
+              <span class="mo-muted">Total:</span> <strong class="mo-white">₹{{formatCurrency this.totalAmount}}</strong>
+            {{/if}}
+          </div>
+        </div>
+        <div class="mo-foot-right">
+          <a href="/user/order-details/{{this.orderId}}" class="mo-btn mo-btn-solid-gold">View Order</a>
+        </div>
+      </div>
+
+    </div>
+    {{/each}}
+
+  </div>
+
+  {{#if hasPages}}
+  <div class="mo-pagination">
+    {{#each pagination}}
+      <a href="{{this.url}}" class="mo-page-link {{#if this.active}}active{{/if}}">{{this.page}}</a>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{else}}
+  <div class="mo-empty">
+    <div class="mo-empty-icon">
+      <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+        <line x1="8" y1="8" x2="16" y2="8"></line>
+        <line x1="8" y1="16" x2="12" y2="16"></line>
+      </svg>
+    </div>
+    <h2>No Orders Found</h2>
+    <p>We couldn't find any orders matching your request.</p>
+    <a href="/user/shop" class="mo-btn mo-btn-primary">Explore Collections</a>
+  </div>
+  {{/if}}
+
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="mo-modal-overlay" id="cancelModalOverlay">
+  <div class="mo-modal">
+    <h3>Cancel Product</h3>
+    <p>Are you sure you want to cancel this product? This action cannot be undone.</p>
+    <textarea id="cancelReasonInput" class="mo-modal-textarea" placeholder="Required: Please tell us why you are cancelling this product..."></textarea>
+    <p id="cancelReasonError" class="mo-modal-error"></p>
+    <div class="mo-modal-actions">
+      <button class="mo-btn mo-btn-outline-white" onclick="closeCancelModal()">Keep Product</button>
+      <button class="mo-btn mo-btn-solid-danger" id="confirmCancelBtn">Confirm Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Return Order Modal -->
+<div class="mo-modal-overlay" id="returnModalOverlay">
+  <div class="mo-modal">
+    <h3>Return Product</h3>
+    <p>Please provide a reason for returning this product.</p>
+    <textarea id="returnReasonInput" class="mo-modal-textarea" placeholder="Reason for return (e.g. Damaged item, Wrong size)..."></textarea>
+    <p id="returnReasonError" class="mo-modal-error"></p>
+    <div class="mo-modal-actions">
+      <button class="mo-btn mo-btn-outline-white" onclick="closeReturnModal()">Cancel</button>
+      <button class="mo-btn mo-btn-solid-gold" id="confirmReturnBtn">Submit Return Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review Product Modal -->
+<div class="mo-modal-overlay" id="reviewModalOverlay">
+  <div class="mo-modal">
+    <h3>Add Review</h3>
+    <p>Please rate and review this product.</p>
+    
+    <div class="mo-modal-select-wrap">
+      <label>Rating (1-5):</label>
+      <select id="reviewRatingInput" class="mo-modal-select">
+        <option value="5">5 ★★★★★</option>
+        <option value="4">4 ★★★★☆</option>
+        <option value="3">3 ★★★☆☆</option>
+        <option value="2">2 ★★☆☆☆</option>
+        <option value="1">1 ★☆☆☆☆</option>
+      </select>
+    </div>
+    
+    <textarea id="reviewTextInput" class="mo-modal-textarea" placeholder="Write your honest review (e.g. Good watch, Bad quality)..."></textarea>
+    <p id="reviewTextError" class="mo-modal-error"></p>
+    <div class="mo-modal-actions">
+      <button class="mo-btn mo-btn-outline-white" onclick="closeReviewModal()">Cancel</button>
+      <button class="mo-btn mo-btn-solid-blue" id="confirmReviewBtn">Submit Review</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Shared validation helpers ──────────────────────────────────
+  function showToast(msg, type) {
+    const wrap = document.createElement('div');
+    const bg = type === 'success' ? '#16a34a' : type === 'info' ? '#2563eb' : '#dc2626';
+    wrap.style.cssText = `position:fixed;top:20px;right:20px;z-index:99999;background:${bg};color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-width:320px;word-break:break-word;opacity:0;transition:opacity .25s;`;
+    wrap.textContent = msg;
+    document.body.appendChild(wrap);
+    requestAnimationFrame(() => { wrap.style.opacity = '1'; });
+    setTimeout(() => { wrap.style.opacity = '0'; setTimeout(() => wrap.remove(), 300); }, 3500);
+  }
+
+  function validateReason(value, fieldLabel) {
+    const v = (value || '').trim();
+    if (!v) return `Please enter a ${fieldLabel}.`;
+    if (v.length < 3) return `${fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)} must contain at least 3 characters.`;
+    if (!/[A-Za-z]/.test(v)) return `${fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1)} cannot contain only numbers or special characters.`;
+    return null;
+  }
+
+  function showModalError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = msg || '';
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  // ── State ─────────────────────────────────────────────────────
+  let targetCancelOrderId = null;
+  let targetCancelItemId = null;
+  let targetReturnOrderId = null;
+  let targetReturnItemId = null;
+  let targetReviewOrderId = null;
+  let targetReviewProductId = null;
+
+  // ── Cancel Modal ──────────────────────────────────────────────
+  function openCancelModal(orderId, itemId) {
+    targetCancelOrderId = orderId;
+    targetCancelItemId = itemId;
+    document.getElementById('cancelReasonInput').value = '';
+    showModalError('cancelReasonError', null);
+    document.getElementById('cancelModalOverlay').classList.add('active');
+  }
+
+  function closeCancelModal() {
+    targetCancelOrderId = null;
+    targetCancelItemId = null;
+    document.getElementById('cancelModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmCancelBtn').addEventListener('click', async () => {
+    if (!targetCancelOrderId || !targetCancelItemId) return;
+    const reason = document.getElementById('cancelReasonInput').value;
+    const err = validateReason(reason, 'cancellation reason');
+    if (err) { showModalError('cancelReasonError', err); return; }
+    showModalError('cancelReasonError', null);
+
+    const btn = document.getElementById('confirmCancelBtn');
+    btn.disabled = true; btn.innerText = 'Cancelling...';
+    showGlobalLoader();
+    try {
+      const res = await fetch('/user/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetCancelOrderId, itemId: targetCancelItemId, reason: reason.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        showToast(data.message || 'Failed to cancel product.', 'error');
+        btn.disabled = false; btn.innerText = 'Confirm Cancel';
+        hideGlobalLoader();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('An error occurred. Please try again.', 'error');
+      btn.disabled = false; btn.innerText = 'Confirm Cancel';
+      hideGlobalLoader();
+    }
+  });
+
+  // ── Return Modal ──────────────────────────────────────────────
+  function openReturnModal(orderId, itemId) {
+    targetReturnOrderId = orderId;
+    targetReturnItemId = itemId;
+    document.getElementById('returnReasonInput').value = '';
+    showModalError('returnReasonError', null);
+    document.getElementById('returnModalOverlay').classList.add('active');
+  }
+
+  function closeReturnModal() {
+    targetReturnOrderId = null;
+    targetReturnItemId = null;
+    document.getElementById('returnModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+    if (!targetReturnOrderId || !targetReturnItemId) return;
+    const reason = document.getElementById('returnReasonInput').value;
+    const err = validateReason(reason, 'return reason');
+    if (err) { showModalError('returnReasonError', err); return; }
+    showModalError('returnReasonError', null);
+
+    const btn = document.getElementById('confirmReturnBtn');
+    btn.disabled = true; btn.innerText = 'Submitting...';
+    showGlobalLoader();
+    try {
+      const res = await fetch('/user/orders/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetReturnOrderId, itemId: targetReturnItemId, reason: reason.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        showToast(data.message || 'Failed to submit return request.', 'error');
+        btn.disabled = false; btn.innerText = 'Submit Return Request';
+        hideGlobalLoader();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('An error occurred. Please try again.', 'error');
+      btn.disabled = false; btn.innerText = 'Submit Return Request';
+      hideGlobalLoader();
+    }
+  });
+
+  // ── Review Modal ──────────────────────────────────────────────
+  function openReviewModal(orderId, productId) {
+    targetReviewOrderId = orderId;
+    targetReviewProductId = productId;
+    document.getElementById('reviewRatingInput').value = 5;
+    document.getElementById('reviewTextInput').value = '';
+    showModalError('reviewTextError', null);
+    document.getElementById('reviewModalOverlay').classList.add('active');
+  }
+
+  function closeReviewModal() {
+    targetReviewOrderId = null;
+    targetReviewProductId = null;
+    document.getElementById('reviewModalOverlay').classList.remove('active');
+  }
+
+  document.getElementById('confirmReviewBtn').addEventListener('click', async () => {
+    if (!targetReviewOrderId || !targetReviewProductId) return;
+    const rating = document.getElementById('reviewRatingInput').value;
+    const reviewText = document.getElementById('reviewTextInput').value;
+    const err = validateReason(reviewText, 'review');
+    if (err) { showModalError('reviewTextError', err); return; }
+    showModalError('reviewTextError', null);
+
+    const btn = document.getElementById('confirmReviewBtn');
+    btn.disabled = true; btn.innerText = 'Submitting...';
+    showGlobalLoader();
+    try {
+      const res = await fetch('/user/reviews/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: targetReviewOrderId, productId: targetReviewProductId, rating, reviewText: reviewText.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Review submitted!', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast(data.message || 'Failed to submit review.', 'error');
+        btn.disabled = false; btn.innerText = 'Submit Review';
+        hideGlobalLoader();
+      }
+    } catch (err) {
+      showToast('Error submitting review.', 'error');
+      btn.disabled = false; btn.innerText = 'Submit Review';
+      hideGlobalLoader();
+    }
+  });
+</script>

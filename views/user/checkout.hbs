@@ -1,0 +1,995 @@
+<link href="/checkout.css" rel="stylesheet">
+
+<div class="breadcrumb">
+  <a href="/user/home">Home</a> &nbsp;›&nbsp;
+  {{#ifEquals checkoutSource.type "buyNow"}}
+    <a href="/user/shop">Shop</a> &nbsp;›&nbsp;
+    <span class="current" style="color:var(--muted); font-weight:normal;">Product Details</span> &nbsp;›&nbsp;
+  {{else}}
+    <a href="/user/cart">Cart</a> &nbsp;›&nbsp;
+  {{/ifEquals}}
+  <span class="current">Checkout</span>
+</div>
+
+<div class="checkout-wrapper">
+  <div class="page-heading">
+    <h1>Secure Checkout</h1>
+    <p>Complete your luxury watch purchase securely</p>
+    <div class="heading-underline"></div>
+  </div>
+
+  <div class="checkout-layout">
+    
+    <!-- LEFT: CHECKOUT STEPS -->
+    <div class="checkout-main-col">
+      
+      <!-- 1. ADDRESS SECTION -->
+      <section class="checkout-section" id="step-shipping">
+        <h2 class="section-title">Shipping <em>Destinations</em></h2>
+        
+        {{#if address}}
+        <div class="address-card">
+          <div class="address-badge">
+            <div class="dot"></div> {{#if address.addressType}}{{address.addressType}}{{else}}HOME{{/if}}
+          </div>
+          <div class="address-name">{{address.name}}</div>
+          <div class="address-phone">{{address.phone}}</div>
+          <div class="address-text">
+            {{address.street}}<br>
+            {{address.city}}, {{address.state}} {{address.pincode}}
+          </div>
+        </div>
+        {{else}}
+        <div class="address-card">
+          <div class="address-text">No default address selected. Please add an address.</div>
+        </div>
+        {{/if}}
+        
+        <div class="address-actions">
+          <button class="btn-address-action" onclick="window.location.href='/user/address?from=checkout'">
+            Manage Address
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. PRODUCT SUMMARY SECTION -->
+      <section class="checkout-section" id="step-products">
+        <h2 class="section-title">Product <em>Summary</em></h2>
+        <div class="product-summary-list">
+          {{#each cartItems}}
+          <div class="product-summary-card" data-variant="{{this.variantId}}" data-product="{{this.productId}}">
+            <div class="ps-img">
+              <img src="{{this.img}}" alt="{{this.name}}">
+            </div>
+            <div class="ps-info">
+              <div class="ps-header">
+                <div>
+                  <div class="ps-name">{{this.name}}</div>
+                  <div class="ps-variant">{{this.variantSpecs}}</div>
+                </div>
+                <div class="ps-price-block">
+                  <div class="ps-total">₹{{formatCurrency this.total}}</div>
+                  {{#if false}}
+                  <div style="display:flex; gap: 8px;">
+                    <span class="ps-mrp">₹{{formatCurrency this.originalPrice}}</span>
+                    <span class="ps-discount">{{this.discountPercentage}}% OFF</span>
+                  </div>
+                  {{/if}}
+                </div>
+              </div>
+              <div class="ps-controls">
+                <div class="qty-display">
+                  <span style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-right:8px;">Qty:</span>
+                  <span style="font-size:12px; font-weight:600; color:var(--white);">{{this.qty}}</span>
+                </div>
+                {{#if this.isOutOfStock}}
+                <div style="color: #ff4d4d; font-size: 12px; margin-top: 8px; font-weight: 500;">
+                  This product is currently out of stock
+                </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+
+      <!-- 3. OFFERS & COUPONS -->
+      <section class="checkout-section" id="step-offers">
+        <h2 class="section-title">Savings &amp; <em>Discounts</em></h2>
+
+        <!-- ── OFFERS PANEL ── -->
+        <div class="promo-panel" id="offers-panel">
+          <div class="promo-panel-header">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <span>Available Offers</span>
+          </div>
+          <div id="offers-loading" style="font-size:12px; color:var(--muted); padding:8px 0;">Loading offers...</div>
+          <div id="offers-dropdown-wrap" style="display:none;">
+            <select id="offers-select" class="promo-select">
+              <option value="">— Select an offer —</option>
+            </select>
+          </div>
+          <div id="offers-empty" style="display:none; font-size:12px; color:var(--muted); padding:8px 0;">No eligible offers for your current cart &amp; payment method.</div>
+
+          <div id="applied-offer-bar" class="applied-bar" style="display:none;">
+            <div>
+              <span class="applied-label">✅ Offer Applied:</span>
+              <strong id="applied-offer-name"></strong>
+              <span class="applied-saving"> — You save <strong id="applied-offer-saving"></strong></span>
+            </div>
+            <button class="btn-remove-promo" id="remove-offer-btn">✕ Remove</button>
+          </div>
+          <div id="offer-msg" class="promo-msg"></div>
+
+          <button class="btn-apply-promo" id="apply-offer-btn" style="display:none;">Apply Offer</button>
+        </div>
+
+        <div class="promo-divider"><span>OR use a</span></div>
+
+        <!-- ── COUPONS PANEL ── -->
+        <div class="promo-panel" id="coupons-panel">
+          <div class="promo-panel-header">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span>Coupon Code</span>
+          </div>
+
+          {{#if availableCoupons.length}}
+          <div style="margin-bottom:10px;">
+            <select id="coupons-select" class="promo-select">
+              <option value="">— Pick a coupon —</option>
+              {{#each availableCoupons}}
+              <option value="{{this.code}}">{{this.code}} — {{this.title}} ({{#if (eq this.discountType 'percentage')}}{{this.discountValue}}% off{{else}}₹{{this.discountValue}} off{{/if}})</option>
+              {{/each}}
+            </select>
+          </div>
+          {{/if}}
+
+          <div class="promo-input-row">
+            <input type="text" id="coupon-input" class="promo-input" placeholder="Enter coupon code" autocomplete="off">
+            <button class="btn-apply-promo" id="apply-coupon-btn">Apply Coupon</button>
+          </div>
+
+          <div id="applied-coupon-bar" class="applied-bar" style="display:none;">
+            <div>
+              <span class="applied-label">✅ Coupon Applied:</span>
+              <strong id="applied-coupon-code"></strong>
+              <span class="applied-saving"> — You save <strong id="applied-coupon-saving"></strong></span>
+            </div>
+            <button class="btn-remove-promo" id="remove-coupon-btn">✕ Remove</button>
+          </div>
+          <div id="coupon-msg" class="promo-msg"></div>
+        </div>
+      </section>
+
+      <!-- 4. DELIVERY TIERS -->
+      <section class="checkout-section" id="step-delivery">
+        <h2 class="section-title">Delivery <em>Tiers</em></h2>
+        
+        <div class="delivery-grid">
+          <div class="delivery-card selected" data-charge="0" id="tier-normal">
+            <div class="del-left">
+              <div class="radio-circle"><div class="radio-inner"></div></div>
+              <div class="del-info">
+                <h4>Normal Delivery</h4>
+                <p>Standard secure shipping</p>
+              </div>
+            </div>
+            <div class="del-price free">Free</div>
+          </div>
+          
+          <div class="delivery-card" data-charge="50" id="tier-fast">
+            <div class="del-left">
+              <div class="radio-circle"></div>
+              <div class="del-info">
+                <h4>Fast Delivery</h4>
+                <p>Priority expedited shipping</p>
+              </div>
+            </div>
+            <div class="del-price">₹50</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. PAYMENT METHOD -->
+      <section class="checkout-section" id="step-payment">
+        <h2 class="section-title">Payment <em>method</em></h2>
+        
+        <div class="payment-grid">
+          <div class="payment-tab" id="tab-online" data-method="Online">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <div class="pay-name">Online Payment</div>
+          </div>
+          <div class="payment-tab" id="tab-wallet" data-method="Wallet">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <line x1="6" y1="12" x2="6" y2="12"></line>
+                <line x1="10" y1="12" x2="10" y2="12"></line>
+              </svg>
+            </div>
+            <div class="pay-name">Wallets</div>
+          </div>
+          <div class="payment-tab" id="tab-cod" data-method="COD">
+            <div class="pay-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div class="pay-name">C.O.D.</div>
+          </div>
+        </div>
+
+        <div id="payment-error-container" class="inline-error" style="display:none; color:#e05252; font-size:12px; margin-bottom:16px; font-weight:600;"></div>
+
+        <!-- Online Payment Form -->
+        <div class="payment-form-section" id="online-form" style="display:none; margin-top:24px; max-width:600px; background:#111; padding:24px; border:1px solid rgba(255,255,255,0.1); border-radius:4px;">
+          <div style="margin-bottom: 16px;">
+            <strong style="color: var(--white); font-size: 14px;">ONLINE PAYMENT</strong><br>
+            <span style="color: var(--muted); font-size: 12px;">Supported by Razorpay (UPI, Cards, Net Banking, Wallets)</span>
+          </div>
+          <div class="cod-checkbox">
+            <input type="checkbox" id="online-confirm">
+            <label for="online-confirm">I understand that I will be redirected to Razorpay Secure Checkout.</label>
+          </div>
+          <div id="online-error" class="inline-error" style="color:#e05252; font-size:11px; margin-top:8px; display:none;"></div>
+        </div>
+
+        <!-- Wallet Form -->
+        <div class="payment-form-section" id="wallet-form" style="display:none; margin-top:24px; max-width:600px; background:#111; padding:24px; border:1px solid rgba(255,255,255,0.1); border-radius:4px;">
+          <div style="margin-bottom:16px;">
+            <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="wallet-confirm" style="margin-top: 4px; accent-color: var(--gold); width: 16px; height: 16px;">
+              <span style="font-size: 14px; color: var(--white);">I confirm that I want to pay using my wallet balance.</span>
+            </label>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 4px;">
+            <div>Available Wallet Balance: <strong style="color: var(--gold);">₹{{formatCurrency walletBalance}}</strong></div>
+            <div>Wallet Amount to be Deducted: <strong style="color: var(--gold);" id="wallet-deduction-amount">₹0</strong></div>
+          </div>
+          <input type="hidden" id="wallet-balance-amount" value="{{walletBalance}}">
+          <div id="wallet-error" class="inline-error" style="color:#e05252; font-size:12px; font-weight:600; display:none;">Insufficient wallet balance.</div>
+          <div id="wallet-confirm-error" class="inline-error" style="color:#e05252; font-size:12px; font-weight:600; display:none;">Please confirm wallet payment by selecting the checkbox.</div>
+        </div>
+
+        <!-- COD Info Card -->
+        <div class="payment-form-section cod-card" id="cod-info-card" style="display:none; margin-top:24px;">
+          <div class="cod-info">
+            <div class="cod-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div class="cod-text">
+              Cash on Delivery available with an additional <strong>₹30 handling charge</strong>.
+            </div>
+          </div>
+          <div class="cod-checkbox">
+            <input type="checkbox" id="cod-confirm">
+            <label for="cod-confirm">Confirm Cash on Delivery</label>
+          </div>
+          <div id="cod-error" class="inline-error" style="color:#e05252; font-size:11px; margin-top:8px; display:none;"></div>
+        </div>
+
+      </section>
+
+      <!-- Trust Badges -->
+      <div class="trust-badges-row">
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>Insured Shipping</span>
+        </div>
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>2-Year Warranty</span>
+        </div>
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Secure Checkout</span>
+        </div>
+        <div class="trust-badge-item">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <span>Authentic Certified</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: ORDER SUMMARY -->
+    <aside class="summary-sidebar">
+      <div class="summary-card">
+        <h3 class="summary-title">Order Summary</h3>
+
+        <div class="summary-breakdown">
+          <div class="sum-row">
+            <span>Selling Price</span>
+            <span class="val" id="sum-selling-price">₹{{formatCurrency subtotal}}</span>
+          </div>
+          <div class="sum-row discount">
+            <span>Offer Discount</span>
+            <span class="val" id="sum-offer" style="display:none;">- ₹0</span>
+            <span class="val" id="sum-offer-zero" style="color:var(--muted);">-</span>
+          </div>
+          <div class="sum-row discount">
+            <span>Coupon Discount</span>
+            <span class="val" id="sum-coupon" style="display:none;">- ₹0</span>
+            <span class="val" id="sum-coupon-zero" style="color:var(--muted);">-</span>
+          </div>
+          <div class="sum-row">
+            <span>Delivery</span>
+            <span class="val" id="sum-delivery">₹0</span>
+          </div>
+          <div class="sum-row">
+            <span>COD Charge</span>
+            <span class="val" id="sum-cod">₹30</span>
+          </div>
+          <div class="sum-row">
+            <span>CGST (9%)</span>
+            <span class="val" id="sum-cgst">₹{{formatCurrency cgst}}</span>
+          </div>
+          <div class="sum-row">
+            <span>SGST (9%)</span>
+            <span class="val" id="sum-sgst">₹{{formatCurrency sgst}}</span>
+          </div>
+        </div>
+        
+        <div class="sum-total-row">
+          <div class="sum-total-label">TOTAL</div>
+          <div class="sum-total-price-wrap">
+            <div class="sum-total-price" id="sum-final-total">₹0</div>
+          </div>
+        </div>
+
+<div id="place-order-error-msg" style="color:#ff4d4d; margin-top:8px; margin-bottom:12px; font-weight:600; font-size:12px; text-align:center; display:none;"></div>
+<button class="btn-place-order" id="placeOrderBtn" data-address-id="{{address._id}}" disabled style="opacity: 0.5; cursor: not-allowed;">PLACE ORDER &gt;</button>
+      </div>
+
+      <div class="concierge-assist">
+        <div class="concierge-icon">
+          <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        </div>
+        <div class="concierge-text">
+          <h4>Concierge Assistance</h4>
+          <p>Need help with your order? Speak to a concierge expert for immediate assistance.</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<style>
+.promo-panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; margin-top:12px; }
+.promo-panel-header { display:flex; align-items:center; gap:8px; color:var(--gold); font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.promo-select { width:100%; background:#111; color:var(--white); border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:10px 12px; font-size:13px; cursor:pointer; margin-bottom:8px; }
+.promo-input-row { display:flex; gap:8px; }
+.promo-input { flex:1; background:#111; color:var(--white); border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:10px 12px; font-size:13px; }
+.promo-input::placeholder { color:var(--muted); }
+.btn-apply-promo { background:var(--gold); color:#000; border:none; border-radius:4px; padding:10px 18px; font-size:12px; font-weight:700; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:opacity .2s; }
+.btn-apply-promo:hover { opacity:.85; }
+.applied-bar { display:flex; justify-content:space-between; align-items:center; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:6px; padding:10px 14px; margin-top:10px; font-size:13px; }
+.applied-label { color:#4ade80; }
+.applied-saving { color:var(--muted); }
+.btn-remove-promo { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); border-radius:4px; padding:5px 12px; font-size:11px; cursor:pointer; transition:all .2s; }
+.btn-remove-promo:hover { background:rgba(239,68,68,0.3); }
+.promo-msg { font-size:12px; font-weight:600; margin-top:8px; min-height:16px; }
+.promo-divider { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:1.5px; margin:16px 0; }
+.promo-divider::before, .promo-divider::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.08); }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  // ── State ────────────────────────────────────────────────────────────────
+  let deliveryCharge    = 0;
+  let codCharge         = 0;
+  let currentOfferId    = '';   // applied offer _id
+  let currentCoupon     = '';   // applied coupon code
+  // Once a product-availability error is shown, lock it so no subsequent
+  // AJAX recalculation (delivery/payment change) can overwrite it.
+  let productErrorLocked = false;
+
+  // ── DOM refs ─────────────────────────────────────────────────────────────
+  const offersSelect       = document.getElementById('offers-select');
+  const applyOfferBtn      = document.getElementById('apply-offer-btn');
+  const removeOfferBtn     = document.getElementById('remove-offer-btn');
+  const appliedOfferBar    = document.getElementById('applied-offer-bar');
+  const appliedOfferName   = document.getElementById('applied-offer-name');
+  const appliedOfferSaving = document.getElementById('applied-offer-saving');
+  const offerMsg           = document.getElementById('offer-msg');
+  const offersLoading      = document.getElementById('offers-loading');
+  const offersDropWrap     = document.getElementById('offers-dropdown-wrap');
+  const offersEmpty        = document.getElementById('offers-empty');
+
+  const couponsSelect      = document.getElementById('coupons-select');
+  const couponInput        = document.getElementById('coupon-input');
+  const applyCouponBtn     = document.getElementById('apply-coupon-btn');
+  const removeCouponBtn    = document.getElementById('remove-coupon-btn');
+  const appliedCouponBar   = document.getElementById('applied-coupon-bar');
+  const appliedCouponCode  = document.getElementById('applied-coupon-code');
+  const appliedCouponSaving= document.getElementById('applied-coupon-saving');
+  const couponMsg          = document.getElementById('coupon-msg');
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function fmtINR(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+  function showMsg(el, text, isError) {
+    el.textContent = text;
+    el.style.color = isError ? '#f87171' : '#4ade80';
+  }
+  function clearMsg(el) { el.textContent = ''; }
+
+  function getPaymentMethod() {
+    const tab = document.querySelector('.payment-tab.active');
+    return tab ? tab.getAttribute('data-method') : null;
+  }
+
+  // ── Populate offer dropdown from API result ───────────────────────────────
+  function populateOffersDropdown(eligibleOffers) {
+    offersLoading.style.display = 'none';
+    if (!eligibleOffers || eligibleOffers.length === 0) {
+      offersDropWrap.style.display  = 'none';
+      offersEmpty.style.display     = 'block';
+      applyOfferBtn.style.display   = 'none';
+      return;
+    }
+    offersDropWrap.style.display  = 'block';
+    offersEmpty.style.display     = 'none';
+    applyOfferBtn.style.display   = 'block';
+
+    // Rebuild options (offers arrive already sorted by best discount)
+    offersSelect.innerHTML = '<option value="">— Select an offer —</option>';
+    eligibleOffers.forEach(o => {
+      const label = o.discountType === 'percentage'
+        ? `${o.name} — ${o.discountValue}% off (saves ${fmtINR(o.calculatedDiscount)})`
+        : `${o.name} — flat ${fmtINR(o.discountValue)} off`;
+      const opt = document.createElement('option');
+      opt.value = o._id;
+      opt.textContent = label;
+      offersSelect.appendChild(opt);
+    });
+
+    // Restore selection or pre-select best
+    if (currentOfferId) {
+      offersSelect.value = currentOfferId;
+    } else if (eligibleOffers.length > 0) {
+      offersSelect.value = eligibleOffers[0]._id; // pre-select best
+    }
+  }
+
+  // ── Update order summary DOM ──────────────────────────────────────────────
+  function updateSummaryDOM(data) {
+    document.getElementById('sum-selling-price').textContent = fmtINR(data.subtotal);
+    document.getElementById('sum-delivery').textContent  = data.deliveryCharge === 0 ? 'Free' : fmtINR(data.deliveryCharge);
+    document.getElementById('sum-cod').textContent       = data.codCharge === 0 ? fmtINR(0) : fmtINR(data.codCharge);
+    document.getElementById('sum-cgst').textContent      = fmtINR(data.cgst);
+    document.getElementById('sum-sgst').textContent      = fmtINR(data.sgst);
+    document.getElementById('sum-final-total').textContent = fmtINR(data.finalTotal);
+
+    // Offer row
+    const offerAmt = data.offerDiscount || 0;
+    const offerEl  = document.getElementById('sum-offer');
+    const offerZero= document.getElementById('sum-offer-zero');
+    if (offerAmt > 0) {
+      offerEl.textContent  = '- ' + fmtINR(offerAmt);
+      offerEl.style.display = 'inline';
+      if (offerZero) offerZero.style.display = 'none';
+    } else {
+      offerEl.style.display = 'none';
+      if (offerZero) offerZero.style.display = 'inline';
+    }
+
+    // Coupon row
+    const couponAmt = data.couponDiscount || 0;
+    const couponEl  = document.getElementById('sum-coupon');
+    const couponZero= document.getElementById('sum-coupon-zero');
+    if (couponAmt > 0) {
+      couponEl.textContent  = '- ' + fmtINR(couponAmt);
+      couponEl.style.display = 'inline';
+      if (couponZero) couponZero.style.display = 'none';
+    } else {
+      couponEl.style.display = 'none';
+      if (couponZero) couponZero.style.display = 'inline';
+    }
+
+    let firstUnavailableItem = null;
+    if (data.cartItems && data.cartItems.length > 0) {
+      data.cartItems.forEach(item => {
+        const card = document.querySelector(`.product-summary-card[data-variant="${item.variantId}"]`);
+        if (card) {
+          const controls = card.querySelector('.ps-controls');
+          if (item.isOutOfStock) {
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+            if (controls && !controls.querySelector('.co-oos-badge')) {
+              const badge = document.createElement('div');
+              badge.className = 'co-oos-badge';
+              badge.style.marginTop = '8px';
+              badge.style.fontSize = '10px';
+              badge.style.fontWeight = '700';
+              badge.style.color = '#ff4d4d';
+              badge.style.border = '1px solid #ff4d4d';
+              badge.style.padding = '2px 10px';
+              badge.style.borderRadius = '20px';
+              badge.style.display = 'inline-block';
+              badge.textContent = 'UNAVAILABLE';
+              controls.appendChild(badge);
+            }
+            if (!firstUnavailableItem) firstUnavailableItem = item;
+          } else {
+            card.style.opacity = '1';
+            card.style.pointerEvents = 'auto';
+            const badge = controls ? controls.querySelector('.co-oos-badge') : null;
+            if (badge) badge.remove();
+          }
+        }
+      });
+    }
+
+    const placeOrderError = document.getElementById('place-order-error-msg');
+    if (firstUnavailableItem && placeOrderError) {
+      // Only set the message if it has not already been locked by a previous render.
+      // This prevents delivery/payment AJAX refreshes from replacing the specific
+      // error message with a generic one.
+      if (!productErrorLocked) {
+        const reason = firstUnavailableItem.unavailableReason;
+        let msg;
+        if (reason === 'inactive') {
+          msg = `Product "${firstUnavailableItem.name}" is unavailable and cannot be purchased. Return to cart and remove the product to continue.`;
+        } else {
+          msg = `Product "${firstUnavailableItem.name}" is out of stock. Return to cart and remove the product to continue.`;
+        }
+        placeOrderError.textContent = msg;
+        placeOrderError.style.display = 'block';
+        productErrorLocked = true;  // lock — no further AJAX update may overwrite this
+      }
+    } else if (placeOrderError && !productErrorLocked) {
+      // Only hide the error banner if it was never locked (i.e. all items are now fine)
+      placeOrderError.style.display = 'none';
+      productErrorLocked = false;
+    }
+
+    window.checkoutDataState = { hasOutOfStock: data.hasOutOfStock, finalTotal: data.finalTotal };
+    validatePlaceOrderButton();
+  }
+
+  // ── Core fetch: recalculate totals ────────────────────────────────────────
+  async function fetchUpdatedTotals({ applyOffer = false, applyCoupon = false } = {}) {
+    try {
+      const pm = getPaymentMethod();
+      const body = { deliveryCharge, codCharge, paymentMethod: pm };
+      if (currentOfferId)  body.offerId    = currentOfferId;
+      if (currentCoupon)   body.couponCode = currentCoupon;
+
+      const res  = await fetch('/user/checkout/calculate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!data.success) { 
+        const errObj = document.getElementById('place-order-error-msg');
+        if (errObj) {
+          errObj.textContent = data.message || 'Some products are unavailable. Return to cart.';
+          errObj.style.display = 'block';
+        }
+        window.checkoutDataState = { hasOutOfStock: true, finalTotal: 0 };
+        validatePlaceOrderButton();
+        return; 
+      }
+
+      // Refresh eligible offers list
+      populateOffersDropdown(data.eligibleOffers || []);
+
+      // ── Handle Offer apply response ───────────────────────────────────────
+      if (applyOffer) {
+        if (data.offerMessage) {
+          showMsg(offerMsg, data.offerMessage, true);
+          currentOfferId = '';
+          appliedOfferBar.style.display = 'none';
+        } else if (data.appliedOffer) {
+          clearMsg(offerMsg);
+          appliedOfferName.textContent   = data.appliedOffer.name;
+          appliedOfferSaving.textContent = fmtINR(data.appliedOffer.discount);
+          appliedOfferBar.style.display  = 'flex';
+          // Auto-clear coupon since no stacking
+          currentCoupon = '';
+          if (couponInput) couponInput.value = '';
+          if (couponsSelect) couponsSelect.value = '';
+          appliedCouponBar.style.display = 'none';
+          clearMsg(couponMsg);
+        }
+      }
+
+      // ── Handle Coupon apply response ──────────────────────────────────────
+      if (applyCoupon) {
+        if (data.couponMessage) {
+          showMsg(couponMsg, data.couponMessage, true);
+          currentCoupon = '';
+          appliedCouponBar.style.display = 'none';
+        } else if (data.appliedCoupon) {
+          clearMsg(couponMsg);
+          appliedCouponCode.textContent   = data.appliedCoupon.code;
+          appliedCouponSaving.textContent = fmtINR(data.appliedCoupon.discount);
+          appliedCouponBar.style.display  = 'flex';
+          // Auto-clear offer since no stacking
+          currentOfferId = '';
+          if (offersSelect) offersSelect.value = '';
+          appliedOfferBar.style.display = 'none';
+          clearMsg(offerMsg);
+        }
+      }
+
+      // ── Revalidate applied offer/coupon after payment method change ───────
+      if (!applyOffer && !applyCoupon) {
+        if (currentOfferId && data.offerMessage) {
+          // Offer is no longer eligible (e.g. COD selected for online-only offer)
+          showMsg(offerMsg, '⚠ ' + data.offerMessage + ' — offer removed.', true);
+          currentOfferId = '';
+          appliedOfferBar.style.display = 'none';
+        }
+        if (currentCoupon && data.couponMessage) {
+          showMsg(couponMsg, '⚠ ' + data.couponMessage + ' — coupon removed.', true);
+          currentCoupon = '';
+          appliedCouponBar.style.display = 'none';
+        }
+        // Restore applied bars if still valid
+        if (currentOfferId && data.appliedOffer) {
+          appliedOfferName.textContent   = data.appliedOffer.name;
+          appliedOfferSaving.textContent = fmtINR(data.appliedOffer.discount);
+          appliedOfferBar.style.display  = 'flex';
+        }
+        if (currentCoupon && data.appliedCoupon) {
+          appliedCouponCode.textContent   = data.appliedCoupon.code;
+          appliedCouponSaving.textContent = fmtINR(data.appliedCoupon.discount);
+          appliedCouponBar.style.display  = 'flex';
+        }
+      }
+
+      updateSummaryDOM(data);
+    } catch (err) { console.error('fetchUpdatedTotals error:', err); }
+  }
+
+  // ── Offer interactions ────────────────────────────────────────────────────
+  offersSelect?.addEventListener('change', () => {
+    clearMsg(offerMsg);
+  });
+
+  applyOfferBtn?.addEventListener('click', async () => {
+    showGlobalLoader();
+    try {
+      const selectedId = offersSelect?.value;
+      if (!selectedId) { showMsg(offerMsg, 'Please select an offer first.', true); return; }
+      currentOfferId = selectedId;
+      currentCoupon  = '';
+      await fetchUpdatedTotals({ applyOffer: true });
+    } finally {
+      hideGlobalLoader();
+    }
+  });
+
+  removeOfferBtn?.addEventListener('click', async () => {
+    showGlobalLoader();
+    try {
+      currentOfferId = '';
+      appliedOfferBar.style.display = 'none';
+      clearMsg(offerMsg);
+      if (offersSelect) offersSelect.value = '';
+      await fetchUpdatedTotals();
+    } finally {
+      hideGlobalLoader();
+    }
+  });
+
+  // ── Coupon interactions ───────────────────────────────────────────────────
+  couponsSelect?.addEventListener('change', () => {
+    if (couponsSelect.value && couponInput) couponInput.value = couponsSelect.value;
+    clearMsg(couponMsg);
+  });
+
+  couponInput?.addEventListener('input', () => {
+    clearMsg(couponMsg);
+    if (couponsSelect) couponsSelect.value = '';
+  });
+
+  applyCouponBtn?.addEventListener('click', async () => {
+    showGlobalLoader();
+    try {
+      const code = (couponInput?.value || '').trim().toUpperCase();
+      if (!code) { showMsg(couponMsg, 'Please enter or select a coupon code.', true); return; }
+      currentCoupon  = code;
+      currentOfferId = '';
+      await fetchUpdatedTotals({ applyCoupon: true });
+    } finally {
+      hideGlobalLoader();
+    }
+  });
+
+  removeCouponBtn?.addEventListener('click', async () => {
+    showGlobalLoader();
+    try {
+      currentCoupon = '';
+      appliedCouponBar.style.display = 'none';
+      clearMsg(couponMsg);
+      if (couponInput)    couponInput.value    = '';
+      if (couponsSelect)  couponsSelect.value  = '';
+      await fetchUpdatedTotals();
+    } finally {
+      hideGlobalLoader();
+    }
+  });
+
+  // ── Delivery tiers ────────────────────────────────────────────────────────
+  const normalTier = document.getElementById('tier-normal');
+  const fastTier   = document.getElementById('tier-fast');
+
+  normalTier.addEventListener('click', () => {
+    normalTier.classList.add('selected'); fastTier.classList.remove('selected');
+    normalTier.querySelector('.radio-circle').innerHTML = '<div class="radio-inner"></div>';
+    fastTier.querySelector('.radio-circle').innerHTML = '';
+    deliveryCharge = 0;
+    fetchUpdatedTotals();
+  });
+
+  fastTier.addEventListener('click', () => {
+    fastTier.classList.add('selected'); normalTier.classList.remove('selected');
+    fastTier.querySelector('.radio-circle').innerHTML = '<div class="radio-inner"></div>';
+    normalTier.querySelector('.radio-circle').innerHTML = '';
+    deliveryCharge = 50;
+    fetchUpdatedTotals();
+  });
+
+  // ── Payment Methods ───────────────────────────────────────────────────────
+  let selectedPaymentMethod = null;
+  const paymentTabs        = document.querySelectorAll('.payment-tab');
+  const paymentSections    = document.querySelectorAll('.payment-form-section');
+  const paymentErrorContainer = document.getElementById('payment-error-container');
+  const placeOrderBtn      = document.getElementById('placeOrderBtn');
+
+  function validatePlaceOrderButton() {
+    const hasOutOfStock = window.checkoutDataState ? window.checkoutDataState.hasOutOfStock : {{#if hasOutOfStock}}true{{else}}false{{/if}};
+    let isValid = !hasOutOfStock && !!selectedPaymentMethod;
+    if (selectedPaymentMethod === 'Online' && !document.getElementById('online-confirm').checked) isValid = false;
+    if (selectedPaymentMethod === 'COD'    && !document.getElementById('cod-confirm').checked)    isValid = false;
+    if (selectedPaymentMethod === 'Wallet') {
+      const balance = parseFloat(document.getElementById('wallet-balance-amount').value) || 0;
+      const total   = window.checkoutDataState ? window.checkoutDataState.finalTotal : 0;
+      if (balance < total || !document.getElementById('wallet-confirm').checked) isValid = false;
+    }
+    placeOrderBtn.disabled      = !isValid;
+    placeOrderBtn.style.opacity = isValid ? '1' : '0.5';
+    placeOrderBtn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
+  }
+
+  document.getElementById('online-confirm').addEventListener('change', validatePlaceOrderButton);
+  document.getElementById('wallet-confirm').addEventListener('change', validatePlaceOrderButton);
+
+  paymentTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      paymentTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      selectedPaymentMethod = tab.getAttribute('data-method');
+      paymentErrorContainer.style.display = 'none';
+      paymentSections.forEach(sec => sec.style.display = 'none');
+      if (selectedPaymentMethod !== 'COD') { codCharge = 0; document.getElementById('cod-confirm').checked = false; }
+      else { codCharge = 30; }
+      fetchUpdatedTotals(); // revalidate offers/coupons for new payment method
+      if (selectedPaymentMethod === 'Online') document.getElementById('online-form').style.display = 'block';
+      if (selectedPaymentMethod === 'Wallet') { document.getElementById('wallet-form').style.display = 'block'; validateWalletBalance(); }
+      if (selectedPaymentMethod === 'COD')    document.getElementById('cod-info-card').style.display = 'block';
+      validatePlaceOrderButton();
+    });
+  });
+
+  function validateWalletBalance() {
+    const total   = window.checkoutDataState ? window.checkoutDataState.finalTotal : 0;
+    const balance = parseFloat(document.getElementById('wallet-balance-amount').value) || 0;
+    const errObj  = document.getElementById('wallet-error');
+    const deductEl= document.getElementById('wallet-deduction-amount');
+    if (deductEl) deductEl.textContent = fmtINR(total);
+    if (balance < total) { errObj.style.display = 'block'; errObj.textContent = 'Insufficient wallet balance.'; return false; }
+    errObj.style.display = 'none'; return true;
+  }
+
+  document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', e => { const err = document.getElementById(e.target.id + '-error'); if (err) err.style.display = 'none'; });
+  });
+
+  document.getElementById('cod-confirm').addEventListener('change', e => {
+    const err = document.getElementById('cod-error');
+    if (err) err.style.display = 'none';
+    codCharge = e.target.checked ? 30 : 0;
+    fetchUpdatedTotals();
+    validatePlaceOrderButton();
+  });
+
+  // ── Place Order ───────────────────────────────────────────────────────────
+  placeOrderBtn.addEventListener('click', async () => {
+    showGlobalLoader();
+    paymentErrorContainer.style.display = 'none';
+    if (!selectedPaymentMethod) {
+      paymentErrorContainer.textContent = 'Please select a payment method.';
+      paymentErrorContainer.style.display = 'block';
+      hideGlobalLoader();
+      return;
+    }
+    let paymentDetails = {};
+    if (selectedPaymentMethod === 'Online') {
+      if (!document.getElementById('online-confirm').checked) {
+        document.getElementById('online-error').textContent = 'Please acknowledge the redirect to Razorpay.';
+        document.getElementById('online-error').style.display = 'block';
+        hideGlobalLoader();
+        return;
+      }
+      paymentDetails = { provider: 'Razorpay' };
+    } else if (selectedPaymentMethod === 'Wallet') {
+      if (!validateWalletBalance()) { hideGlobalLoader(); return; }
+      if (!document.getElementById('wallet-confirm').checked) {
+        document.getElementById('wallet-confirm-error').textContent = 'Please confirm wallet payment.';
+        document.getElementById('wallet-confirm-error').style.display = 'block';
+        hideGlobalLoader();
+        return;
+      } else { document.getElementById('wallet-confirm-error').style.display = 'none'; }
+    } else if (selectedPaymentMethod === 'COD') {
+      if (!document.getElementById('cod-confirm').checked) {
+        document.getElementById('cod-error').textContent = 'Please confirm Cash on Delivery to proceed.';
+        document.getElementById('cod-error').style.display = 'block';
+        hideGlobalLoader();
+        return;
+      }
+    }
+
+    const isFast      = document.getElementById('tier-fast').classList.contains('selected');
+    const deliveryType = isFast ? 'Fast' : 'Normal';
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.textContent = 'PLACING ORDER...';
+
+    try {
+      const addressId = placeOrderBtn.getAttribute('data-address-id');
+      const res  = await fetch('/user/checkout/place-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addressId, paymentMethod: selectedPaymentMethod, deliveryType, paymentDetails,
+          couponCode: currentCoupon || undefined,
+          offerId:    currentOfferId || undefined
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.isRazorpay) {
+          const options = {
+            key: data.key, amount: data.razorpayOrder.amount, currency: 'INR',
+            name: 'TYMORA', description: 'Order Payment', order_id: data.razorpayOrder.id,
+            handler: async function (response) {
+              showGlobalLoader();
+              try {
+                const vr = await fetch('/user/checkout/verify-payment', {
+                  method:'POST', headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({ razorpay_order_id:response.razorpay_order_id, razorpay_payment_id:response.razorpay_payment_id, razorpay_signature:response.razorpay_signature, orderId:data.orderId })
+                });
+                const vd = await vr.json();
+                window.location.href = vd.success
+                  ? `/user/order-success?orderId=${data.orderId}`
+                  : `/user/payment-failed?orderId=${data.orderId}&reason=verification_failed`;
+              } catch(e) { window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=network_error`; }
+              finally { hideGlobalLoader(); }
+            },
+            theme: { color: '#c9a84c' },
+            modal: { 
+              ondismiss: async () => {
+                showGlobalLoader();
+                try {
+                  await fetch('/user/checkout/mark-payment-failed', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: data.orderId })
+                  });
+                } catch (err) { console.error('Failed to mark payment as failed'); }
+                finally { hideGlobalLoader(); }
+                window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=cancelled`;
+              } 
+            }
+          };
+          const rzp = new Razorpay(options);
+          rzp.on('payment.failed', async (response) => {
+            showGlobalLoader();
+            try {
+              await fetch('/user/checkout/mark-payment-failed', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: data.orderId, error: response.error })
+              });
+            } catch (err) { console.error('Failed to mark payment as failed'); }
+            finally { hideGlobalLoader(); }
+            window.location.href = `/user/payment-failed?orderId=${data.orderId}&reason=declined`;
+          });
+          rzp.open();
+          hideGlobalLoader();
+        } else {
+          window.location.href = `/user/order-success?orderId=${data.orderId}`;
+        }
+      } else {
+        hideGlobalLoader();
+        const placeOrderError = document.getElementById('place-order-error-msg');
+        if (data.message && (data.message.includes('unavailable') || data.message.includes('out of stock'))) {
+           if (placeOrderError) {
+             placeOrderError.textContent = data.message.endsWith('.')
+               ? data.message + ' Return to cart and remove the product to continue.'
+               : data.message;
+             placeOrderError.style.display = 'block';
+             productErrorLocked = true;
+           }
+           placeOrderBtn.disabled = true;
+           placeOrderBtn.style.opacity = '0.5';
+           placeOrderBtn.style.cursor = 'not-allowed';
+           placeOrderBtn.textContent = 'PLACE ORDER >';
+        } else {
+           paymentErrorContainer.textContent = data.message || 'Failed to place order. Please try again.';
+           paymentErrorContainer.style.display = 'block';
+           placeOrderBtn.disabled = false;
+           placeOrderBtn.textContent = 'PLACE ORDER >';
+        }
+      }
+    } catch (err) {
+      hideGlobalLoader();
+      console.error(err);
+      paymentErrorContainer.textContent = 'Something went wrong. Please try again.';
+      paymentErrorContainer.style.display = 'block';
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = 'PLACE ORDER >';
+    }
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────────────
+  {{#if checkoutState}}
+    (function() {
+      const p_deliveryType = "{{checkoutState.deliveryType}}";
+      const p_paymentMethod = "{{checkoutState.paymentMethod}}";
+      const p_couponCode = "{{checkoutState.couponCode}}";
+      const p_offerId = "{{checkoutState.offerId}}";
+
+      if (p_deliveryType === 'Fast') {
+        const fastTier = document.getElementById('tier-fast');
+        const normTier = document.getElementById('tier-normal');
+        if (fastTier && normTier) {
+          fastTier.classList.add('selected'); 
+          normTier.classList.remove('selected');
+          fastTier.querySelector('.radio-circle').innerHTML = '<div class="radio-inner"></div>';
+          normTier.querySelector('.radio-circle').innerHTML = '';
+          deliveryCharge = 50;
+        }
+      }
+      if (p_paymentMethod) {
+        const tab = document.querySelector(`.payment-tab[data-method="${p_paymentMethod}"]`);
+        if (tab) {
+          paymentTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          selectedPaymentMethod = p_paymentMethod;
+          paymentSections.forEach(sec => sec.style.display = 'none');
+          if (selectedPaymentMethod !== 'COD') { codCharge = 0; document.getElementById('cod-confirm').checked = false; }
+          else { codCharge = 30; }
+          if (selectedPaymentMethod === 'Online') document.getElementById('online-form').style.display = 'block';
+          if (selectedPaymentMethod === 'Wallet') { document.getElementById('wallet-form').style.display = 'block'; validateWalletBalance(); }
+          if (selectedPaymentMethod === 'COD')    document.getElementById('cod-info-card').style.display = 'block';
+        }
+      }
+      if (p_couponCode) {
+        currentCoupon = p_couponCode;
+        const cIn = document.getElementById('coupon-input');
+        if (cIn) cIn.value = p_couponCode;
+      }
+      if (p_offerId) {
+        currentOfferId = p_offerId;
+      }
+    })();
+  {{/if}}
+
+  fetchUpdatedTotals();
+
+  // Animations
+  gsap.from('.checkout-section', { y:20, opacity:0, duration:0.6, stagger:0.1, ease:'power2.out', delay:0.1 });
+  gsap.from('.summary-sidebar',  { y:20, opacity:0, duration:0.6, ease:'power2.out', delay:0.3 });
+</script>
