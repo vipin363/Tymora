@@ -1,0 +1,12 @@
+User-agent: *
+
+Allow: /
+
+Disallow: /admin/
+Disallow: /user/cart
+Disallow: /user/wishlist
+Disallow: /user/login
+Disallow: /user/register
+Disallow: /user/forgotPassword
+
+Sitemap: https://tymora.vipinrajkk.in/sitemap.xml
