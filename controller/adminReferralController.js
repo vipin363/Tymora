@@ -1,4 +1,4 @@
-import Referral from "../model/referralModel.js";
+import Referral from '../model/referralModel.js';
 
 export const loadAdminReferrals = async (req, res) => {
   try {
@@ -21,8 +21,8 @@ export const loadAdminReferrals = async (req, res) => {
     if (search) {
       // Allow searching by email or code
       query.$or = [
-        { referredEmail: { $regex: search, $options: "i" } },
-        { referralCodeUsed: { $regex: search, $options: "i" } }
+        { referredEmail: { $regex: search, $options: 'i' } },
+        { referralCodeUsed: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -37,34 +37,42 @@ export const loadAdminReferrals = async (req, res) => {
       .limit(limit)
       .lean();
 
-    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
+    const fmtDate = (d) =>
+      d
+        ? new Date(d).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '-';
 
-    const formattedReferrals = referralsList.map(r => ({
+    const formattedReferrals = referralsList.map((r) => ({
       ...r,
       signupDateFormatted: fmtDate(r.createdAt),
       rewardDateFormatted: fmtDate(r.rewardReleaseDate),
-      referrerName: r.referrer?.name || "Unknown",
-      referredName: r.referredUser?.name || "Unknown",
-      totalRewardValue: r.referrerRewardAmount + r.referredRewardAmount
+      referrerName: r.referrer?.name || 'Unknown',
+      referredName: r.referredUser?.name || 'Unknown',
+      totalRewardValue: r.referrerRewardAmount + r.referredRewardAmount,
     }));
 
-    res.render("admin/referralManagement", {
-      activePage: "referrals",
+    res.render('admin/referralManagement', {
+      activePage: 'referrals',
       referrals: formattedReferrals,
       currentPage: page,
       totalPages,
-      search: search || "",
-      statusFilter: status || "all",
-      sourceFilter: source || "all",
+      search: search || '',
+      statusFilter: status || 'all',
+      sourceFilter: source || 'all',
       stats: {
         total: await Referral.countDocuments(),
-        pending: await Referral.countDocuments({ rewardStatus: "PENDING" }),
-        completed: await Referral.countDocuments({ rewardStatus: "COMPLETED" })
-      }
+        pending: await Referral.countDocuments({ rewardStatus: 'PENDING' }),
+        completed: await Referral.countDocuments({ rewardStatus: 'COMPLETED' }),
+      },
     });
-
   } catch (err) {
-    console.error("loadAdminReferrals error:", err);
-    res.redirect("/admin/dashboard");
+    console.error('loadAdminReferrals error:', err);
+    res.redirect('/admin/dashBoard');
   }
 };

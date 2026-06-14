@@ -520,7 +520,7 @@ export const loadUsers = async (req, res) => {
       };
     });
 
-    res.render('admin/userManagement', {
+    res.render('admin/usermanagement', {
       layout: 'admin',
       users: formattedUsers,
       currentPage: page,
@@ -859,7 +859,7 @@ export const loadUserProfile = async (req, res) => {
       orders: formattedOrders,
     };
 
-    res.render('admin/userManagement', {
+    res.render('admin/usermanagement', {
       layout: 'admin',
       users: formattedUsers,
       selectedUser,
@@ -944,7 +944,7 @@ export const loadCategoryManagement = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/dashBoard');
   }
 };
 
@@ -1286,7 +1286,7 @@ export const loadProductManagement = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/dashBoard');
   }
 };
 
@@ -2436,7 +2436,7 @@ export const loadAdminOrders = async (req, res) => {
     });
   } catch (err) {
     console.error('loadAdminOrders error:', err);
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/dashBoard');
   }
 };
 
@@ -2776,12 +2776,10 @@ export const updateItemStatus = async (req, res) => {
     if (newStatus !== 'Cancelled') {
       const allowedNext = getNextAllowedStatus(currentStatus);
       if (newStatus !== allowedNext) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: `Cannot skip steps. Next allowed is "${allowedNext}".`,
-          });
+        return res.status(400).json({
+          success: false,
+          message: `Cannot skip steps. Next allowed is "${allowedNext}".`,
+        });
       }
     }
 
@@ -2995,7 +2993,7 @@ export const loadSettings = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/dashBoard');
   }
 };
 
@@ -3108,7 +3106,7 @@ export const loadAdminReturns = async (req, res) => {
     });
   } catch (err) {
     console.error('loadAdminReturns error:', err);
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/dashBoard');
   }
 };
 
@@ -3122,12 +3120,10 @@ export const approveReturn = async (req, res) => {
         .json({ success: false, message: 'Order not found' });
 
     if (order.orderStatus !== 'Return Requested') {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Only Return Requested orders can be approved.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Only Return Requested orders can be approved.',
+      });
     }
 
     order.orderStatus = 'Return Approved';
@@ -3166,12 +3162,10 @@ export const rejectReturn = async (req, res) => {
     const { reason } = req.body;
 
     if (!reason || reason.trim().length < 5) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Please provide a valid rejection reason (min 5 chars).',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid rejection reason (min 5 chars).',
+      });
     }
 
     const order = await Order.findOne({ orderId });
@@ -3181,12 +3175,10 @@ export const rejectReturn = async (req, res) => {
         .json({ success: false, message: 'Order not found' });
 
     if (order.orderStatus !== 'Return Requested') {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Only Return Requested orders can be rejected.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Only Return Requested orders can be rejected.',
+      });
     }
 
     order.orderStatus = 'Return Rejected';
@@ -3232,12 +3224,10 @@ export const updatePickupStatus = async (req, res) => {
         order.orderStatus
       )
     ) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Cannot update pickup status for this order.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot update pickup status for this order.',
+      });
     }
 
     order.returnPickupStatus = pickupStatus;
@@ -3305,13 +3295,10 @@ export const inspectReturn = async (req, res) => {
         .json({ success: false, message: 'Order not found' });
 
     if (order.orderStatus !== 'Return Picked') {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message:
-            'Inspection can only be performed after return is Picked up.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Inspection can only be performed after return is Picked up.',
+      });
     }
 
     order.returnInspectionStatus = 'Inspected';
@@ -3380,12 +3367,10 @@ export const updateRefundStatus = async (req, res) => {
         order.orderStatus
       )
     ) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'Refund can only be processed after pickup/inspection.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'Refund can only be processed after pickup/inspection.',
+      });
     }
 
     order.returnRefundStatus = refundStatus;
@@ -3481,12 +3466,10 @@ export const updateItemReturnAction = async (req, res) => {
 
     if (action === 'reject') {
       if (!reason || reason.trim().length < 5)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: 'Please provide a valid rejection reason (min 5 chars).',
-          });
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a valid rejection reason (min 5 chars).',
+        });
       item.orderStatus = 'Return Rejected';
       item.returnStatus = 'Rejected';
       item.returnRejectionReason = reason;
