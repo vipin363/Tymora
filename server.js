@@ -99,6 +99,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Middleware
 app.use(nocache());
 app.set('trust proxy', 1);
+console.log('NODE_ENV =', process.env.NODE_ENV);
 
 app.use(
   session({
