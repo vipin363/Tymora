@@ -752,10 +752,10 @@ export const loadReferrals = async (req, res) => {
     const fmtDate = (d) =>
       d
         ? new Date(d).toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          })
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
         : '-';
 
     const referralsFormatted = await Promise.all(
@@ -2124,14 +2124,14 @@ export const loadProductDetail = async (req, res) => {
 
     const couponData = showcaseCoupon
       ? {
-          code: showcaseCoupon.code,
-          discountType: showcaseCoupon.discountType,
-          discountValue: showcaseCoupon.discountValue,
-          label:
-            showcaseCoupon.discountType === 'percentage'
-              ? `Use code for extra ${showcaseCoupon.discountValue}% off`
-              : `Use code for ₹${showcaseCoupon.discountValue} off`,
-        }
+        code: showcaseCoupon.code,
+        discountType: showcaseCoupon.discountType,
+        discountValue: showcaseCoupon.discountValue,
+        label:
+          showcaseCoupon.discountType === 'percentage'
+            ? `Use code for extra ${showcaseCoupon.discountValue}% off`
+            : `Use code for ₹${showcaseCoupon.discountValue} off`,
+      }
       : null;
 
     res.render('user/productDetail', {
@@ -2765,9 +2765,6 @@ export const getUserOrders = async (req, res) => {
     const userId = req.session.user?.id;
     if (!userId) return res.redirect('/user/login');
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = 5;
-    const skip = (page - 1) * limit;
     const searchQuery = req.query.search || '';
 
     let query = {
@@ -2780,13 +2777,8 @@ export const getUserOrders = async (req, res) => {
       ];
     }
 
-    const totalOrders = await Order.countDocuments(query);
-    const totalPages = Math.ceil(totalOrders / limit);
-
     let orders = await Order.find(query)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .lean();
 
     const settings = (await Settings.findOne().lean()) || {
@@ -2934,12 +2926,6 @@ export const getUserOrders = async (req, res) => {
     res.render('user/myOrders', {
       layout: 'main',
       orders,
-      currentPage: page,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
-      nextPage: page + 1,
-      prevPage: page - 1,
       searchQuery,
     });
   } catch (err) {
@@ -4048,48 +4034,48 @@ export const calculateCheckout = async (req, res) => {
     const eligibleOffers = hasOutOfStock
       ? []
       : activeOffers
-          .filter((o) => {
-            if (o.usageLimit && o.usedCount >= o.usageLimit) return false;
-            if (initialSubtotal < (o.minPurchaseAmount || 0)) return false;
-            if (!isPaymentMethodEligible(o.paymentMethods, paymentMethod))
-              return false;
-            return true;
-          })
-          .map((o) => ({
-            _id: o._id.toString(),
-            name: o.name,
-            discountType: o.discountType,
-            discountValue: o.discountValue,
-            offerType: o.offerType,
-            calculatedDiscount: calcOfferDiscount(o, initialSubtotal),
-          }))
-          .sort((a, b) => b.calculatedDiscount - a.calculatedDiscount);
+        .filter((o) => {
+          if (o.usageLimit && o.usedCount >= o.usageLimit) return false;
+          if (initialSubtotal < (o.minPurchaseAmount || 0)) return false;
+          if (!isPaymentMethodEligible(o.paymentMethods, paymentMethod))
+            return false;
+          return true;
+        })
+        .map((o) => ({
+          _id: o._id.toString(),
+          name: o.name,
+          discountType: o.discountType,
+          discountValue: o.discountValue,
+          offerType: o.offerType,
+          calculatedDiscount: calcOfferDiscount(o, initialSubtotal),
+        }))
+        .sort((a, b) => b.calculatedDiscount - a.calculatedDiscount);
 
     // ── 3. Filter eligible coupons ────────────────────────────────────────
     const eligibleCoupons = hasOutOfStock
       ? []
       : activeCoupons
-          .filter((c) => {
-            const used = c.usedBy
-              ? c.usedBy.filter((id) => id.toString() === userId.toString())
-                  .length
-              : 0;
-            if (used >= (c.perUserLimit || 1)) return false;
-            if (initialSubtotal < (c.minPurchase || 0)) return false;
-            if (!isPaymentMethodEligible(c.paymentMethods, paymentMethod))
-              return false;
-            return true;
-          })
-          .map((c) => ({
-            _id: c._id.toString(),
-            code: c.code,
-            title: c.title,
-            discountType: c.discountType,
-            discountValue: c.discountValue,
-            minPurchase: c.minPurchase,
-            calculatedDiscount: calcCouponDiscount(c, initialSubtotal),
-          }))
-          .sort((a, b) => b.calculatedDiscount - a.calculatedDiscount);
+        .filter((c) => {
+          const used = c.usedBy
+            ? c.usedBy.filter((id) => id.toString() === userId.toString())
+              .length
+            : 0;
+          if (used >= (c.perUserLimit || 1)) return false;
+          if (initialSubtotal < (c.minPurchase || 0)) return false;
+          if (!isPaymentMethodEligible(c.paymentMethods, paymentMethod))
+            return false;
+          return true;
+        })
+        .map((c) => ({
+          _id: c._id.toString(),
+          code: c.code,
+          title: c.title,
+          discountType: c.discountType,
+          discountValue: c.discountValue,
+          minPurchase: c.minPurchase,
+          calculatedDiscount: calcCouponDiscount(c, initialSubtotal),
+        }))
+        .sort((a, b) => b.calculatedDiscount - a.calculatedDiscount);
 
     // ── 4. Best offer suggestion ──────────────────────────────────────────
     const bestOfferSuggestion =
@@ -4150,7 +4136,7 @@ export const calculateCheckout = async (req, res) => {
       } else {
         const used = coupon.usedBy
           ? coupon.usedBy.filter((id) => id.toString() === userId.toString())
-              .length
+            .length
           : 0;
         if (used >= (coupon.perUserLimit || 1)) {
           couponMessage =
@@ -4520,7 +4506,7 @@ export const placeOrder = async (req, res) => {
 
       const usageCount = coupon.usedBy
         ? coupon.usedBy.filter((id) => id.toString() === userId.toString())
-            .length
+          .length
         : 0;
       if (usageCount >= (coupon.perUserLimit || 1))
         return res.json({
