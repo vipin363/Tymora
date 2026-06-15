@@ -299,6 +299,8 @@ export const login = async (req, res) => {
 
 export const homePage = async (req, res) => {
   try {
+    console.log('HOME SESSION:', req.session.user);
+    console.log('HOME SESSION ID:', req.sessionID);
     let message = req.query.message || null;
     // Find category IDs that have at least one active product with active variants
     const activeCategoryIds = await Product.distinct('category', {
