@@ -74,31 +74,56 @@ export const googleRegisterInit = (req, res, next) => {
 export const googleCallback = (req, res, next) => {
   passport.authenticate('google', (err, user, info) => {
     if (err) return next(err);
+
     const isRegister = req.session.googleAuthType === 'register';
-    req.session.googleAuthType = null;
+
+    // Clean up the temporary flag
+    delete req.session.googleAuthType;
 
     if (!user) {
       console.log('[Google OAuth] Auth failed:', info?.message);
-      if (isRegister) {
+
+      return req.session.save(() => {
+        if (isRegister) {
+          return res.redirect(
+            `/user/register?message=${encodeURIComponent(
+              info?.message || 'Registration failed'
+            )}`
+          );
+        }
+
         return res.redirect(
-          `/user/register?message=${encodeURIComponent(info?.message || 'Registration failed')}`
+          `/user/login?message=${encodeURIComponent(
+            info?.message || 'Login failed'
+          )}`
         );
-      } else {
-        return res.redirect(
-          `/user/login?message=${encodeURIComponent(info?.message || 'Login failed')}`
-        );
-      }
+      });
     }
 
-    req.session.user = { id: user._id, name: user.name };
+    // Save logged in user
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+    };
 
     if (isRegister) {
-      clearReferralCookie(res); // Consume the referral cookie after account creation
+      clearReferralCookie(res);
       console.log(`[Google OAuth] Referral cookie cleared after registration.`);
     }
 
-    console.log(`[Google OAuth] Session set for user: ${user.email}`);
-    res.redirect('/user/home');
+    req.session.save((err) => {
+      if (err) {
+        console.error('[Google OAuth] Session save failed:', err);
+
+        return res.redirect('/user/login?message=Session error');
+      }
+
+      console.log(
+        `[Google OAuth] Session saved successfully for ${user.email}`
+      );
+
+      return res.redirect('/user/home');
+    });
   })(req, res, next);
 };
 
