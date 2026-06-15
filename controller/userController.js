@@ -47,14 +47,28 @@ export const loadRegister = async (req, res) => {
 export const googleLoginInit = (req, res, next) => {
   console.log('[Google OAuth] Login flow initiated');
   req.session.googleAuthType = 'login';
-  next();
+  req.session.save((err) => {
+    if (err) {
+      console.error(err);
+      return res.redirect('/user/login');
+    }
+
+    next();
+  });
 };
 
 export const googleRegisterInit = (req, res, next) => {
   console.log('[Google OAuth] Register flow initiated');
   req.session.googleAuthType = 'register';
 
-  next();
+  req.session.save((err) => {
+    if (err) {
+      console.error(err);
+      return res.redirect('/user/register');
+    }
+
+    next();
+  });
 };
 
 export const googleCallback = (req, res, next) => {
