@@ -376,23 +376,45 @@ const getReportData = async (query, isExport = false) => {
 
     transactions.sort((a, b) => a.timestamp - b.timestamp);
     
-    // Build trendData directly from these exact same transactions to guarantee a match
-    const trendMap = {};
+    // Calculate running balance for transactions
     transactions.forEach(t => {
         if (t.type === 'Credit') runningBalance += t.amount;
         else runningBalance -= t.amount;
         t.balance = runningBalance;
+    });
 
-        // Group by day for the trend chart
-        const dateStr = new Date(t.timestamp).toISOString().split('T')[0];
+    // Build trendData directly from the orders to match the card metrics exactly
+    const trendMap = {};
+    ordersForLedger.forEach(order => {
+        const dateStr = new Date(order.orderDate).toISOString().split('T')[0];
         if (!trendMap[dateStr]) trendMap[dateStr] = { _id: dateStr, revenue: 0, orders: new Set() };
         
-        if (t.type === 'Credit') {
-            trendMap[dateStr].revenue += t.amount;
-            trendMap[dateStr].orders.add(t.orderId);
-        } else {
-            trendMap[dateStr].revenue -= t.amount;
-        }
+        order.products.forEach(prod => {
+            // Apply Status Filter
+            if (query.status && query.status !== 'All Statuses' && query.status !== 'all') {
+                if (query.status === 'Returned') {
+                    if (!['Returned', 'Refund Processed'].includes(prod.orderStatus)) return;
+                } else {
+                    if (prod.orderStatus !== query.status) return;
+                }
+            }
+
+            // Gross Sales Logic
+            let prodGross = 0;
+            if (['Paid', 'Refunded'].includes(order.paymentStatus) || 
+                (order.paymentMethod === 'COD' && prod.orderStatus === 'Delivered')) {
+                prodGross = prod.productFinalPaidPrice || 0;
+            }
+
+            // Refunds Logic
+            let prodRefund = 0;
+            if (prod.refundAmountProcessed && prod.refundAmountProcessed > 0) {
+                prodRefund = prod.refundAmountProcessed;
+            }
+
+            trendMap[dateStr].revenue += (prodGross - prodRefund);
+            trendMap[dateStr].orders.add(order.orderId);
+        });
     });
 
     const trendData = Object.values(trendMap).map(d => ({

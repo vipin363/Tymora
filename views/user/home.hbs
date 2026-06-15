@@ -213,22 +213,26 @@
   <div class="lux-container">
     <div class="lux-numbers__grid">
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.happyCustomers}}">0</span>+</div>
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.happyCustomers}}">0</span>+
+        </div>
         <div class="lux-number-card__label">Happy Customers</div>
         <div class="lux-number-card__glow"></div>
       </div>
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.watchesSold}}">0</span>+</div>
+        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.watchesSold}}">0</span>+
+        </div>
         <div class="lux-number-card__label">Luxury Watches Sold</div>
         <div class="lux-number-card__glow"></div>
       </div>
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.premiumCollections}}">0</span>+</div>
+        <div class="lux-number-card__value"><span class="lux-counter"
+            data-target="{{stats.premiumCollections}}">0</span>+</div>
         <div class="lux-number-card__label">Premium Collections</div>
         <div class="lux-number-card__glow"></div>
       </div>
       <div class="lux-number-card lux-reveal">
-        <div class="lux-number-card__value"><span class="lux-counter" data-target="{{stats.customerSatisfaction}}">0</span>%</div>
+        <div class="lux-number-card__value"><span class="lux-counter"
+            data-target="{{stats.customerSatisfaction}}">0</span>%</div>
         <div class="lux-number-card__label">Customer Satisfaction</div>
         <div class="lux-number-card__glow"></div>
       </div>
@@ -309,6 +313,83 @@
     </div>
   </div>
 </section>
+
+<!-- ══════════════════════════════════════════════════════════
+     7.5 DEAL OF THE DAY SECTION
+     ══════════════════════════════════════════════════════════ -->
+{{#if hasDeals}}
+<section class="lux-deal-of-day" style="padding: 80px 0; background: var(--lux-charcoal); position: relative;">
+  <div class="lux-deal-of-day__bg-glow" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 80%; background: radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 70%); z-index: 0; pointer-events: none;"></div>
+  <div class="lux-container" style="position: relative; z-index: 1;">
+    <div class="lux-deal-of-day__header lux-reveal" style="text-align: center; margin-bottom: 40px;">
+      <div class="lux-eyebrow" style="color: var(--gold); letter-spacing: 3px; font-size: 0.85rem; margin-bottom: 10px; text-transform: uppercase;">LIMITED TIME OFFERS</div>
+      <h2 class="lux-heading">Deal of the <span class="lux-gold">Day</span></h2>
+    </div>
+
+    <!-- Products Grid (reusing premium shop card style) -->
+    <div class="products-grid" id="dealProductsGrid">
+      {{#each dealOfTheDayProducts}}
+        <div class="prod-card lux-reveal" style="animation-delay:{{@index}}00ms"
+             data-id="{{this.id}}"
+             data-variant-id="{{this.variantId}}"
+             data-avail="{{this.avail}}">
+          <div class="prod-img-wrap">
+            {{#if this.badgeLabel}}
+              <span class="prod-badge badge-{{this.badge}}">{{this.badgeLabel}}</span>
+            {{/if}}
+            <div class="card-wish {{#if this.wished}}wished{{/if}}"
+                 data-id="{{this.id}}"
+                 title="{{#if this.wished}}Remove from Wishlist{{else}}Add to Wishlist{{/if}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+                         a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+                         1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
+            <img src="{{this.img}}" alt="{{this.name}}" loading="lazy"
+                 style="cursor:pointer"
+                 onclick="window.location.href='/user/product/{{this.id}}'">
+            <div class="prod-img-overlay"></div>
+            {{#ifEquals this.avail 'outofstock'}}
+              <button class="quick-add disabled" disabled title="Out of Stock">Out of Stock</button>
+            {{else}}
+              {{#if this.inCart}}
+                <button class="quick-add"
+                        style="background:transparent;color:var(--gold);border:1px solid var(--gold);"
+                        data-id="{{this.id}}"
+                        data-variant-id="{{this.variantId}}"
+                        data-in-cart="true">View in Cart</button>
+              {{else}}
+                <button class="quick-add"
+                        data-id="{{this.id}}"
+                        data-variant-id="{{this.variantId}}"
+                        data-in-cart="">+ Add to Bag</button>
+              {{/if}}
+            {{/ifEquals}}
+          </div>
+          <div class="prod-info">
+            <div class="prod-atelier">{{this.brand}}</div>
+            <div class="prod-rating">★ {{this.rating}}
+              <span class="rating-count">({{this.reviews}})</span>
+            </div>
+            <div class="prod-name">{{this.name}}</div>
+            <div class="prod-price-wrap">
+              <span class="prod-price">₹{{formatCurrency this.price}}</span>
+              {{#if this.oldPrice}}
+                <span class="prod-price-old">₹{{formatCurrency this.oldPrice}}</span>
+                {{#if this.discountPct}}
+                  <span class="prod-discount-pill">{{this.discountPct}}% OFF</span>
+                {{/if}}
+              {{/if}}
+            </div>
+            <button class="prod-btn" onclick="window.location.href='/user/product/{{this.id}}'">View Details</button>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</section>
+{{/if}}
 
 <!-- ══════════════════════════════════════════════════════════
      8. TESTIMONIALS — REAL DB REVIEWS
@@ -703,34 +784,7 @@
       );
     });
 
-    // ── 13. HERO VIDEO AUDIO CONTROL ──
-    const heroVideo = document.getElementById('heroVideo');
-    if (heroVideo) {
-      let hasInteracted = false;
-
-      // Unmute on first scroll or interaction
-      const enableAudio = () => {
-        if (!hasInteracted) {
-          heroVideo.muted = false;
-          hasInteracted = true;
-        }
-      };
-
-      window.addEventListener('scroll', enableAudio, { once: true });
-      window.addEventListener('click', enableAudio, { once: true });
-
-      // Mute audio when hero section is out of view
-      ScrollTrigger.create({
-        trigger: '#luxHero',
-        start: 'top top',
-        end: 'bottom top',
-        onLeave: () => {
-          heroVideo.muted = true;
-        },
-        onEnterBack: () => {
-          if (hasInteracted) heroVideo.muted = false;
-        }
-      });
-    }
+    // ── 13. HERO VIDEO AUDIO CONTROL (REMOVED) ──
+    // Audio has been completely disabled.
   });
 </script>
