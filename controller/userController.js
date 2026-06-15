@@ -475,6 +475,64 @@ export const homePage = async (req, res) => {
       customerSatisfaction: customerSatisfaction,
     };
 
+    // ── Fetch Deal of the Day Products ──
+    const dealRaw = await Product.find({
+      _id: { $in: productIdsWithVariants },
+      status: 'active',
+      deleted_at: null,
+      dealOfTheDay: true,
+    })
+      .populate('brand', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    let wishedSet = new Set();
+    let cartVariantSet = new Set();
+    if (req.session.user) {
+      const [wl, cart] = await Promise.all([
+        Wishlist.findOne({ userId: req.session.user.id }).lean(),
+        Cart.findOne({ userId: req.session.user.id }).lean(),
+      ]);
+      if (wl?.products?.length) {
+        wishedSet = new Set(wl.products.map((p) => p.productId.toString()));
+      }
+      if (cart?.items?.length) {
+        cartVariantSet = new Set(cart.items.map((i) => i.variantId.toString()));
+      }
+    }
+
+    const dealOfTheDayProducts = [];
+    for (const p of dealRaw) {
+      const variant = await Variant.findOne({
+        product: p._id,
+        status: 'active',
+        deleted_at: null,
+      })
+        .sort({ isDefault: -1 })
+        .lean();
+      if (!variant) continue;
+      const salePrice = variant.salePrice || variant.price || 0;
+      const originalPrice = variant.originalPrice || salePrice;
+      const discountPct = variant.discountPercentage || 0;
+      dealOfTheDayProducts.push({
+        id: p._id.toString(),
+        name: p.name,
+        brand: p.brand?.name || 'TYMORA',
+        img: variant.images?.[0] || p.images?.[0] || '',
+        price: salePrice,
+        oldPrice: discountPct > 0 ? originalPrice : null,
+        discountPct: discountPct,
+        rating: p.rating || 4.5,
+        reviews: p.reviews || 0,
+        variantId: variant._id.toString(),
+        avail: variant.stock > 0 ? 'instock' : 'outofstock',
+        badge: 'deal',
+        badgeLabel: 'DEAL OF THE DAY',
+        wished: wishedSet.has(p._id.toString()),
+        inCart: cartVariantSet.has(variant._id.toString()),
+      });
+    }
+
     res.render('user/home', {
       layout: 'main',
       user: req.session.user || null,
@@ -483,6 +541,8 @@ export const homePage = async (req, res) => {
       categories: navCategories,
       trendingProducts,
       hasProducts: trendingProducts.length > 0,
+      dealOfTheDayProducts,
+      hasDeals: dealOfTheDayProducts.length > 0,
       testimonials,
       hasTestimonials: testimonials.length > 0,
       stats,
@@ -496,6 +556,8 @@ export const homePage = async (req, res) => {
       navCategories: [],
       categories: [],
       trendingProducts: [],
+      dealOfTheDayProducts: [],
+      hasDeals: false,
       testimonials: [],
       stats: {
         happyCustomers: 0,
@@ -654,7 +716,7 @@ export const loadProfile = async (req, res) => {
       },
     });
 
-    res.render('user/userProfile', {
+    res.render('user/userprofile', {
       layout: 'main',
       user,
       hasPassword: !!user.password,
@@ -757,7 +819,7 @@ export const loadEditProfile = async (req, res) => {
     res.render('user/editProfile', { layout: 'main', user });
   } catch (err) {
     console.log(err);
-    res.redirect('/user/userProfile');
+    res.redirect('/user/userprofile');
   }
 };
 
