@@ -75,6 +75,7 @@ export const googleCallback = (req, res, next) => {
   passport.authenticate('google', (err, user, info) => {
     console.log('SESSION googleAuthType:', req.session.googleAuthType);
     console.log('QUERY state:', req.query.state);
+
     if (err) return next(err);
 
     const isRegister = req.session.googleAuthType === 'register';
@@ -107,6 +108,9 @@ export const googleCallback = (req, res, next) => {
       id: user._id,
       name: user.name,
     };
+
+    console.log('CALLBACK SESSION ID:', req.sessionID);
+    console.log('CALLBACK SESSION USER:', req.session.user);
 
     if (isRegister) {
       clearReferralCookie(res);
