@@ -73,6 +73,8 @@ export const googleRegisterInit = (req, res, next) => {
 
 export const googleCallback = (req, res, next) => {
   passport.authenticate('google', (err, user, info) => {
+    console.log('SESSION googleAuthType:', req.session.googleAuthType);
+    console.log('QUERY state:', req.query.state);
     if (err) return next(err);
 
     const isRegister = req.session.googleAuthType === 'register';
