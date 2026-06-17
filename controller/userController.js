@@ -2002,8 +2002,10 @@ export const loadProductDetail = async (req, res) => {
       ]);
 
       if (wl?.products?.length) {
-        wishedSet = new Set(wl.products.map((p) => p.productId.toString()));
-        wished = wishedSet.has(id);
+        wishedSet = new Set(
+          wl.products.map((p) => (p.variantId ? p.variantId.toString() : p.productId.toString()))
+        );
+        wished = wishedSet.has(displayVariant._id.toString()) || wishedSet.has(id);
       }
 
       if (cart?.items?.length) {
@@ -2029,6 +2031,7 @@ export const loadProductDetail = async (req, res) => {
       images: v.images || [],
       isDefault: !!v.isDefault,
       inCart: cartItems.includes(v._id.toString()),
+      wished: wishedSet.has(v._id.toString()),       // ← was missing; seeds wishedSet on the frontend
       avail: v.stock > 0 ? 'instock' : 'outofstock',
     }));
 
@@ -2075,7 +2078,7 @@ export const loadProductDetail = async (req, res) => {
           avail: rv.stock > 0 ? 'instock' : 'outofstock',
           img: rv.images?.[0] || p.images?.[0] || '',
           variantId: vid,
-          wished: wishedSet.has(pid),
+          wished: wishedSet.has(vid) || wishedSet.has(pid),
           inCart: cartVariantSet.has(vid),
         };
       });
@@ -2225,8 +2228,9 @@ export const loadWishlist = async (req, res) => {
     }
 
     const products = wishlist.products
-      .map(({ productId }) => {
+      .map(({ productId, variantId }) => {
         const pid = productId.toString();
+        const vid = variantId ? variantId.toString() : null;
         const p = dbProducts.find((d) => d._id.toString() === pid);
         if (!p) return null;
         if (
@@ -2235,7 +2239,7 @@ export const loadWishlist = async (req, res) => {
           p.category.deleted_at
         )
           return null;
-        const display = variantMap[pid];
+        const display = vid ? variantDocs.find((v) => v._id.toString() === vid) : variantMap[pid];
         if (!display) return null;
         const bp = display.price ?? p.price;
         const fp =
@@ -2280,30 +2284,39 @@ export const loadWishlist = async (req, res) => {
 export const toggleWishlist = async (req, res) => {
   try {
     const userId = req.session.user?.id;
-    const { productId } = req.body;
+    const { productId, variantId } = req.body;
 
     if (!userId) return res.json({ success: false, redirect: '/user/login' });
-    if (!productId)
-      return res.json({ success: false, message: 'Missing productId' });
+    if (!productId || !variantId)
+      return res.json({ success: false, message: 'Missing productId or variantId' });
 
-    // Check if product is already in wishlist
     const existing = await Wishlist.findOne({
       userId,
-      'products.productId': productId,
+      products: { $elemMatch: { productId, variantId } },
     });
 
     if (existing) {
       await Wishlist.findOneAndUpdate(
         { userId },
-        { $pull: { products: { productId } } },
+        { $pull: { products: { productId, variantId } } },
         { returnDocument: 'after' }
+      );
+      // Clean up legacy entries missing variantId
+      await Wishlist.findOneAndUpdate(
+        { userId },
+        { $pull: { products: { productId, variantId: { $exists: false } } } }
       );
       return res.json({ success: true, status: 'removed' });
     } else {
       await Wishlist.findOneAndUpdate(
-        { userId, 'products.productId': { $ne: productId } },
-        { $push: { products: { productId } } },
+        { userId },
+        { $push: { products: { productId, variantId } } },
         { upsert: true, returnDocument: 'after' }
+      );
+      // Clean up legacy entries missing variantId
+      await Wishlist.findOneAndUpdate(
+        { userId },
+        { $pull: { products: { productId, variantId: { $exists: false } } } }
       );
       return res.json({ success: true, status: 'added' });
     }
@@ -2343,14 +2356,10 @@ export const getWishlistIds = async (req, res) => {
       })
       .map((p) => p._id.toString());
 
-    // Also ensure at least one active variant exists for each product
-    const variantProductIds = await Variant.distinct('product', {
-      product: { $in: visibleProductIds },
-      status: 'active',
-      deleted_at: null,
-    });
-
-    const finalIds = variantProductIds.map((id) => id.toString());
+    const visibleSet = new Set(visibleProductIds);
+    const finalIds = wishlist.products
+      .filter((p) => visibleSet.has(p.productId.toString()))
+      .map((p) => (p.variantId ? p.variantId.toString() : p.productId.toString()));
     return res.json({ ids: finalIds });
   } catch {
     return res.json({ ids: [] });
@@ -2377,6 +2386,9 @@ export const addAllToCart = async (req, res) => {
 
     const variantMap = {};
     variants.forEach((v) => {
+      const vid = v._id.toString();
+      variantMap[vid] = v;
+      // also keep pid for legacy
       const pid = v.product.toString();
       if (!variantMap[pid] || v.isDefault) variantMap[pid] = v;
     });
@@ -2386,11 +2398,16 @@ export const addAllToCart = async (req, res) => {
 
     let added = 0;
     const addedVariants = [];
+    const skippedVariants = [];
 
-    for (const { productId } of wishlist.products) {
+    for (const { productId, variantId } of wishlist.products) {
       const pid = productId.toString();
-      const variant = variantMap[pid];
-      if (!variant) continue;
+      const vid = variantId ? variantId.toString() : null;
+      const variant = vid ? variantMap[vid] : variantMap[pid];
+      if (!variant) {
+        if (vid) skippedVariants.push(vid);
+        continue;
+      }
 
       const alreadyInCart = cart.items.find(
         (i) =>
@@ -2412,7 +2429,7 @@ export const addAllToCart = async (req, res) => {
 
     await cart.save();
     const cartCount = cart.items.reduce((s, i) => s + i.quantity, 0);
-    return res.json({ success: true, added, addedVariants, cartCount });
+    return res.json({ success: true, added, addedVariants, skippedVariants, cartCount });
   } catch (err) {
     console.error('addAllToCart error:', err);
     return res.json({ success: false, message: 'Something went wrong' });

@@ -32,7 +32,7 @@
     });
   }
 
- async function toggleWishlist(productId) {
+ async function toggleWishlist(productId, variantId) {
     if (!window.SHOP_USER_LOGGED_IN) {
       window.location.href = '/user/login';
       return;
@@ -45,7 +45,7 @@
       const res  = await fetch('/user/wishlist/toggle', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ productId }),
+        body:    JSON.stringify({ productId, variantId }),
       });
       const data = await res.json();
 
@@ -128,7 +128,8 @@
 
       fresh.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleWishlist(fresh.dataset.id);
+        const vid = fresh.dataset.variantId || fresh.closest('[data-variant-id]')?.dataset.variantId;
+        toggleWishlist(fresh.dataset.id, vid);
       });
     });
   }
