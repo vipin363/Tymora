@@ -4,7 +4,7 @@
    ────────────────────────────────────────────────────────── */
 
 :root {
-  --gold: #C9A84C;
+  --gold: #c9a84c;
   --gold-light: #e8c96a;
   --white: #f5f0e8;
   --dark: #0a0a0a;
@@ -32,8 +32,12 @@ body {
   overflow-x: clip;
   position: relative;
   scroll-behavior: smooth;
+}
+
+/* Dedicated wrapper strategy to prevent double-spacing */
+.main-content {
   padding-top: var(--nav-height);
-  /* Strict alignment with nav */
+  min-height: calc(100vh - var(--nav-height));
 }
 
 /* ── CUSTOM SCROLLBAR ── */
@@ -69,10 +73,10 @@ a {
 
 /* ── GLOBAL BREADCRUMB ── */
 .breadcrumb {
-  padding: 0 48px;
-  /* Desktop alignment with nav */
+  padding: 29px 48px 20px;
+  /* Desktop alignment: 12px from nav, 20px before content */
   font-size: 10px;
-  margin-top: 0;
+  margin: 0;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--muted);
@@ -95,48 +99,47 @@ a {
   color: var(--white);
 }
 
-/* Mobile/Tablet Standardization for Breadcrumb and Container Alignment */
+/* Zero out top padding/margin on ALL page wrappers globally so nothing pushes content away from breadcrumb */
+.account-wrap,
+.wishlist-container,
+.cart-container,
+.pd-container,
+.mo-wrapper,
+.od-wrapper,
+.mr-wrapper,
+.checkout-wrapper,
+.page-header,
+.edit-wrap,
+.address-wrap {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Zero out top margin on first heading/content blocks globally */
+h1,
+h2,
+.page-title,
+.page-heading,
+.page-heading h1,
+.cart-header,
+.cart-title,
+.wishlist-header,
+.wishlist-title,
+.pd-name,
+.mo-header,
+.mo-title,
+.mr-header,
+.mr-title,
+.od-header,
+.od-title {
+  margin-top: 0 !important;
+}
+
+/* Mobile/Tablet Standardization for Breadcrumb */
 @media (max-width: 1024px) {
   .breadcrumb {
-    padding: 6px 20px 3px;
-    /* 6px from navbar, 3px before content */
-    margin: 0;
-  }
-
-  /* Zero out top padding/margin on ALL page wrappers so nothing pushes content away from breadcrumb */
-  .account-wrap,
-  .wishlist-container,
-  .cart-container,
-  .pd-container,
-  .mo-wrapper,
-  .od-wrapper,
-  .mr-wrapper,
-  .checkout-wrapper,
-  .page-header,
-  .edit-wrap,
-  .address-wrap {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* Zero out top margin on first heading/content blocks so the 2-3px gap is exact */
-  h1,
-  h2,
-  .page-title,
-  .page-heading,
-  .page-heading h1,
-  .cart-header,
-  .cart-title,
-  .wishlist-header,
-  .wishlist-title,
-  .pd-name,
-  .mo-header,
-  .mo-title,
-  .mr-header,
-  .mr-title,
-  .od-header,
-  .od-title {
-    margin-top: 0 !important;
+    padding: 19px 20px 16px;
+    /* 8px from nav, 16px before content */
   }
 }
 
@@ -163,7 +166,7 @@ nav {
   font-family: 'Playfair Display', serif;
   font-size: 1.6rem;
   font-weight: 700;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   color: var(--gold);
 }
 
@@ -180,7 +183,7 @@ nav {
 .nav-links a {
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white);
   padding: 8px 0;
@@ -645,7 +648,7 @@ nav {
 
 #closeSearchModal:hover {
   opacity: 1;
-  color: var(--gold, #D4AF37);
+  color: var(--gold, #d4af37);
 }
 
 .search-results {
@@ -726,7 +729,7 @@ nav {
 .search-result-price {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--gold, #D4AF37);
+  color: var(--gold, #d4af37);
   font-family: 'Montserrat', sans-serif;
 }
 
@@ -812,7 +815,7 @@ nav {
   margin: 0;
   color: #c9a84c;
   animation: text_713 3.5s ease both infinite;
-  font-size: .8rem;
+  font-size: 0.8rem;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -831,7 +834,7 @@ nav {
 
 .load::before {
   position: absolute;
-  content: "";
+  content: '';
   width: 100%;
   height: 100%;
   background-color: #c9a84c;
@@ -920,16 +923,9 @@ nav {
   }
 }
 
-width: 16px;
-bottom: 0;
-position: absolute;
-transform: translateX(64px);
-animation: loading_713 3.5s ease both infinite;
-}
-
 .load::before {
   position: absolute;
-  content: "";
+  content: '';
   width: 100%;
   height: 100%;
   background-color: #c9a84c;

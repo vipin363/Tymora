@@ -159,7 +159,7 @@
 
 .lux-hero__intro {
   position: absolute;
-  top: 40%;
+  top: calc(40% + 50px);
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 4;
@@ -1487,6 +1487,11 @@
     grid-template-columns: 1fr;
   }
 
+@media (max-width: 1024px) {
+  .lux-hero__intro {
+    top: calc(40% + 35px);
+  }
+
   .lux-story__image-side {
     height: 400px;
   }
@@ -1497,6 +1502,10 @@
 }
 
 @media (max-width: 768px) {
+  .lux-hero__intro {
+    top: calc(40% + 25px);
+  }
+
   .lux-hero__word--time {
     font-size: clamp(40px, 14vw, 80px);
   }
