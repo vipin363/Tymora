@@ -2,13 +2,16 @@
 'use strict';
 
 
-window.__cartState     = window.__cartState     || {};   
-window.__wishlistState = window.__wishlistState || {};  
+window.__cartState     = window.__cartState     || {};
+window.__wishlistState = window.__wishlistState || {};
 
 
 let ALL_VARIANTS  = [];
 let activeVariant = null;
 
+// Module-scoped wishlist set keyed by "productId_variantId"
+// Seeded from server-rendered variant data — refreshed on every page load.
+let wishedSet = new Set();
 
 const PRODUCT_ID = window.PD_DATA?.productId;
 
@@ -94,13 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
   ALL_VARIANTS  = typeof window.PD_DATA?.variants === 'string' ? JSON.parse(window.PD_DATA.variants) : window.PD_DATA?.variants || [];
   activeVariant = ALL_VARIANTS.find(v => v.isDefault) || ALL_VARIANTS[0] || null;
 
-  
-  if (window.PD_DATA?.productId) {
-    window.__wishlistState[window.PD_DATA.productId] = !!window.PD_DATA.wished;
-  }
-
-  
+  // Seed wishedSet with compound keys from server-rendered per-variant wished flags.
+  // This is the canonical source of truth for the heart icon on this page load.
+  wishedSet = new Set();
   ALL_VARIANTS.forEach(v => {
+    if (v.wished) {
+      wishedSet.add(`${PRODUCT_ID}_${v.id}`);
+      window.__wishlistState[v.id] = true;
+    }
     if (v.inCart) window.__cartState[v.id] = true;
   });
 
@@ -331,10 +335,26 @@ function onAttrSelect(attr, val) {
 }
 
 
+// ── Update the main product-detail heart based on compound wishedSet key ──
+// Always use this instead of reading window.__wishlistState directly.
+function updateWishlistButtonState(variantId) {
+  const wished = wishedSet.has(`${PRODUCT_ID}_${variantId}`);
+  const pdBtn  = document.getElementById('pdWishBtn');
+  if (!pdBtn) return;
+  pdBtn.title             = wished ? 'Remove from Wishlist' : 'Add to Wishlist';
+  pdBtn.style.background  = wished ? '#e05252' : '';
+  pdBtn.style.borderColor = wished ? '#e05252' : '';
+  const path = pdBtn.querySelector('svg path');
+  if (path) path.setAttribute('fill', wished ? '#fff' : 'none');
+}
+
 function applyVariantToPage(v) {
   if (!v) return;
 
   window.PD_DATA.variantId = v.id;
+
+  // Immediately reflect this variant's wishlist state on the heart
+  updateWishlistButtonState(v.id);
 
   const priceEl  = document.getElementById('pdPrice');
   const oldEl    = document.getElementById('pdOldPrice');
@@ -598,21 +618,24 @@ function initAddToCart() {
 }
 
 
-function syncAllHearts(productId, wished) {
-  window.__wishlistState[productId] = wished;
+function syncAllHearts(productId, variantId, wished) {
+  // Store state keyed by VARIANT so switching variants reads the right value
+  if (variantId) window.__wishlistState[variantId] = wished;
 
-
+  // Sync any product-card hearts (related products / shop grid)
   document.querySelectorAll(`.card-wish[data-id="${productId}"]`).forEach(btn => {
+    // Only sync cards whose variant matches, or cards without a variant id
+    const btnVid = btn.dataset.variantId;
+    if (btnVid && btnVid !== variantId) return;
     btn.classList.toggle('wished', wished);
     btn.title = wished ? 'Remove from Wishlist' : 'Add to Wishlist';
     const svg = btn.querySelector('svg path');
     if (svg) svg.setAttribute('fill', wished ? 'currentColor' : 'none');
   });
 
-
+  // Sync the main product-detail heart
   const pdBtn = document.getElementById('pdWishBtn');
   if (pdBtn && pdBtn.dataset.id === productId) {
-    pdBtn.classList.toggle('wished', wished);
     pdBtn.title             = wished ? 'Remove from Wishlist' : 'Add to Wishlist';
     pdBtn.style.background  = wished ? '#e05252' : '';
     pdBtn.style.borderColor = wished ? '#e05252' : '';
@@ -626,23 +649,24 @@ function initWishlist() {
   if (!btn) return;
   const productId = btn.dataset.id;
 
-  
-  syncAllHearts(productId, window.__wishlistState[productId] ?? window.PD_DATA?.wished ?? false);
+  // Set initial heart state from the active variant using the compound wishedSet key
+  if (activeVariant) updateWishlistButtonState(activeVariant.id);
 
+  btn.addEventListener('click', async () => { await guardedAction(() => toggleWish(productId, window.PD_DATA.variantId)); });
 
-  btn.addEventListener('click', async () => { await guardedAction(() => toggleWish(productId)); });
-
- 
   document.querySelectorAll('.card-wish[data-id]').forEach(cardBtn => {
     cardBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      await toggleWish(cardBtn.dataset.id);
+      const vid = cardBtn.dataset.variantId || cardBtn.closest('[data-variant-id]')?.dataset.variantId || window.PD_DATA.variantId;
+      await toggleWish(cardBtn.dataset.id, vid);
     });
   });
 }
 
-async function toggleWish(pid) {
-  const was = window.__wishlistState[pid] || false;
+async function toggleWish(pid, variantId) {
+  // Track previous state via wishedSet for reliable rollback
+  const compoundKey = `${pid}_${variantId}`;
+  const was = wishedSet.has(compoundKey);
 
   if (pid === PRODUCT_ID) {
     const active = await checkProductActive();
@@ -653,7 +677,7 @@ async function toggleWish(pid) {
     const res  = await fetch('/user/wishlist/toggle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId: pid }),
+      body: JSON.stringify({ productId: pid, variantId }),
     });
     const data = await res.json();
 
@@ -663,7 +687,23 @@ async function toggleWish(pid) {
     }
 
     const nowWished = data.status === 'added';
-    syncAllHearts(pid, nowWished);
+
+    // Keep wishedSet in sync so future variant switches read the correct state
+    if (nowWished) {
+      wishedSet.add(compoundKey);
+      if (variantId) window.__wishlistState[variantId] = true;
+    } else {
+      wishedSet.delete(compoundKey);
+      if (variantId) delete window.__wishlistState[variantId];
+    }
+
+    // Update all matching card hearts
+    syncAllHearts(pid, variantId, nowWished);
+
+    // If this is the currently displayed variant, refresh the main heart button
+    if (pid === PRODUCT_ID) {
+      updateWishlistButtonState(window.PD_DATA.variantId);
+    }
 
     // ── Update wishlist badge immediately via AJAX ──
     if (typeof window.updateWishlistBadge === 'function') {
@@ -675,7 +715,9 @@ async function toggleWish(pid) {
 
     showToast(nowWished ? 'Added to wishlist ♡' : 'Removed from wishlist', nowWished ? 'gold' : 'muted');
   } catch {
-    syncAllHearts(pid, was);
+    // Rollback wishedSet and re-render heart
+    if (was) wishedSet.add(compoundKey); else wishedSet.delete(compoundKey);
+    if (pid === PRODUCT_ID) updateWishlistButtonState(window.PD_DATA.variantId);
   }
 }
 
@@ -751,7 +793,8 @@ function attachRelatedHandlers(container) {
   container.querySelectorAll('.card-wish[data-id]').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      await toggleWish(btn.dataset.id);
+      const vid = btn.dataset.variantId || btn.closest('[data-variant-id]')?.dataset.variantId;
+      await toggleWish(btn.dataset.id, vid);
     });
   });
 
@@ -787,6 +830,7 @@ function buildRelatedCard(p) {
 
         <div class="card-wish ${wished ? 'wished' : ''}"
              data-id="${p.id}"
+             data-variant-id="${p.variantId || ''}"
              title="${wished ? 'Remove from Wishlist' : 'Add to Wishlist'}">
           <svg viewBox="0 0 24 24"
                fill="${wished ? 'currentColor' : 'none'}"

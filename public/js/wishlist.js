@@ -86,7 +86,7 @@ function initWishlistCards() {
         const res  = await fetch('/user/wishlist/toggle', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ productId: pid }),
+          body:    JSON.stringify({ productId: pid, variantId: vid }),
         });
         const data = await res.json();
         if (!data.success) {
@@ -214,9 +214,12 @@ function initAddAllToCart() {
           });
         }
         updateNavCartCount(data.cartCount);
-        const msg = data.added > 0
+        let msg = data.added > 0
           ? `${data.added} item(s) added to cart!`
           : 'All items already in cart or unavailable';
+        if (data.skippedVariants?.length) {
+          msg += ` (${data.skippedVariants.length} unavailable/skipped)`;
+        }
         showToast(msg, data.added > 0 ? 'gold' : 'error');
         refreshAddAllBtn();
       }
